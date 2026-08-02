@@ -1,0 +1,17 @@
+#!/bin/sh
+# Reject empty subjects and tool trailers. One-line subject required.
+set -eu
+msg=$1
+subject=$(sed -n '1p' "$msg")
+if [ -z "$subject" ]; then
+    echo "commit-msg: empty subject" >&2
+    exit 1
+fi
+if grep -Eiq '^(Co-Authored-By|Made-with|Generated-by|Signed-off-by: claude):' "$msg"; then
+    echo "commit-msg: tool trailer is not allowed" >&2
+    exit 1
+fi
+if grep -Eiq 'Claude|ChatGPT|Generated with' "$msg"; then
+    echo "commit-msg: tool credit is not allowed" >&2
+    exit 1
+fi

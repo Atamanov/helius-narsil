@@ -1,0 +1,23 @@
+#!/bin/sh
+# Reject local-only branches, then require the publish gates.
+set -eu
+while read -r local_ref _ _ _; do
+    case "$local_ref" in
+        refs/heads/local/*)
+            echo "pre-push: $local_ref is a local-only branch, refusing to push" >&2
+            exit 1
+            ;;
+    esac
+done
+
+cargo fmt --check
+cargo clippy --features std --all-targets -- -D warnings
+cargo test --no-default-features
+cargo test --features std
+cargo doc --no-deps --features std -- -D warnings
+if command -v cargo-deny >/dev/null 2>&1; then
+    cargo deny check
+else
+    echo "pre-push: cargo-deny not installed, skipping deny check" >&2
+fi
+cargo publish --dry-run

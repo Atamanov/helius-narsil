@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="490" viewBox="0 0 900 490" role="img" aria-labelledby="title desc">
+  <title id="title">BN254 median execution time</title>
+  <desc id="desc">Grouped horizontal bars compare Narsil, MCL, and arkworks for final exponentiation, full pairing, prepared pairing, and a single Groth16 verification. Lower is better. The diagnostic run is not claim-eligible.</desc>
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07112d"/>
+      <stop offset="1" stop-color="#0b1a4a"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="900" height="490" rx="22" fill="url(#panel)"/>
+  <path d="M0 82 H900" stroke="#28477e" stroke-width="1"/>
+  <text x="34" y="38" fill="#eefaff" font-family="ui-sans-serif,system-ui,sans-serif" font-size="20" font-weight="700">BN254 median time</text>
+  <text x="34" y="63" fill="#9db6de" font-family="ui-sans-serif,system-ui,sans-serif" font-size="13">Microseconds · lower is better · Xeon 6952P diagnostic container</text>
+  <g font-family="ui-sans-serif,system-ui,sans-serif" font-size="12">
+    <circle cx="644" cy="38" r="6" fill="#3ad4ff" filter="url(#glow)"/><text x="658" y="42" fill="#dff9ff">Narsil</text>
+    <circle cx="724" cy="38" r="6" fill="#7c4dff"/><text x="738" y="42" fill="#e3dcff">MCL</text>
+    <circle cx="790" cy="38" r="6" fill="#5075bd"/><text x="804" y="42" fill="#cbdafa">arkworks</text>
+  </g>
+
+  <g font-family="ui-sans-serif,system-ui,sans-serif">
+    <g transform="translate(0 108)">
+      <text x="34" y="14" fill="#eefaff" font-size="14" font-weight="600">Final exponentiation</text>
+      <rect x="226" y="0" width="25" height="15" rx="7.5" fill="#3ad4ff"/><text x="259" y="12" fill="#7ee5ff" font-size="12">63.6</text>
+      <rect x="226" y="24" width="68" height="11" rx="5.5" fill="#7c4dff"/><text x="302" y="34" fill="#bba9ff" font-size="11">170.5</text>
+      <rect x="226" y="44" width="159" height="11" rx="5.5" fill="#5075bd"/><text x="393" y="54" fill="#a9bee8" font-size="11">398.2</text>
+    </g>
+    <g transform="translate(0 194)">
+      <text x="34" y="14" fill="#eefaff" font-size="14" font-weight="600">Full pairing</text>
+      <rect x="226" y="0" width="56" height="15" rx="7.5" fill="#3ad4ff"/><text x="290" y="12" fill="#7ee5ff" font-size="12">140.6</text>
+      <rect x="226" y="24" width="124" height="11" rx="5.5" fill="#7c4dff"/><text x="358" y="34" fill="#bba9ff" font-size="11">309.3</text>
+      <rect x="226" y="44" width="284" height="11" rx="5.5" fill="#5075bd"/><text x="518" y="54" fill="#a9bee8" font-size="11">710.6</text>
+    </g>
+    <g transform="translate(0 280)">
+      <text x="34" y="14" fill="#eefaff" font-size="14" font-weight="600">Prepared pairing</text>
+      <rect x="226" y="0" width="38" height="15" rx="7.5" fill="#3ad4ff"/><text x="272" y="12" fill="#7ee5ff" font-size="12">95.1</text>
+      <rect x="226" y="24" width="109" height="11" rx="5.5" fill="#7c4dff"/><text x="343" y="34" fill="#bba9ff" font-size="11">272.5</text>
+      <rect x="226" y="44" width="254" height="11" rx="5.5" fill="#5075bd"/><text x="488" y="54" fill="#a9bee8" font-size="11">636.0</text>
+    </g>
+    <g transform="translate(0 366)">
+      <text x="34" y="14" fill="#eefaff" font-size="14" font-weight="600">Groth16 single</text>
+      <rect x="226" y="0" width="101" height="15" rx="7.5" fill="#3ad4ff"/><text x="335" y="12" fill="#7ee5ff" font-size="12">253.7</text>
+      <rect x="226" y="24" width="214" height="11" rx="5.5" fill="#7c4dff"/><text x="448" y="34" fill="#bba9ff" font-size="11">533.8</text>
+      <rect x="226" y="44" width="418" height="11" rx="5.5" fill="#5075bd"/><text x="652" y="54" fill="#a9bee8" font-size="11">1046.2</text>
+    </g>
+  </g>
+  <rect x="34" y="452" width="832" height="1" fill="#28477e"/>
+  <text x="34" y="476" fill="#91a9cf" font-family="ui-sans-serif,system-ui,sans-serif" font-size="12">Campaign four-lane-gnr-diagnostic-20260815e · claim_eligible = false</text>
+</svg>

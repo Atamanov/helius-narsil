@@ -1,0 +1,49 @@
+[package]
+name = "helius-narsil"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97.1"
+license = "MIT OR Apache-2.0"
+authors = ["Helius Blockchain Technologies, Inc."]
+description = "Experimental variable-time pairing-friendly curves. BN254 now."
+repository = "https://github.com/helius-labs/helius-narsil"
+homepage = "https://github.com/helius-labs/helius-narsil"
+documentation = "https://docs.rs/helius-narsil"
+readme = "README.md"
+keywords = ["bn254", "pairing", "zk", "elliptic-curve", "cryptography"]
+categories = ["cryptography", "no-std"]
+exclude = [".github/*", "scripts/git-hooks/*", "scripts/install-git-hooks.sh"]
+
+[features]
+default = []
+std = []
+force-portable = []
+# Repository harness only. Expose the selected capability/backend string.
+backend-report = []
+# Differential tests against a caller-supplied MCL tree (`MCL_DIR`).
+mcl-oracle = []
+
+[dependencies]
+bytemuck = { version = "1.25", default-features = false, features = ["derive", "min_const_generics"] }
+
+[build-dependencies]
+cc = "1.0"
+
+[dev-dependencies]
+ark-bn254 = "=0.5.0"
+ark-ec = "=0.5.0"
+ark-ff = { version = "=0.5.0", features = ["asm"] }
+hex = "0.4"
+proptest = { version = "=1.5.0", default-features = false, features = ["std"] }
+rand = "=0.8.6"
+
+[package.metadata.docs.rs]
+features = ["std"]
+rustdoc-args = ["--cfg", "docsrs"]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+opt-level = 3
+panic = "abort"
