@@ -5,7 +5,6 @@
 //! public verifier material. It never caches a verification verdict.
 
 use alloc::vec::Vec;
-use core::fmt;
 
 use crate::pairing::{
     final_exponentiation,
@@ -80,40 +79,23 @@ impl PairingResidueWitness {
 }
 
 /// Construction or verification error for [`PreparedVerifier`].
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, thiserror::Error)]
 pub enum PreparedVerifierError {
     /// A typed point failed the same curve/subgroup validation used by the byte
     /// facade. The contained error identifies the failed predicate.
-    InvalidPoint(InputError),
+    #[error("invalid prepared-verifier point: {0}")]
+    InvalidPoint(#[from] InputError),
     /// A prepared G2 was the identity. Identity terms need no schedule and are
     /// rejected to prevent meaningless context state.
+    #[error("prepared G2 must be nonidentity")]
     IdentityPreparedG2,
     /// An online prepared term referred outside the context's schedule table.
+    #[error("prepared G2 index is outside the verifier context")]
     PreparedIndexOutOfBounds,
     /// A context or online verification exceeded the deliberately bounded
     /// one-through-five-pair workload supported by this API.
+    #[error("prepared verifier supports at most five terms")]
     TooManyTerms,
-}
-
-impl fmt::Display for PreparedVerifierError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::InvalidPoint(error) => write!(f, "invalid prepared-verifier point: {error}"),
-            Self::IdentityPreparedG2 => f.write_str("prepared G2 must be nonidentity"),
-            Self::PreparedIndexOutOfBounds => {
-                f.write_str("prepared G2 index is outside the verifier context")
-            }
-            Self::TooManyTerms => f.write_str("prepared verifier supports at most five terms"),
-        }
-    }
-}
-
-impl core::error::Error for PreparedVerifierError {}
-
-impl From<InputError> for PreparedVerifierError {
-    fn from(value: InputError) -> Self {
-        Self::InvalidPoint(value)
-    }
 }
 
 struct PreparedG2 {

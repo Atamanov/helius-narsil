@@ -31,7 +31,6 @@
 //! `force-portable` builds validate the same inputs without the cache.
 
 use alloc::{vec, vec::Vec};
-use core::fmt;
 
 use crate::{
     Fp, Fp2, Fp12, Fr, G1Affine, G1Projective, G2Affine,
@@ -318,43 +317,32 @@ pub use PairBytes as PodG1G2Pair;
 pub use ScalarBytes as PodScalar;
 
 /// Stable validation taxonomy shared with the Agave batch-syscall design.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, thiserror::Error)]
 pub enum InputError {
     /// Input length is not a whole number of encoded elements.
+    #[error("input length is not a whole number of elements")]
     InvalidLength,
     /// Field element or scalar encoding is `>= p` (or `>= r`).
+    #[error("field element encoding is not canonical")]
     NonCanonical,
     /// Decoded point does not satisfy the curve equation.
+    #[error("point is not on the curve")]
     NotOnCurve,
     /// G2 point is on the twist but outside the r-order subgroup.
+    #[error("G2 point is not in the r-order subgroup")]
     NotInSubgroup,
     /// Input is empty, or a batch-inversion element is zero.
+    #[error("input is empty or contains a non-invertible zero")]
     ZeroInput,
     /// Element count exceeds the operation's per-call cap.
+    #[error("input exceeds the per-call cap")]
     CapExceeded,
     /// Paired input slices disagree in element count.
+    #[error("input arrays disagree in count")]
     LengthMismatch,
 }
 
 pub use InputError as AltBn128BatchError;
-
-impl fmt::Display for InputError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(match self {
-            Self::InvalidLength => "input length is not a whole number of elements",
-            Self::NonCanonical => "field element encoding is not canonical",
-            Self::NotOnCurve => "point is not on the curve",
-            Self::NotInSubgroup => "G2 point is not in the r-order subgroup",
-            Self::ZeroInput => "input is empty or contains a non-invertible zero",
-            Self::CapExceeded => "input exceeds the per-call cap",
-            Self::LengthMismatch => "input arrays disagree in count",
-        })
-    }
-}
-
-// `core::error::Error` keeps the Agave-facing error usable by `thiserror`
-// consumers without forcing the arithmetic crate to enable `std`.
-impl core::error::Error for InputError {}
 
 impl G1Bytes {
     /// Decode and fully validate: canonical coordinates, then on-curve.

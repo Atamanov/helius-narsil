@@ -25,6 +25,7 @@ mcl-oracle = []
 
 [dependencies]
 bytemuck = { version = "1.25", default-features = false, features = ["derive", "min_const_generics"] }
+thiserror = { version = "2", default-features = false }
 
 [build-dependencies]
 cc = "1.0"

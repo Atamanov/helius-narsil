@@ -108,6 +108,45 @@ pub use g1::{G1Affine, G1Projective};
 pub use g2::{G2Affine, G2Projective};
 pub use pairing::{Gt, multi_pairing, pairing};
 
+/// BN254 base field.
+pub type Fq = Fp;
+/// Quadratic extension of the BN254 base field.
+pub type Fq2 = Fp2;
+/// Sextic extension of the BN254 base field.
+pub type Fq6 = Fp6;
+/// Degree-twelve extension of the BN254 base field.
+pub type Fq12 = Fp12;
+
+/// BN254 pairing engine facade.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Bn254;
+
+impl Bn254 {
+    /// Compute one optimal Ate pairing.
+    #[inline]
+    pub fn pairing(p: &G1Affine, q: &G2Affine) -> Gt {
+        pairing::pairing(p, q)
+    }
+
+    /// Compute a product of pairings with one final exponentiation.
+    #[inline]
+    pub fn multi_pairing(pairs: &[(&G1Affine, &G2Affine)]) -> Gt {
+        pairing::multi_pairing(pairs)
+    }
+
+    /// Compute the Miller-loop value before final exponentiation.
+    #[inline]
+    pub fn miller_loop(p: &G1Affine, q: &G2Affine) -> Fp12 {
+        pairing::miller_loop(p, q)
+    }
+
+    /// Map a Miller-loop value into the target group.
+    #[inline]
+    pub fn final_exponentiation(value: &Fp12) -> Gt {
+        pairing::final_exponentiation(value)
+    }
+}
+
 #[cfg(test)]
 mod pairing_tests {
     use super::*;
