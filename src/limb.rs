@@ -45,6 +45,42 @@ pub fn gte(a: &[u64; 4], b: &[u64; 4]) -> bool {
     !gt(b, a)
 }
 
+#[inline]
+pub fn decode_le(bytes: &[u8; 32]) -> [u64; 4] {
+    core::array::from_fn(|index| {
+        let start = index * 8;
+        u64::from_le_bytes(bytes[start..start + 8].try_into().unwrap())
+    })
+}
+
+#[inline]
+pub fn decode_be(bytes: &[u8; 32]) -> [u64; 4] {
+    core::array::from_fn(|index| {
+        let start = 24 - index * 8;
+        u64::from_be_bytes(bytes[start..start + 8].try_into().unwrap())
+    })
+}
+
+#[inline]
+pub fn encode_le(limbs: [u64; 4]) -> [u8; 32] {
+    let mut bytes = [0u8; 32];
+    for (index, limb) in limbs.iter().enumerate() {
+        let start = index * 8;
+        bytes[start..start + 8].copy_from_slice(&limb.to_le_bytes());
+    }
+    bytes
+}
+
+#[inline]
+pub fn encode_be(limbs: [u64; 4]) -> [u8; 32] {
+    let mut bytes = [0u8; 32];
+    for (index, limb) in limbs.iter().enumerate() {
+        let start = 24 - index * 8;
+        bytes[start..start + 8].copy_from_slice(&limb.to_be_bytes());
+    }
+    bytes
+}
+
 // X86 bool-carry chains lower to native
 // adc/sbb runs. The u64-carry `adc`/`sbb` helpers rematerialize every carry
 // through cmp/setb. AArch64 lowers both forms to adcs and csel.

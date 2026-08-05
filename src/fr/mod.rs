@@ -89,14 +89,7 @@ impl Fr {
 
     /// Canonical little-endian bytes to Montgomery form. `None` if `>= r`.
     pub fn from_bytes_le(bytes: &[u8; 32]) -> Option<Self> {
-        let mut limbs = [0u64; 4];
-        for i in 0..4 {
-            let mut v = 0u64;
-            for j in 0..8 {
-                v |= (bytes[i * 8 + j] as u64) << (8 * j);
-            }
-            limbs[i] = v;
-        }
+        let limbs = limb::decode_le(bytes);
         if limb::gte(&limbs, &MOD) {
             return None;
         }
@@ -106,12 +99,7 @@ impl Fr {
     /// Canonical big-endian scalar encoding to Montgomery form.
     #[inline]
     pub fn from_bytes_be(bytes: &[u8; 32]) -> Option<Self> {
-        let limbs = [
-            u64::from_be_bytes(bytes[24..32].try_into().unwrap()),
-            u64::from_be_bytes(bytes[16..24].try_into().unwrap()),
-            u64::from_be_bytes(bytes[8..16].try_into().unwrap()),
-            u64::from_be_bytes(bytes[0..8].try_into().unwrap()),
-        ];
+        let limbs = limb::decode_be(bytes);
         if limb::gte(&limbs, &MOD) {
             return None;
         }
@@ -120,26 +108,13 @@ impl Fr {
 
     /// Montgomery form to canonical little-endian bytes.
     pub fn to_bytes_le(self) -> [u8; 32] {
-        let raw = self.to_raw();
-        let mut out = [0u8; 32];
-        for i in 0..4 {
-            for j in 0..8 {
-                out[i * 8 + j] = (raw[i] >> (8 * j)) as u8;
-            }
-        }
-        out
+        limb::encode_le(self.to_raw())
     }
 
     /// Montgomery form to canonical big-endian scalar encoding.
     #[inline]
     pub fn to_bytes_be(self) -> [u8; 32] {
-        let raw = self.to_raw();
-        let mut out = [0u8; 32];
-        for (i, limb) in raw.iter().enumerate() {
-            let start = 24 - 8 * i;
-            out[start..start + 8].copy_from_slice(&limb.to_be_bytes());
-        }
-        out
+        limb::encode_be(self.to_raw())
     }
 
     /// Parse a canonical integer string in the given radix. `None` if `>= r`.

@@ -874,13 +874,7 @@ fn decode_fp(bytes: &[u8]) -> Result<Fp, InputError> {
 
 #[inline]
 fn decode_scalar_raw(bytes: &ScalarBytes) -> Result<[u64; 4], InputError> {
-    let bytes = &bytes.0;
-    let limbs = [
-        u64::from_be_bytes(bytes[24..32].try_into().unwrap()),
-        u64::from_be_bytes(bytes[16..24].try_into().unwrap()),
-        u64::from_be_bytes(bytes[8..16].try_into().unwrap()),
-        u64::from_be_bytes(bytes[0..8].try_into().unwrap()),
-    ];
+    let limbs = limb::decode_be(&bytes.0);
     if limb::gte(&limbs, &R) {
         return Err(InputError::NonCanonical);
     }
@@ -889,12 +883,7 @@ fn decode_scalar_raw(bytes: &ScalarBytes) -> Result<[u64; 4], InputError> {
 
 #[inline]
 fn encode_scalar_raw(limbs: [u64; 4]) -> [u8; 32] {
-    let mut out = [0u8; 32];
-    for (i, limb) in limbs.iter().enumerate() {
-        let start = 24 - 8 * i;
-        out[start..start + 8].copy_from_slice(&limb.to_be_bytes());
-    }
-    out
+    limb::encode_be(limbs)
 }
 
 #[inline]
