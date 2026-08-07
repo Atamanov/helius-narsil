@@ -16,6 +16,15 @@
 
 extern crate alloc;
 
+#[cfg(any(
+    all(helius_mont4_x86_64_adx, not(feature = "force-portable")),
+    all(
+        target_arch = "aarch64",
+        target_vendor = "apple",
+        not(feature = "force-portable")
+    )
+))]
+mod abi;
 pub mod batch;
 #[cfg(all(
     any(helius_avx512_ifma, helius_x86_runtime_ifma),

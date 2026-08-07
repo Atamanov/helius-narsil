@@ -1,10 +1,11 @@
 //! AArch64 Montgomery backend generated from `build/a64/schedule.rs`.
 
+use crate::abi::helius_mont4;
 use crate::fp::Fp;
 
 // `repr(C)` and the assertions bind the Rust constants to the FFI layout.
 #[repr(C)]
-struct Mont4Constants {
+pub(crate) struct Mont4Constants {
     modulus: [u64; 4],
     negative_inverse: u64,
 }
@@ -21,10 +22,6 @@ const _: () = {
         core::mem::offset_of!(Mont4Constants, negative_inverse) == 4 * core::mem::size_of::<u64>()
     );
 };
-
-unsafe extern "C" {
-    fn helius_mont4(z: *mut u64, x: *const u64, y: *const u64, constants: *const Mont4Constants);
-}
 
 /// Reduced Montgomery multiplication through the shared Apple AArch64 leaf.
 ///

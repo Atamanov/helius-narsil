@@ -8,12 +8,19 @@
 //! x86-64 Linux with `bmi2` and `adx` in the compile-time target features.
 //! Anything else uses the portable tier -- never a silent runtime fallback.
 
+use crate::abi::{
+    helius_cyc_sqr_x86, helius_f2sqr_small_x86, helius_f2sqr_x86, helius_fp4_sqr_x86,
+    helius_fp6_mul_x86, helius_fp12_034_x86, helius_fp12_034k_x86, helius_fp12_034l_x86,
+    helius_fp12_mul_x86, helius_fp12_sqr_mcl_x86, helius_fp12_sqr_x86, helius_g2_ysqr_x86,
+    helius_mont4_mul_x86, helius_mont4_sqr_x86, helius_sos_x86, helius_sosd2_small_x86,
+    helius_sosd2_x86, helius_sosd6_x86,
+};
 use crate::fp::Fp;
 
 // Arithmetic constants remain typed Rust data. The assembly owns only the
 // instruction schedule. `repr(C)` plus the assertions pins the tiny FFI view.
 #[repr(C)]
-struct Mont4Constants {
+pub(crate) struct Mont4Constants {
     modulus: [u64; 4],
     negative_inverse: u64,
 }
@@ -35,7 +42,7 @@ const _: () = {
 /// quotient estimate `mu = floor(2^310/p)`. A separate static so the mont4
 /// contract stays untouched.
 #[repr(C)]
-struct Fp6MulConstants {
+pub(crate) struct Fp6MulConstants {
     modulus: [u64; 4],
     negative_inverse: u64,
     mu: u64,
@@ -81,110 +88,13 @@ const _: () = {
     assert!(core::mem::size_of::<[Fp2; 3]>() == 24 * core::mem::size_of::<u64>());
 };
 
-unsafe extern "C" {
-    fn helius_mont4_mul_x86(
-        z: *mut u64,
-        x: *const u64,
-        y: *const u64,
-        constants: *const Mont4Constants,
-    );
-    fn helius_mont4_sqr_x86(
-        z: *mut u64,
-        x: *const u64,
-        y: *const u64,
-        constants: *const Mont4Constants,
-    );
-    fn helius_sos_x86(
-        z: *mut u64,
-        pairs: *const *const u64,
-        pair_count: u64,
-        constants: *const Mont4Constants,
-    );
-    fn helius_sosd2_x86(
-        z: *mut u64,
-        x0: *const u64,
-        x1: *const u64,
-        y0: *const u64,
-        y1: *const u64,
-        constants: *const Mont4Constants,
-    );
-    fn helius_sosd2_small_x86(
-        z: *mut u64,
-        x0: *const u64,
-        x1: *const u64,
-        y0: *const u64,
-        y1: *const u64,
-        constants: *const Mont4Constants,
-    );
-    fn helius_f2sqr_x86(
-        z: *mut u64,
-        x0: *const u64,
-        x1: *const u64,
-        constants: *const Mont4Constants,
-    );
-    fn helius_f2sqr_small_x86(
-        z: *mut u64,
-        x0: *const u64,
-        x1: *const u64,
-        constants: *const Mont4Constants,
-    );
-    fn helius_g2_ysqr_x86(
-        z: *mut u64,
-        g: *const u64,
-        e: *const u64,
-        f: *const u64,
-        constants: *const Mont4Constants,
-    );
-    fn helius_sosd6_x86(z: *mut u64, stage: *mut u64, constants: *const Mont4Constants);
-    fn helius_fp6_mul_x86(
-        z: *mut u64,
-        a: *const u64,
-        b: *const u64,
-        constants: *const Fp6MulConstants,
-    );
-    fn helius_fp12_034_x86(
-        z: *mut u64,
-        f: *const u64,
-        c: *const u64,
-        constants: *const Fp6MulConstants,
-    );
-    fn helius_fp12_034l_x86(
-        z: *mut u64,
-        f: *const u64,
-        c: *const u64,
-        constants: *const Fp6MulConstants,
-    );
-    fn helius_fp12_034k_x86(
-        z: *mut u64,
-        f: *const u64,
-        c: *const u64,
-        constants: *const Fp6MulConstants,
-    );
-    fn helius_fp4_sqr_x86(
-        z: *mut u64,
-        r0: *const u64,
-        r1: *const u64,
-        constants: *const Fp6MulConstants,
-    );
-    fn helius_fp12_sqr_x86(z: *mut u64, f: *const u64, constants: *const Fp6MulConstants);
-    fn helius_fp12_sqr_mcl_x86(f: *mut u64, constants: *const Fp6MulConstants);
-    fn helius_cyc_sqr_x86(z: *mut u64, f: *const u64, constants: *const Fp6MulConstants);
-    fn helius_fp12_mul_x86(
-        z: *mut u64,
-        a: *const u64,
-        b: *const u64,
-        constants: *const Fp6MulConstants,
-    );
-}
-
 #[cfg(any(test, helius_fp12_mul_asm))]
 #[inline(never)]
 pub(crate) fn fp12_mul_assign(f: &mut crate::fp12::Fp12, rhs: &crate::fp12::Fp12) {
     #[cfg(debug_assertions)]
     for operand in [&*f, rhs] {
         // SAFETY: repr(C) Fp12 is 48 limbs (asserted above).
-        let components =
-            unsafe { &*(operand as *const crate::fp12::Fp12 as *const [[u64; 4]; 12]) };
+        let components = crate::abi::fp12_components(operand);
         for component in components {
             debug_assert!(!crate::limb::gte(component, &crate::consts::P));
         }
@@ -209,7 +119,7 @@ pub(crate) fn fp12_sqr_assign(f: &mut crate::fp12::Fp12) {
     #[cfg(debug_assertions)]
     {
         // SAFETY: repr(C) Fp12 is 48 limbs (asserted above).
-        let components = unsafe { &*(f as *const crate::fp12::Fp12 as *const [[u64; 4]; 12]) };
+        let components = crate::abi::fp12_components(f);
         for component in components {
             debug_assert!(!crate::limb::gte(component, &crate::consts::P));
         }
@@ -233,7 +143,7 @@ pub(crate) fn fp12_sqr_mcl_assign(f: &mut crate::fp12::Fp12) {
     #[cfg(debug_assertions)]
     {
         // SAFETY: repr(C) Fp12 is 48 limbs (asserted above).
-        let components = unsafe { &*(f as *const crate::fp12::Fp12 as *const [[u64; 4]; 12]) };
+        let components = crate::abi::fp12_components(f);
         for component in components {
             debug_assert!(!crate::limb::gte(component, &crate::consts::P));
         }
@@ -252,7 +162,7 @@ pub(crate) fn cyc_sqr_assign(f: &mut crate::fp12::Fp12) {
     #[cfg(debug_assertions)]
     {
         // SAFETY: repr(C) Fp12 is 48 limbs (asserted above).
-        let components = unsafe { &*(f as *const crate::fp12::Fp12 as *const [[u64; 4]; 12]) };
+        let components = crate::abi::fp12_components(f);
         for component in components {
             debug_assert!(!crate::limb::gte(component, &crate::consts::P));
         }
@@ -279,7 +189,7 @@ pub(crate) fn fp4_sqr(
     #[cfg(debug_assertions)]
     for operand in [r0, r1] {
         // SAFETY: repr(C) Fp2 is 8 limbs (asserted above).
-        let components = unsafe { &*(operand as *const crate::fp2::Fp2 as *const [[u64; 4]; 2]) };
+        let components = crate::abi::fp2_components(operand);
         for component in components {
             debug_assert!(!crate::limb::gte(component, &crate::consts::P));
         }
@@ -329,12 +239,12 @@ pub(crate) fn fp12_034_assign(
     #[cfg(debug_assertions)]
     {
         // SAFETY: repr(C) Fp12 is 48 limbs (asserted above).
-        let components = unsafe { &*(f as *const crate::fp12::Fp12 as *const [[u64; 4]; 12]) };
+        let components = crate::abi::fp12_components(f);
         for component in components {
             debug_assert!(!crate::limb::gte(component, &crate::consts::P));
         }
         // SAFETY: [Fp2. 3] is 24 contiguous limbs (asserted above).
-        let staged = unsafe { &*(coefficients.as_ptr() as *const [[u64; 4]; 6]) };
+        let staged = crate::abi::fp2_triplet_components(&coefficients);
         for component in staged {
             debug_assert!(!crate::limb::gte(component, &crate::consts::P));
         }
@@ -366,12 +276,12 @@ pub(crate) fn fp12_034l_assign(
     #[cfg(debug_assertions)]
     {
         // SAFETY: repr(C) Fp12 is 48 limbs (asserted above).
-        let components = unsafe { &*(f as *const crate::fp12::Fp12 as *const [[u64; 4]; 12]) };
+        let components = crate::abi::fp12_components(f);
         for component in components {
             debug_assert!(!crate::limb::gte(component, &crate::consts::P));
         }
         // SAFETY: [Fp2. 3] is 24 contiguous limbs (asserted above).
-        let staged = unsafe { &*(coefficients.as_ptr() as *const [[u64; 4]; 6]) };
+        let staged = crate::abi::fp2_triplet_components(&coefficients);
         for component in staged {
             debug_assert!(!crate::limb::gte(component, &crate::consts::P));
         }
@@ -403,12 +313,12 @@ pub(crate) fn fp12_034k_assign(
     #[cfg(debug_assertions)]
     {
         // SAFETY: repr(C) Fp12 is 48 limbs (asserted above).
-        let components = unsafe { &*(f as *const crate::fp12::Fp12 as *const [[u64; 4]; 12]) };
+        let components = crate::abi::fp12_components(f);
         for component in components {
             debug_assert!(!crate::limb::gte(component, &crate::consts::P));
         }
         // SAFETY: [Fp2. 3] is 24 contiguous limbs (asserted above).
-        let staged = unsafe { &*(coefficients.as_ptr() as *const [[u64; 4]; 6]) };
+        let staged = crate::abi::fp2_triplet_components(&coefficients);
         for component in staged {
             debug_assert!(!crate::limb::gte(component, &crate::consts::P));
         }
@@ -436,7 +346,7 @@ pub(crate) fn fp6_mul(a: &crate::fp6::Fp6, b: &crate::fp6::Fp6) -> crate::fp6::F
     #[cfg(debug_assertions)]
     for operand in [a, b] {
         // SAFETY: repr(C) Fp6 is 24 limbs (asserted above).
-        let components = unsafe { &*(operand as *const crate::fp6::Fp6 as *const [[u64; 4]; 6]) };
+        let components = crate::abi::fp6_components(operand);
         for component in components {
             debug_assert!(!crate::limb::gte(component, &crate::consts::P));
         }
@@ -528,7 +438,7 @@ fn sos_leaf<const N: usize>(pairs: &[*const u64; N]) -> [u64; 4] {
     for operand in pairs {
         // SAFETY: caller passes pointers to live [u64. 4] operands.
         debug_assert!(!crate::limb::gt(
-            unsafe { &*(*operand as *const [u64; 4]) },
+            unsafe { crate::abi::limbs_from_ptr(*operand) },
             &crate::consts::P
         ));
     }
