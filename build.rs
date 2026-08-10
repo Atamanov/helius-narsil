@@ -22,6 +22,39 @@ fn write_kernel(directory: &Path, name: &str, text: &str) -> PathBuf {
     path
 }
 
+fn build_mcl_oracle() {
+    println!("cargo:rerun-if-env-changed=MCL_DIR");
+    if std::env::var_os("CARGO_FEATURE_MCL_ORACLE").is_none() {
+        return;
+    }
+
+    let root = PathBuf::from(
+        std::env::var_os("MCL_DIR")
+            .expect("mcl-oracle requires MCL_DIR to point at a built MCL tree"),
+    );
+    let include = root.join("include");
+    let archive = root.join("lib256/libmcl.a");
+    assert!(
+        include.join("mcl/bn.h").is_file() && archive.is_file(),
+        "MCL_DIR must contain include/mcl/bn.h and lib256/libmcl.a"
+    );
+
+    cc::Build::new()
+        .cpp(true)
+        .file("tests/mcl_bridge.cpp")
+        .include(include)
+        .define("MCL_FP_BIT", "256")
+        .define("MCL_FR_BIT", "256")
+        .define("NDEBUG", None)
+        .flag_if_supported("-std=c++17")
+        .compile("narsil_mcl_bridge");
+    println!(
+        "cargo:rustc-link-search=native={}",
+        archive.parent().unwrap().display()
+    );
+    println!("cargo:rustc-link-lib=static=mcl");
+}
+
 fn target_cpu_is_intel() -> bool {
     let flags = std::env::var("CARGO_ENCODED_RUSTFLAGS").unwrap_or_default();
     let cpu = flags
@@ -80,6 +113,7 @@ fn target_cpu_is_amd() -> bool {
 }
 
 fn main() {
+    build_mcl_oracle();
     println!("cargo::rustc-check-cfg=cfg(kani)");
     println!("cargo::rustc-check-cfg=cfg(helius_mont4_x86_64_adx)");
     println!("cargo::rustc-check-cfg=cfg(helius_x86_intel)");

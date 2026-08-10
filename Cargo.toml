@@ -21,7 +21,7 @@ force-portable = []
 # Repository harness only. Expose the selected capability/backend string.
 backend-report = []
 # Differential tests against a caller-supplied MCL tree (`MCL_DIR`).
-mcl-oracle = []
+mcl-oracle = ["std"]
 
 [dependencies]
 bytemuck = { version = "1.25", default-features = false, features = ["derive", "min_const_generics"] }
