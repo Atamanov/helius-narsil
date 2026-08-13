@@ -428,11 +428,11 @@ fn fp12_edges() {
     }
 }
 
-/// x86-64 ADX tier: the rolled `helius_sos_x86` leaf behind the public SoS
+/// x86-64 ADX tier: the rolled `narsil_sos_x86` leaf behind the public SoS
 /// entry points must agree with the portable kernels bit for bit. Random
 /// residues, the edge palette (zero drives `negp(0) = p` operands through
 /// the leaf), and a million-case release stress gate.
-#[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+#[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
 mod leaf_differential {
     use super::{edge_fps, random_fp};
     use crate::fp::Fp;
@@ -474,8 +474,8 @@ mod leaf_differential {
             "sosd2 case {case}",
         );
         // The asm sosd2 leaf is verified on silicon regardless of whether the
-        // production dispatch links it (HELIUS_SOSD2_ASM).
-        #[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+        // production dispatch links it (NARSIL_SOSD2_ASM).
+        #[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
         assert_eq!(
             crate::fp::x86_64::sosd2(w[0], w[1], w[2], w[3]),
             sosd2_portable(w[0], w[1], w[2], w[3]),
@@ -494,7 +494,7 @@ mod leaf_differential {
             "sosd6 case {case}",
         );
         // Both x86 sosd6 routes are verified on silicon regardless of which
-        // one the production dispatch links (HELIUS_SOSD6_ASM).
+        // one the production dispatch links (NARSIL_SOSD6_ASM).
         assert_eq!(
             crate::fp::x86_64::sosd6_leaf(fp2_products3),
             sosd6_portable(fp2_products3),
@@ -558,11 +558,11 @@ mod leaf_differential {
 }
 
 /// x86-64 ADX tier: the whole-Fp6 leaf must agree with the composed sosd6
-/// path bit for bit, whatever HELIUS_FP6_ASM selects for production
+/// path bit for bit, whatever NARSIL_FP6_ASM selects for production
 /// dispatch -- the leaf wrapper is called directly. Random operands, the
 /// edge palette rotated through every Fp2 slot, and targeted xi edges
 /// (b1/b2 components where 9*re - im underflows without the +p route).
-#[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+#[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
 mod fp6_leaf_differential {
     use super::{edge_fps, random_fp2, random_fp6};
     use crate::fp::Fp;
@@ -643,13 +643,13 @@ mod fp6_leaf_differential {
 }
 
 /// x86-64 ADX tier: the whole-op fp12_034 leaf must agree with the composed
-/// sosd6 path bit for bit, whatever HELIUS_FP12_034_ASM selects for
+/// sosd6 path bit for bit, whatever NARSIL_FP12_034_ASM selects for
 /// production dispatch -- the leaf wrapper is called directly. Random
 /// operands, the edge palette rotated through every Fp slot, zero
 /// coefficients (the line shapes ell() can degenerate to), line_value-shaped
 /// sparse accumulators (the second Miller iteration's input), and targeted
 /// xi edges on c3/c4.
-#[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+#[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
 mod fp12_034_leaf_differential {
     use super::{edge_fps, random_fp2, random_fp12};
     use crate::fp::Fp;
@@ -786,7 +786,7 @@ mod fp12_034_leaf_differential {
 /// edge palette rotated through every Fp slot of f and the coefficients,
 /// degenerate-line coefficient subsets, xi edges, and the exact
 /// (accumulator, line coefficient) pairs ell() feeds mid-Miller.
-#[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+#[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
 mod fp12_034l_leaf_differential {
     use super::{edge_fps, random_fp2, random_fp12};
     use crate::fp::Fp;
@@ -1054,7 +1054,7 @@ mod fp12_034l_leaf_differential {
 /// degenerate-line coefficient subsets, xi edges on c3/c4 (the X3/X4
 /// sites), and the exact (accumulator, line coefficient) pairs ell() feeds
 /// mid-Miller.
-#[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+#[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
 mod fp12_034k_leaf_differential {
     use super::{edge_fps, random_fp2, random_fp12};
     use crate::fp::Fp;
@@ -1314,12 +1314,12 @@ mod fp12_034k_leaf_differential {
 }
 
 /// x86-64 ADX tier: the whole Fp4 square leaf must agree with the composed
-/// sos4/sos2 path bit for bit, whatever HELIUS_FP4_SQR_ASM selects for
+/// sos4/sos2 path bit for bit, whatever NARSIL_FP4_SQR_ASM selects for
 /// production dispatch -- the leaf wrapper is called directly. Random
 /// operands, the edge palette rotated through every Fp slot, targeted xi
 /// and doubling edges, and the cyclotomic-subgroup-shaped inputs pow_x
 /// actually feeds (generated through the full final exponentiation).
-#[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+#[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
 mod fp4_leaf_differential {
     use super::{edge_fps, random_fp2, random_fp12};
     use crate::fp::Fp;
@@ -1413,12 +1413,12 @@ mod fp4_leaf_differential {
 
 /// x86-64 ADX tier: the whole Fp12 square leaf (lazy double-width, 36
 /// products) must agree with the composed 72-product SoS path bit for bit,
-/// whatever HELIUS_FP12_SQR_ASM selects for production dispatch -- the leaf
+/// whatever NARSIL_FP12_SQR_ASM selects for production dispatch -- the leaf
 /// wrapper is called directly. Random operands, the edge palette rotated
 /// through every Fp slot, targeted xi edges on the scaled components,
 /// line_value-shaped sparse accumulators, and actual Miller-loop
 /// accumulators (the production input shape).
-#[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+#[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
 mod fp12_sqr_leaf_differential {
     use super::{edge_fps, random_fp2, random_fp12};
     use crate::fp::Fp;
@@ -1532,7 +1532,7 @@ mod fp12_sqr_leaf_differential {
     }
 }
 
-#[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+#[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
 mod fp12_sqr_mcl_leaf_differential {
     use super::{edge_fps, random_fp12};
     use crate::fp2::Fp2;
@@ -1581,7 +1581,7 @@ mod fp12_sqr_mcl_leaf_differential {
 
 /// x86-64 ADX tier: the whole Fp12 product leaf (lazy double-width, 54
 /// products) must agree with the composed Fp6-Karatsuba path (108 products)
-/// bit for bit, whatever HELIUS_FP12_MUL_ASM selects for production
+/// bit for bit, whatever NARSIL_FP12_MUL_ASM selects for production
 /// dispatch -- the leaf wrapper is called directly in its z == a shape.
 /// Random operands, the edge palette rotated through the slots of both
 /// operands, targeted xi edges on the a1.c2/b1.c2 sites (the mulVadd BD.c
@@ -1589,7 +1589,7 @@ mod fp12_sqr_mcl_leaf_differential {
 /// identity operands, and final-exp-shaped inputs (cyclotomic elements and
 /// their ladder products, the values Fp12 multiplication sees 60 times per
 /// final exponentiation).
-#[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+#[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
 mod fp12_mul_leaf_differential {
     use super::{edge_fps, random_fp2, random_fp12};
     use crate::fp::Fp;
@@ -1716,14 +1716,14 @@ mod fp12_mul_leaf_differential {
 
 /// x86-64 ADX tier: the cyclotomic-square leaf (lazy double-width, 18
 /// products) must agree with the composed 36-product path bit for bit,
-/// whatever HELIUS_CYC_SQR_ASM selects for production dispatch -- the leaf
+/// whatever NARSIL_CYC_SQR_ASM selects for production dispatch -- the leaf
 /// wrapper is called directly in its in-place (z == f) shape. The formula
 /// identity leaf == composed holds on ARBITRARY canonical inputs (both
 /// compute the same polynomial), so random and edge operands are compared
 /// everywhere. The Granger-Scott square semantics (result == f^2) only hold
 /// on the cyclotomic subgroup, so real final-exp images are additionally
 /// squared through pow_x-shaped chains.
-#[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+#[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
 mod cyc_sqr_leaf_differential {
     use super::{edge_fps, random_fp12};
     use crate::fp::Fp;

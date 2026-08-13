@@ -166,7 +166,7 @@ struct PackedLine {
 }
 
 impl PackedFp12 {
-    #[cfg(all(test, helius_avx512_ifma))]
+    #[cfg(all(test, narsil_avx512_ifma))]
     #[inline]
     fn load(value: &Fp12) -> Self {
         let c = coefficients(value);
@@ -706,7 +706,7 @@ const fn square_plans() -> PackedPlans {
 const SPARSE: PackedPlans = sparse_plans();
 const SQUARE: PackedPlans = square_plans();
 
-#[cfg(all(test, helius_avx512_ifma))]
+#[cfg(all(test, narsil_avx512_ifma))]
 #[inline]
 fn coefficients(value: &Fp12) -> [Fp; 12] {
     [
@@ -742,7 +742,7 @@ fn from_coefficients(c: [Fp; 12]) -> Fp12 {
 }
 
 // Direct tests require IFMA in the compile-time target.
-#[cfg(all(test, helius_avx512_ifma))]
+#[cfg(all(test, narsil_avx512_ifma))]
 mod tests {
     use super::*;
     use crate::consts::P;

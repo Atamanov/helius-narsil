@@ -15,10 +15,10 @@ use crate::fp::aarch64::mont_mul;
         target_vendor = "apple",
         not(feature = "force-portable")
     ),
-    all(helius_mont4_x86_64_adx, not(feature = "force-portable"))
+    all(narsil_mont4_x86_64_adx, not(feature = "force-portable"))
 )))]
 use crate::fp::portable::mont_mul;
-#[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+#[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
 use crate::fp::x86_64::mont_mul;
 use crate::fp2::Fp2;
 use crate::limb::{add_mod, sub_mod};
@@ -61,17 +61,17 @@ pub fn f2_to(f: F2) -> Fp2 {
 }
 
 // X86 outlines these operations to keep the Miller loop within its instruction
-// cache. AArch64 keeps them inline, and HELIUS_MILLER_INLINE re-screens the
+// cache. AArch64 keeps them inline, and NARSIL_MILLER_INLINE re-screens the
 // x86 choice against a host whose accumulator has moved to the vector side.
 macro_rules! miller_helper {
     ($(#[$doc:meta])* pub fn $name:ident $signature:tt -> F2 $body:block) => {
         $(#[$doc])*
         #[cfg_attr(
-            all(target_arch = "x86_64", not(helius_miller_inline)),
+            all(target_arch = "x86_64", not(narsil_miller_inline)),
             inline(never)
         )]
         #[cfg_attr(
-            any(not(target_arch = "x86_64"), helius_miller_inline),
+            any(not(target_arch = "x86_64"), narsil_miller_inline),
             inline(always)
         )]
         pub fn $name $signature -> F2 $body
@@ -132,7 +132,7 @@ pub fn f2_mul_karatsuba(a: F2, b: F2) -> F2 {
 /// `f2_sqr`'s fused 4 + 2, for three extra modular add/subs. Canonical
 /// in/out. The ADX tier routes the Miller G2-step squares here (mont_mul
 /// dominates there). Other tiers keep the fused dual kernel.
-#[cfg(any(test, all(helius_mont4_x86_64_adx, not(feature = "force-portable"))))]
+#[cfg(any(test, all(narsil_mont4_x86_64_adx, not(feature = "force-portable"))))]
 #[cfg_attr(target_arch = "x86_64", inline(never))]
 #[cfg_attr(not(target_arch = "x86_64"), inline(always))]
 pub fn f2_sqr_lazy(a: F2) -> F2 {
@@ -143,7 +143,7 @@ pub fn f2_sqr_lazy(a: F2) -> F2 {
 /// The same complex identity as [`f2_sqr_lazy`], but both Montgomery chains
 /// live in one leaf instead of two sequential `mont_mul` calls, so the second
 /// chain fills the first one's latency. Same product count, same value.
-#[cfg(all(helius_f2sqr_asm, not(feature = "force-portable")))]
+#[cfg(all(narsil_f2sqr_asm, not(feature = "force-portable")))]
 #[inline(always)]
 pub fn f2_sqr_fused(a: F2) -> F2 {
     crate::fp::x86_64::f2sqr(&a.0, &a.1)
@@ -153,7 +153,7 @@ pub fn f2_sqr_fused(a: F2) -> F2 {
 /// `3*e`: the tripling folds into the second operand of each raw product, so
 /// the leaf pays 4 products and 2 Montgomery reductions where the composed
 /// route pays 4 products and 4 reductions plus three Fp2 helper round trips.
-#[cfg(all(helius_g2_ysqr_asm, not(feature = "force-portable")))]
+#[cfg(all(narsil_g2_ysqr_asm, not(feature = "force-portable")))]
 #[inline(always)]
 pub fn f2_ysqr(g: F2, e: F2, f: F2) -> F2 {
     crate::fp::x86_64::g2_ysqr(&[g.0, g.1], &[e.0, e.1], &[f.0, f.1])

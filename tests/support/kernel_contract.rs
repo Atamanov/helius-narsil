@@ -16,35 +16,35 @@ pub struct KernelBudget {
 
 pub const EXISTING_WIDE_PRIMITIVES: &[KernelBudget] = &[
     KernelBudget {
-        symbol: "helius_mont4_mulpre_x86",
+        symbol: "narsil_mont4_mulpre_x86",
         max_instructions: 512,
         max_text_bytes: 4 * 1024,
         max_direct_calls: 0,
         max_stack_frame: 128,
     },
     KernelBudget {
-        symbol: "helius_mont4_redc_x86",
+        symbol: "narsil_mont4_redc_x86",
         max_instructions: 512,
         max_text_bytes: 4 * 1024,
         max_direct_calls: 0,
         max_stack_frame: 128,
     },
     KernelBudget {
-        symbol: "helius_f2sqr_x86",
+        symbol: "narsil_f2sqr_x86",
         max_instructions: 512,
         max_text_bytes: 2 * 1024,
         max_direct_calls: 0,
         max_stack_frame: 192,
     },
     KernelBudget {
-        symbol: "helius_f2sqr_small_x86",
+        symbol: "narsil_f2sqr_small_x86",
         max_instructions: 256,
         max_text_bytes: 1024,
         max_direct_calls: 0,
         max_stack_frame: 192,
     },
     KernelBudget {
-        symbol: "helius_g2_ysqr_x86",
+        symbol: "narsil_g2_ysqr_x86",
         max_instructions: 512,
         max_text_bytes: 2 * 1024,
         max_direct_calls: 0,
@@ -54,14 +54,14 @@ pub const EXISTING_WIDE_PRIMITIVES: &[KernelBudget] = &[
 
 pub const FUTURE_MILLER_KERNELS: &[KernelBudget] = &[
     KernelBudget {
-        symbol: "helius_g2_double_wide_x86",
+        symbol: "narsil_g2_double_wide_x86",
         max_instructions: 1_500,
         max_text_bytes: 12 * 1024,
         max_direct_calls: 24,
         max_stack_frame: 8 * 1024,
     },
     KernelBudget {
-        symbol: "helius_g2_add_wide_x86",
+        symbol: "narsil_g2_add_wide_x86",
         max_instructions: 1_500,
         max_text_bytes: 12 * 1024,
         max_direct_calls: 24,
@@ -153,7 +153,7 @@ fn assert_stack_and_calls(body: &str, budget: &KernelBudget) {
                 .next()
                 .expect("call target");
             assert!(
-                target.starts_with("helius_") && !target.contains(['[', ']', '*']),
+                target.starts_with("narsil_") && !target.contains(['[', ']', '*']),
                 "{}: only direct generated-kernel calls are admitted: {target}",
                 budget.symbol,
             );

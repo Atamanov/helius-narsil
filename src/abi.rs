@@ -42,36 +42,36 @@ pub(crate) unsafe fn limbs_from_ptr<'a>(value: *const u64) -> &'a [u64; 4] {
 
 unsafe extern "C" {
     #[cfg(all(target_arch = "aarch64", target_vendor = "apple"))]
-    pub(crate) fn helius_mont4(
+    pub(crate) fn narsil_mont4(
         z: *mut u64,
         x: *const u64,
         y: *const u64,
         constants: *const crate::fp::aarch64::Mont4Constants,
     );
 
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_mont4_mul_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_mont4_mul_x86(
         z: *mut u64,
         x: *const u64,
         y: *const u64,
         constants: *const crate::fp::x86_64::Mont4Constants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_mont4_sqr_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_mont4_sqr_x86(
         z: *mut u64,
         x: *const u64,
         y: *const u64,
         constants: *const crate::fp::x86_64::Mont4Constants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_sos_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_sos_x86(
         z: *mut u64,
         pairs: *const *const u64,
         pair_count: u64,
         constants: *const crate::fp::x86_64::Mont4Constants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_sosd2_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_sosd2_x86(
         z: *mut u64,
         x0: *const u64,
         x1: *const u64,
@@ -79,8 +79,8 @@ unsafe extern "C" {
         y1: *const u64,
         constants: *const crate::fp::x86_64::Mont4Constants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_sosd2_small_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_sosd2_small_x86(
         z: *mut u64,
         x0: *const u64,
         x1: *const u64,
@@ -88,88 +88,88 @@ unsafe extern "C" {
         y1: *const u64,
         constants: *const crate::fp::x86_64::Mont4Constants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_f2sqr_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_f2sqr_x86(
         z: *mut u64,
         x0: *const u64,
         x1: *const u64,
         constants: *const crate::fp::x86_64::Mont4Constants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_f2sqr_small_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_f2sqr_small_x86(
         z: *mut u64,
         x0: *const u64,
         x1: *const u64,
         constants: *const crate::fp::x86_64::Mont4Constants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_g2_ysqr_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_g2_ysqr_x86(
         z: *mut u64,
         g: *const u64,
         e: *const u64,
         f: *const u64,
         constants: *const crate::fp::x86_64::Mont4Constants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_sosd6_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_sosd6_x86(
         z: *mut u64,
         stage: *mut u64,
         constants: *const crate::fp::x86_64::Mont4Constants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_fp6_mul_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_fp6_mul_x86(
         z: *mut u64,
         a: *const u64,
         b: *const u64,
         constants: *const crate::fp::x86_64::Fp6MulConstants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_fp12_034_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_fp12_034_x86(
         z: *mut u64,
         f: *const u64,
         c: *const u64,
         constants: *const crate::fp::x86_64::Fp6MulConstants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_fp12_034l_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_fp12_034l_x86(
         z: *mut u64,
         f: *const u64,
         c: *const u64,
         constants: *const crate::fp::x86_64::Fp6MulConstants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_fp12_034k_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_fp12_034k_x86(
         z: *mut u64,
         f: *const u64,
         c: *const u64,
         constants: *const crate::fp::x86_64::Fp6MulConstants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_fp4_sqr_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_fp4_sqr_x86(
         z: *mut u64,
         r0: *const u64,
         r1: *const u64,
         constants: *const crate::fp::x86_64::Fp6MulConstants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_fp12_sqr_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_fp12_sqr_x86(
         z: *mut u64,
         f: *const u64,
         constants: *const crate::fp::x86_64::Fp6MulConstants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_fp12_sqr_mcl_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_fp12_sqr_mcl_x86(
         f: *mut u64,
         constants: *const crate::fp::x86_64::Fp6MulConstants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_cyc_sqr_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_cyc_sqr_x86(
         z: *mut u64,
         f: *const u64,
         constants: *const crate::fp::x86_64::Fp6MulConstants,
     );
-    #[cfg(helius_mont4_x86_64_adx)]
-    pub(crate) fn helius_fp12_mul_x86(
+    #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_fp12_mul_x86(
         z: *mut u64,
         a: *const u64,
         b: *const u64,

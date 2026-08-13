@@ -3,17 +3,17 @@
 //! The assembly is generated at build time from the readable schedule DSL in
 //! `build/schedule.rs` and verified by `tests/kernelgen_verify.rs`. See
 //! ADR 0001 (build-time amendment). Inspect a copy with
-//! `HELIUS_DUMP_ASM=<absolute dir> cargo build`. This module exists only
-//! when `build.rs` emitted `helius_mont4_x86_64_adx`. The target must be
+//! `NARSIL_DUMP_ASM=<absolute dir> cargo build`. This module exists only
+//! when `build.rs` emitted `narsil_mont4_x86_64_adx`. The target must be
 //! x86-64 Linux with `bmi2` and `adx` in the compile-time target features.
 //! Anything else uses the portable tier -- never a silent runtime fallback.
 
 use crate::abi::{
-    helius_cyc_sqr_x86, helius_f2sqr_small_x86, helius_f2sqr_x86, helius_fp4_sqr_x86,
-    helius_fp6_mul_x86, helius_fp12_034_x86, helius_fp12_034k_x86, helius_fp12_034l_x86,
-    helius_fp12_mul_x86, helius_fp12_sqr_mcl_x86, helius_fp12_sqr_x86, helius_g2_ysqr_x86,
-    helius_mont4_mul_x86, helius_mont4_sqr_x86, helius_sos_x86, helius_sosd2_small_x86,
-    helius_sosd2_x86, helius_sosd6_x86,
+    narsil_cyc_sqr_x86, narsil_f2sqr_small_x86, narsil_f2sqr_x86, narsil_fp4_sqr_x86,
+    narsil_fp6_mul_x86, narsil_fp12_034_x86, narsil_fp12_034k_x86, narsil_fp12_034l_x86,
+    narsil_fp12_mul_x86, narsil_fp12_sqr_mcl_x86, narsil_fp12_sqr_x86, narsil_g2_ysqr_x86,
+    narsil_mont4_mul_x86, narsil_mont4_sqr_x86, narsil_sos_x86, narsil_sosd2_small_x86,
+    narsil_sosd2_x86, narsil_sosd6_x86,
 };
 use crate::fp::Fp;
 
@@ -88,7 +88,7 @@ const _: () = {
     assert!(core::mem::size_of::<[Fp2; 3]>() == 24 * core::mem::size_of::<u64>());
 };
 
-#[cfg(any(test, helius_fp12_mul_asm))]
+#[cfg(any(test, narsil_fp12_mul_asm))]
 #[inline(never)]
 pub(crate) fn fp12_mul_assign(f: &mut crate::fp12::Fp12, rhs: &crate::fp12::Fp12) {
     #[cfg(debug_assertions)]
@@ -104,7 +104,7 @@ pub(crate) fn fp12_mul_assign(f: &mut crate::fp12::Fp12, rhs: &crate::fp12::Fp12
         // contract above (canonical inputs are the Fp invariant). Z == a is
         // the contract's in-place shape. The assembly initializes all 384
         // output bytes and cannot retain any pointer.
-        helius_fp12_mul_x86(
+        narsil_fp12_mul_x86(
             f as *mut crate::fp12::Fp12 as *mut u64,
             f as *const crate::fp12::Fp12 as *const u64,
             rhs as *const crate::fp12::Fp12 as *const u64,
@@ -113,7 +113,7 @@ pub(crate) fn fp12_mul_assign(f: &mut crate::fp12::Fp12, rhs: &crate::fp12::Fp12
     }
 }
 
-#[cfg(any(test, helius_fp12_sqr_asm))]
+#[cfg(any(test, narsil_fp12_sqr_asm))]
 #[inline(never)]
 pub(crate) fn fp12_sqr_assign(f: &mut crate::fp12::Fp12) {
     #[cfg(debug_assertions)]
@@ -129,7 +129,7 @@ pub(crate) fn fp12_sqr_assign(f: &mut crate::fp12::Fp12) {
         // contract above (canonical inputs are the Fp invariant). Z == f is
         // the contract's in-place shape. The assembly initializes all 384
         // output bytes and cannot retain any pointer.
-        helius_fp12_sqr_x86(
+        narsil_fp12_sqr_x86(
             f as *mut crate::fp12::Fp12 as *mut u64,
             f as *const crate::fp12::Fp12 as *const u64,
             &FP6_MUL_CONSTANTS,
@@ -137,7 +137,7 @@ pub(crate) fn fp12_sqr_assign(f: &mut crate::fp12::Fp12) {
     }
 }
 
-#[cfg(any(test, helius_fp12_sqr_mcl_asm))]
+#[cfg(any(test, narsil_fp12_sqr_mcl_asm))]
 #[inline(never)]
 pub(crate) fn fp12_sqr_mcl_assign(f: &mut crate::fp12::Fp12) {
     #[cfg(debug_assertions)]
@@ -152,11 +152,11 @@ pub(crate) fn fp12_sqr_mcl_assign(f: &mut crate::fp12::Fp12) {
         // SAFETY: `f` is a live, aligned repr(C) Fp12 of canonical residues.
         // the assembly wrapper initializes all 384 bytes in place, preserves
         // the System V callee-saved set, and retains no pointer.
-        helius_fp12_sqr_mcl_x86(f as *mut crate::fp12::Fp12 as *mut u64, &FP6_MUL_CONSTANTS);
+        narsil_fp12_sqr_mcl_x86(f as *mut crate::fp12::Fp12 as *mut u64, &FP6_MUL_CONSTANTS);
     }
 }
 
-#[cfg(any(test, helius_cyc_sqr_asm))]
+#[cfg(any(test, narsil_cyc_sqr_asm))]
 #[inline(never)]
 pub(crate) fn cyc_sqr_assign(f: &mut crate::fp12::Fp12) {
     #[cfg(debug_assertions)]
@@ -172,7 +172,7 @@ pub(crate) fn cyc_sqr_assign(f: &mut crate::fp12::Fp12) {
         // contract above (canonical inputs are the Fp invariant). Z == f is
         // the contract's in-place shape. The assembly initializes all 384
         // output bytes and cannot retain any pointer.
-        helius_cyc_sqr_x86(
+        narsil_cyc_sqr_x86(
             f as *mut crate::fp12::Fp12 as *mut u64,
             f as *const crate::fp12::Fp12 as *const u64,
             &FP6_MUL_CONSTANTS,
@@ -180,7 +180,7 @@ pub(crate) fn cyc_sqr_assign(f: &mut crate::fp12::Fp12) {
     }
 }
 
-#[cfg(any(test, helius_fp4_sqr_asm))]
+#[cfg(any(test, narsil_fp4_sqr_asm))]
 #[inline(always)]
 pub(crate) fn fp4_sqr(
     r0: &crate::fp2::Fp2,
@@ -200,7 +200,7 @@ pub(crate) fn fp4_sqr(
         // the complete kernel contract above (canonical inputs are the Fp
         // invariant. The local z cannot alias the inputs). The assembly
         // initializes all 128 output bytes and cannot retain any pointer.
-        helius_fp4_sqr_x86(
+        narsil_fp4_sqr_x86(
             z.as_mut_ptr() as *mut u64,
             r0 as *const crate::fp2::Fp2 as *const u64,
             r1 as *const crate::fp2::Fp2 as *const u64,
@@ -217,15 +217,15 @@ pub(crate) fn fp4_sqr(
 /// computed in the kernel. `f` and the three coefficients must be canonical.
 /// The kernel reads all inputs before it writes the canonical result to `f`.
 // Dispatched by default on Intel targets, opt-in elsewhere (build.rs
-// HELIUS_FP12_034_ASM: Zen 4 store ports favor the composed path). The
+// NARSIL_FP12_034_ASM: Zen 4 store ports favor the composed path). The
 // sibling leaves take precedence when their toggles are also set (034K >
 // 034L > v1). Always covered by the leaf differential tests.
 #[cfg(any(
     test,
     all(
-        helius_fp12_034_asm,
-        not(helius_fp12_034l_asm),
-        not(helius_fp12_034k_asm)
+        narsil_fp12_034_asm,
+        not(narsil_fp12_034l_asm),
+        not(narsil_fp12_034k_asm)
     )
 ))]
 #[inline(never)]
@@ -255,7 +255,7 @@ pub(crate) fn fp12_034_assign(
         // the Fp invariant). Z == f is the contract's in-place shape. The
         // assembly initializes all 384 output bytes and cannot retain any
         // pointer.
-        helius_fp12_034_x86(
+        narsil_fp12_034_x86(
             f as *mut crate::fp12::Fp12 as *mut u64,
             f as *const crate::fp12::Fp12 as *const u64,
             coefficients.as_ptr() as *const u64,
@@ -264,7 +264,7 @@ pub(crate) fn fp12_034_assign(
     }
 }
 
-#[cfg(any(test, all(helius_fp12_034l_asm, not(helius_fp12_034k_asm))))]
+#[cfg(any(test, all(narsil_fp12_034l_asm, not(narsil_fp12_034k_asm))))]
 #[inline(never)]
 pub(crate) fn fp12_034l_assign(
     f: &mut crate::fp12::Fp12,
@@ -292,7 +292,7 @@ pub(crate) fn fp12_034l_assign(
         // the Fp invariant). Z == f is the contract's in-place shape. The
         // assembly initializes all 384 output bytes and cannot retain any
         // pointer.
-        helius_fp12_034l_x86(
+        narsil_fp12_034l_x86(
             f as *mut crate::fp12::Fp12 as *mut u64,
             f as *const crate::fp12::Fp12 as *const u64,
             coefficients.as_ptr() as *const u64,
@@ -301,7 +301,7 @@ pub(crate) fn fp12_034l_assign(
     }
 }
 
-#[cfg(any(test, helius_fp12_034k_asm))]
+#[cfg(any(test, narsil_fp12_034k_asm))]
 #[inline(never)]
 pub(crate) fn fp12_034k_assign(
     f: &mut crate::fp12::Fp12,
@@ -329,7 +329,7 @@ pub(crate) fn fp12_034k_assign(
         // the Fp invariant). Z == f is the contract's in-place shape. The
         // assembly initializes all 384 output bytes and cannot retain any
         // pointer.
-        helius_fp12_034k_x86(
+        narsil_fp12_034k_x86(
             f as *mut crate::fp12::Fp12 as *mut u64,
             f as *const crate::fp12::Fp12 as *const u64,
             coefficients.as_ptr() as *const u64,
@@ -340,7 +340,7 @@ pub(crate) fn fp12_034k_assign(
 
 /// `a` and `b` contain canonical field values. They may alias. `z` contains a
 /// canonical `Fp6` value on return.
-#[cfg(any(test, helius_fp6_asm))]
+#[cfg(any(test, narsil_fp6_asm))]
 #[inline(never)]
 pub(crate) fn fp6_mul(a: &crate::fp6::Fp6, b: &crate::fp6::Fp6) -> crate::fp6::Fp6 {
     #[cfg(debug_assertions)]
@@ -357,7 +357,7 @@ pub(crate) fn fp6_mul(a: &crate::fp6::Fp6, b: &crate::fp6::Fp6) -> crate::fp6::F
         // complete kernel contract above (canonical inputs are the Fp
         // invariant). The assembly initializes all 192 bytes before
         // `assume_init` and cannot retain any pointer.
-        helius_fp6_mul_x86(
+        narsil_fp6_mul_x86(
             z.as_mut_ptr() as *mut u64,
             a as *const crate::fp6::Fp6 as *const u64,
             b as *const crate::fp6::Fp6 as *const u64,
@@ -389,7 +389,7 @@ pub fn mont_mul(a: &[u64; 4], b: &[u64; 4]) -> Fp {
         // SAFETY: fixed-size references and the local output satisfy the
         // complete kernel contract above. The assembly initializes 32 bytes
         // before `assume_init` and cannot retain any pointer.
-        helius_mont4_mul_x86(
+        narsil_mont4_mul_x86(
             z.as_mut_ptr() as *mut u64,
             a.as_ptr(),
             b.as_ptr(),
@@ -407,7 +407,7 @@ pub fn mont_sqr(a: &[u64; 4]) -> Fp {
     let mut z = core::mem::MaybeUninit::<[u64; 4]>::uninit();
     unsafe {
         // SAFETY: as in `mont_mul`. The square reads only `x` and the table.
-        helius_mont4_sqr_x86(
+        narsil_mont4_sqr_x86(
             z.as_mut_ptr() as *mut u64,
             a.as_ptr(),
             a.as_ptr(),
@@ -447,7 +447,7 @@ fn sos_leaf<const N: usize>(pairs: &[*const u64; N]) -> [u64; 4] {
         // SAFETY: fixed-size table and the local output satisfy the complete
         // kernel contract above. The assembly initializes 32 bytes before
         // `assume_init` and cannot retain any pointer.
-        helius_sos_x86(
+        narsil_sos_x86(
             z.as_mut_ptr() as *mut u64,
             pairs.as_ptr(),
             (N / 2) as u64,
@@ -490,7 +490,7 @@ pub(crate) fn sos4(products: [crate::fp::sos::Product<'_>; 4]) -> [u64; 4] {
 /// other but not the output. The leaf initializes all eight output limbs
 /// with canonical residues, saves every callee-saved register it uses, keeps
 /// rsp 8-mod-16 aligned as on entry, and neither calls Rust nor unwinds.
-#[cfg(any(test, helius_g2_ysqr_asm))]
+#[cfg(any(test, narsil_g2_ysqr_asm))]
 pub(crate) fn g2_ysqr(
     g: &[[u64; 4]; 2],
     e: &[[u64; 4]; 2],
@@ -506,7 +506,7 @@ pub(crate) fn g2_ysqr(
         // SAFETY: fixed-size references and the local output satisfy the
         // complete kernel contract above. The assembly initializes 64 bytes
         // before `assume_init` and cannot retain any pointer.
-        helius_g2_ysqr_x86(
+        narsil_g2_ysqr_x86(
             z.as_mut_ptr() as *mut u64,
             g.as_ptr() as *const u64,
             e.as_ptr() as *const u64,
@@ -528,14 +528,14 @@ pub(crate) fn g2_ysqr(
 /// carry bound. It initializes all eight output limbs with canonical
 /// residues, saves every callee-saved register it uses, keeps rsp 8-mod-16
 /// aligned as on entry, and neither calls Rust nor unwinds.
-#[cfg(any(test, helius_f2sqr_asm))]
+#[cfg(any(test, narsil_f2sqr_asm))]
 pub(crate) fn f2sqr(x0: &[u64; 4], x1: &[u64; 4]) -> ([u64; 4], [u64; 4]) {
     debug_assert!(!crate::limb::gte(x0, &crate::consts::P));
     debug_assert!(!crate::limb::gte(x1, &crate::consts::P));
-    let leaf = if cfg!(helius_f2sqr_small) {
-        helius_f2sqr_small_x86
+    let leaf = if cfg!(narsil_f2sqr_small) {
+        narsil_f2sqr_small_x86
     } else {
-        helius_f2sqr_x86
+        narsil_f2sqr_x86
     };
     let mut z = core::mem::MaybeUninit::<[u64; 8]>::uninit();
     unsafe {
@@ -553,7 +553,7 @@ pub(crate) fn f2sqr(x0: &[u64; 4], x1: &[u64; 4]) -> ([u64; 4], [u64; 4]) {
     }
 }
 
-#[cfg(any(test, helius_sosd2_asm))]
+#[cfg(any(test, narsil_sosd2_asm))]
 pub(crate) fn sosd2(
     x0: &[u64; 4],
     x1: &[u64; 4],
@@ -564,10 +564,10 @@ pub(crate) fn sosd2(
     for operand in [x0, x1, y0, y1] {
         debug_assert!(!crate::limb::gt(operand, &crate::consts::P));
     }
-    let leaf = if cfg!(helius_sosd2_small) {
-        helius_sosd2_small_x86
+    let leaf = if cfg!(narsil_sosd2_small) {
+        narsil_sosd2_small_x86
     } else {
-        helius_sosd2_x86
+        narsil_sosd2_x86
     };
     let mut z = core::mem::MaybeUninit::<[u64; 8]>::uninit();
     unsafe {
@@ -615,7 +615,7 @@ pub(crate) fn sosd4(products: [crate::fp::sos::Fp2Product<'_>; 2]) -> ([u64; 4],
     )
 }
 
-#[cfg(any(test, not(helius_sosd6_asm)))]
+#[cfg(any(test, not(narsil_sosd6_asm)))]
 pub(crate) fn sosd6(products: [crate::fp::sos::Fp2Product<'_>; 3]) -> ([u64; 4], [u64; 4]) {
     let [
         (x00, x01, y00, y01),
@@ -661,7 +661,7 @@ pub(crate) fn sosd6(products: [crate::fp::sos::Fp2Product<'_>; 3]) -> ([u64; 4],
 /// `lane0 = (sum x_i0*y_i0 + x_i1*(p - y_i1))/R`, `lane1 = (sum x_i0*y_i1 +
 /// x_i1*y_i0)/R`, both canonical, in one call -- the composed [`sosd6`]
 /// route's value with the two lanes' carry chains interleaved in-kernel.
-/// Two serial `helius_sos_x86` walks are each one ~700-instruction
+/// Two serial `narsil_sos_x86` walks are each one ~700-instruction
 /// single-lane chain, so their independent lanes get no overlap. The leaf
 /// alternates lane rows per multiplicand (the sosd2 finding at T = 6) and
 /// computes the three `p - y_i1` images itself.
@@ -681,9 +681,9 @@ pub(crate) fn sosd6(products: [crate::fp::sos::Fp2Product<'_>; 3]) -> ([u64; 4],
 /// eight limbs (lane0 then lane1), all initialized and canonical on
 /// return. The leaf saves every callee-saved register it uses, keeps rsp
 /// 8-mod-16 aligned as on entry, and neither calls Rust nor unwinds.
-// Dispatched in production only under HELIUS_SOSD6_ASM=1. Always covered by
+// Dispatched in production only under NARSIL_SOSD6_ASM=1. Always covered by
 // the leaf differential tests.
-#[cfg(any(test, helius_sosd6_asm))]
+#[cfg(any(test, narsil_sosd6_asm))]
 pub(crate) fn sosd6_leaf(products: [crate::fp::sos::Fp2Product<'_>; 3]) -> ([u64; 4], [u64; 4]) {
     let [
         (x00, x01, y00, y01),
@@ -712,7 +712,7 @@ pub(crate) fn sosd6_leaf(products: [crate::fp::sos::Fp2Product<'_>; 3]) -> ([u64
         // the complete kernel contract above. The assembly initializes 64
         // output bytes before `assume_init`, writes nothing outside z and
         // stage, and cannot retain any pointer.
-        helius_sosd6_x86(
+        narsil_sosd6_x86(
             z.as_mut_ptr() as *mut u64,
             stage.as_mut_ptr(),
             &MONT4_CONSTANTS,

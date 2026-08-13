@@ -4,7 +4,7 @@ use super::machine::Reg::{
 };
 use super::machine::{MachineA64, Reg};
 
-/// Register roles for `helius_mont4`.
+/// Register roles for `narsil_mont4`.
 pub const MONT4_REGISTER_MAP: &[(Reg, &str)] = &[
     (X0, "z: result pointer (live throughout)"),
     (
@@ -75,7 +75,7 @@ fn column_products<M: MachineA64>(m: &mut M, v: Reg, limbs: [Reg; 4], limb: &str
     m.cinc_hs(S[4], S[4], "S4 = hi3 + chain carry (cannot wrap)");
 }
 
-/// `helius_mont4`: four-word CIOS Montgomery multiplication, counted loop.
+/// `narsil_mont4`: four-word CIOS Montgomery multiplication, counted loop.
 pub fn mont4<M: MachineA64>(m: &mut M) {
     m.stp_pre(X19, X20, -48);
     m.stp(X21, X22, Sp, 16, "");

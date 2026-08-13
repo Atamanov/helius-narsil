@@ -240,7 +240,7 @@ pub(crate) fn sosd2_portable(
 /// Dual-lane sum of two Fp2 products, T = 4 per lane.
 #[cfg(any(
     test,
-    not(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))
+    not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))
 ))]
 #[inline(never)]
 pub(crate) fn sosd4_portable(products: [Fp2Product<'_>; 2]) -> ([u64; 4], [u64; 4]) {
@@ -294,7 +294,7 @@ pub(crate) fn sosd4_portable(products: [Fp2Product<'_>; 2]) -> ([u64; 4], [u64; 
 /// Dual-lane sum of three Fp2 products, T = 6 per lane.
 #[cfg(any(
     test,
-    not(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))
+    not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))
 ))]
 #[inline(never)]
 pub(crate) fn sosd6_portable(products: [Fp2Product<'_>; 3]) -> ([u64; 4], [u64; 4]) {
@@ -435,7 +435,7 @@ pub(crate) fn sosd8_portable(products: [Fp2Product<'_>; 4]) -> ([u64; 4], [u64; 
 /// `(a0*b0 + a1*b1)*R^{-1} mod p`, canonical output. Final value < 1.379p.
 #[cfg(any(
     test,
-    not(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))
+    not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))
 ))]
 #[inline(never)]
 pub(crate) fn sos2_portable(
@@ -459,7 +459,7 @@ pub(crate) fn sos2_portable(
 /// `(sum_{i<4} a_i*b_i)*R^{-1} mod p`, canonical. Final value < 1.757p.
 #[cfg(any(
     test,
-    not(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))
+    not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))
 ))]
 #[inline(never)]
 pub(crate) fn sos4_portable(products: [Product<'_>; 4]) -> [u64; 4] {
@@ -691,25 +691,25 @@ pub(crate) fn sos8_terms(products: [Product<'_>; 8]) -> [u64; 4] {
 }
 
 // Tier dispatch: on the x86-64 ADX tier every production SoS entry point
-// routes to the rolled `helius_sos_x86` leaf (one op-cache-resident loop for
+// routes to the rolled `narsil_sos_x86` leaf (one op-cache-resident loop for
 // the whole tower. See build/schedule.rs). Everywhere else, and under
 // force-portable, the unrolled portable kernels above are the
 // implementation. Purely compile-time -- no runtime dispatch exists.
 
-/// Dual-lane Fp2 product. `HELIUS_SOSD2_ASM=1` selects the x86 leaf.
+/// Dual-lane Fp2 product. `NARSIL_SOSD2_ASM=1` selects the x86 leaf.
 #[inline(always)]
 pub fn sosd2(x0: &[u64; 4], x1: &[u64; 4], y0: &[u64; 4], y1: &[u64; 4]) -> ([u64; 4], [u64; 4]) {
     #[cfg(all(
-        helius_mont4_x86_64_adx,
-        helius_sosd2_asm,
+        narsil_mont4_x86_64_adx,
+        narsil_sosd2_asm,
         not(feature = "force-portable")
     ))]
     {
         crate::fp::x86_64::sosd2(x0, x1, y0, y1)
     }
     #[cfg(not(all(
-        helius_mont4_x86_64_adx,
-        helius_sosd2_asm,
+        narsil_mont4_x86_64_adx,
+        narsil_sosd2_asm,
         not(feature = "force-portable")
     )))]
     {
@@ -719,47 +719,47 @@ pub fn sosd2(x0: &[u64; 4], x1: &[u64; 4], y0: &[u64; 4], y1: &[u64; 4]) -> ([u6
 
 #[inline(always)]
 pub fn sos2(a0: &[u64; 4], b0: &[u64; 4], a1: &[u64; 4], b1: &[u64; 4]) -> [u64; 4] {
-    #[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+    #[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
     return crate::fp::x86_64::sos2(a0, b0, a1, b1);
-    #[cfg(not(all(helius_mont4_x86_64_adx, not(feature = "force-portable"))))]
+    #[cfg(not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable"))))]
     sos2_portable(a0, b0, a1, b1)
 }
 
 #[inline(always)]
 pub(crate) fn sos4_terms(products: [Product<'_>; 4]) -> [u64; 4] {
-    #[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+    #[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
     return crate::fp::x86_64::sos4(products);
-    #[cfg(not(all(helius_mont4_x86_64_adx, not(feature = "force-portable"))))]
+    #[cfg(not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable"))))]
     sos4_portable(products)
 }
 
 #[inline(always)]
 pub(crate) fn sosd4_terms(products: [Fp2Product<'_>; 2]) -> ([u64; 4], [u64; 4]) {
-    #[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+    #[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
     return crate::fp::x86_64::sosd4(products);
-    #[cfg(not(all(helius_mont4_x86_64_adx, not(feature = "force-portable"))))]
+    #[cfg(not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable"))))]
     sosd4_portable(products)
 }
 
 #[inline(always)]
 pub(crate) fn sosd6_terms(products: [Fp2Product<'_>; 3]) -> ([u64; 4], [u64; 4]) {
     #[cfg(all(
-        helius_mont4_x86_64_adx,
-        helius_sosd6_asm,
+        narsil_mont4_x86_64_adx,
+        narsil_sosd6_asm,
         not(feature = "force-portable")
     ))]
     {
         crate::fp::x86_64::sosd6_leaf(products)
     }
     #[cfg(all(
-        helius_mont4_x86_64_adx,
-        not(helius_sosd6_asm),
+        narsil_mont4_x86_64_adx,
+        not(narsil_sosd6_asm),
         not(feature = "force-portable")
     ))]
     {
         crate::fp::x86_64::sosd6(products)
     }
-    #[cfg(not(all(helius_mont4_x86_64_adx, not(feature = "force-portable"))))]
+    #[cfg(not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable"))))]
     {
         sosd6_portable(products)
     }
@@ -770,11 +770,11 @@ pub(crate) fn sosd6_terms(products: [Fp2Product<'_>; 3]) -> ([u64; 4], [u64; 4])
 #[cfg(test)]
 #[inline(always)]
 pub(crate) fn sosd8_terms(products: [Fp2Product<'_>; 4]) -> ([u64; 4], [u64; 4]) {
-    #[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+    #[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
     {
         crate::fp::x86_64::sosd8(products)
     }
-    #[cfg(not(all(helius_mont4_x86_64_adx, not(feature = "force-portable"))))]
+    #[cfg(not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable"))))]
     {
         sosd8_portable(products)
     }

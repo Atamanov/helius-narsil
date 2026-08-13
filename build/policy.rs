@@ -2,7 +2,7 @@
 //! tests. Keep target probing itself in `build.rs`. This module only maps an
 //! already classified target plus an optional environment override.
 
-/// Resolve one `HELIUS_*` override. `None` means the value is not a
+/// Resolve one `NARSIL_*` override. `None` means the value is not a
 /// recognized setting and the build must fail rather than guess.
 fn override_or(value: Option<&str>, default: bool) -> Option<bool> {
     match value {

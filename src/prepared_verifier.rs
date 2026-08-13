@@ -140,7 +140,7 @@ impl ValidatedOnlineTerms<'_> {
 /// identical bit for bit.
 fn online_miller(sources: &[(&G1Affine, G2Miller<'_>)], pairs: &[(G1Affine, G2Affine)]) -> Fp12 {
     #[cfg(all(
-        any(helius_avx512_ifma, helius_x86_runtime_ifma),
+        any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
         not(feature = "force-portable")
     ))]
     if pairs.len() >= crate::pairing::miller::VERTICAL_MIN_MILLER_TERMS

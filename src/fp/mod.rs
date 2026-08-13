@@ -9,11 +9,11 @@ use alloc::{string::String, vec::Vec};
 ))]
 pub(crate) mod aarch64;
 // This module exists only when the build emits the x86-64 kernel.
-#[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+#[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
 pub(crate) mod x86_64;
 // Generic x86-64 builds isolate IFMA behind runtime dispatch.
 #[cfg(all(
-    any(helius_avx512_ifma, helius_x86_runtime_ifma),
+    any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
     not(feature = "force-portable")
 ))]
 pub(crate) mod avx512ifma;
@@ -56,11 +56,11 @@ use aarch64 as mont_backend;
     feature = "force-portable",
     not(any(
         all(target_arch = "aarch64", target_vendor = "apple"),
-        helius_mont4_x86_64_adx,
+        narsil_mont4_x86_64_adx,
     )),
 ))]
 use portable as mont_backend;
-#[cfg(all(helius_mont4_x86_64_adx, not(feature = "force-portable")))]
+#[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
 use x86_64 as mont_backend;
 
 /// Element of `Fp` in Montgomery form: value represents `n * R mod p`.

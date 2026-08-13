@@ -1,6 +1,6 @@
 //! AArch64 Montgomery backend generated from `build/a64/schedule.rs`.
 
-use crate::abi::helius_mont4;
+use crate::abi::narsil_mont4;
 use crate::fp::Fp;
 
 // `repr(C)` and the assertions bind the Rust constants to the FFI layout.
@@ -45,7 +45,7 @@ pub fn mont_mul(a: &[u64; 4], b: &[u64; 4]) -> Fp {
         // SAFETY: fixed-size references and the local output satisfy the
         // complete kernel contract above. The assembly initializes 32 bytes
         // before `assume_init` and cannot retain any pointer.
-        helius_mont4(
+        narsil_mont4(
             z.as_mut_ptr() as *mut u64,
             a.as_ptr(),
             b.as_ptr(),

@@ -178,11 +178,11 @@ pub(crate) fn batch_backend() -> BatchBackend {
     select_batch_backend(
         capability_tier(),
         cfg!(all(
-            any(helius_avx512_ifma, helius_x86_runtime_ifma),
+            any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
             not(feature = "force-portable")
         )),
         cfg!(all(
-            helius_mont4_x86_64_adx,
+            narsil_mont4_x86_64_adx,
             not(feature = "force-portable")
         )),
     )
@@ -190,7 +190,7 @@ pub(crate) fn batch_backend() -> BatchBackend {
 
 /// Authorize an AVX-512F+IFMA entry when both the implementation and the
 /// required CPU/OS register state are present.
-#[cfg(any(all(helius_x86_runtime_ifma, not(feature = "force-portable")), test))]
+#[cfg(any(all(narsil_x86_runtime_ifma, not(feature = "force-portable")), test))]
 #[inline]
 pub(crate) fn avx512_ifma() -> Option<Avx512Ifma> {
     (batch_backend() == BatchBackend::Avx512Ifma).then_some(Avx512Ifma(()))

@@ -5,8 +5,8 @@
 use super::emit::EmitterA64;
 use super::schedule::{MONT4_REGISTER_MAP, mont4};
 
-/// Apple Mach-O adds the underscore. Rust names the symbol `helius_mont4`.
-pub const MONT4_SYMBOL: &str = "_helius_mont4";
+/// Apple Mach-O adds the underscore. Rust names the symbol `narsil_mont4`.
+pub const MONT4_SYMBOL: &str = "_narsil_mont4";
 pub const MONT4_SCHEDULE_NAME: &str = "bn254-mont4-cios-rolled";
 
 /// Render the full AArch64 kernel file. Byte-for-byte deterministic (no
@@ -26,7 +26,7 @@ pub fn render_mont4_aarch64() -> String {
 
     line("/* @generated at build time by the helius-narsil build script.");
     line("   Source of truth: crates/helius-narsil/build/a64/schedule.rs (ADR 0001).");
-    line("   Inspect a copy: HELIUS_DUMP_ASM=<absolute dir> cargo build.");
+    line("   Inspect a copy: NARSIL_DUMP_ASM=<absolute dir> cargo build.");
     line("   Verified by: tests/kernelgen_verify.rs (interpreter + determinism).");
     line("");
     line(&format!(

@@ -355,14 +355,14 @@ fn msm_signed_pippenger(points: &[G1Affine], scalars: &[[u64; 4]]) -> G1Projecti
 /// bucket path has cheaper bucket adds, which shifts its optimum toward wider
 /// windows earlier than the Jacobian schedule.
 fn msm_width(n: usize) -> usize {
-    #[cfg(not(all(helius_avx512_ifma, not(feature = "force-portable"))))]
+    #[cfg(not(all(narsil_avx512_ifma, not(feature = "force-portable"))))]
     if n >= BATCH_AFFINE_MIN_N {
         return batch_affine_width(n);
     }
     pippenger_width(n)
 }
 
-#[cfg(not(all(helius_avx512_ifma, not(feature = "force-portable"))))]
+#[cfg(not(all(narsil_avx512_ifma, not(feature = "force-portable"))))]
 #[inline]
 fn batch_affine_width(n: usize) -> usize {
     match n {
@@ -377,19 +377,19 @@ fn msm_signed_pippenger_with_width(
     scalars: &[[u64; 4]],
     width: usize,
 ) -> G1Projective {
-    #[cfg(all(helius_avx512_ifma, not(feature = "force-portable")))]
+    #[cfg(all(narsil_avx512_ifma, not(feature = "force-portable")))]
     return msm_signed_pippenger_with(points, scalars, width, accumulate_window_ifma);
-    #[cfg(not(all(helius_avx512_ifma, not(feature = "force-portable"))))]
+    #[cfg(not(all(narsil_avx512_ifma, not(feature = "force-portable"))))]
     if points.len() >= BATCH_AFFINE_MIN_N {
         return msm_signed_pippenger_batch_affine(points, scalars, width);
     }
-    #[cfg(not(all(helius_avx512_ifma, not(feature = "force-portable"))))]
+    #[cfg(not(all(narsil_avx512_ifma, not(feature = "force-portable"))))]
     msm_signed_pippenger_with(points, scalars, width, accumulate_window_scalar)
 }
 
 /// One window of bucket accumulation: consume the next signed digit of every
 /// term and add the (sign-adjusted) point into its bucket.
-#[cfg(not(all(helius_avx512_ifma, not(feature = "force-portable"))))]
+#[cfg(not(all(narsil_avx512_ifma, not(feature = "force-portable"))))]
 fn accumulate_window_scalar(
     buckets: &mut [G1Projective],
     terms: &mut [GlvTerm],
@@ -421,7 +421,7 @@ fn accumulate_window_scalar(
 ///   with the deferred batch update, which re-reads the bucket at flush).
 /// - `h == 0` or identity-at-flush lanes: redone scalar from the untouched
 ///   bucket.
-#[cfg(all(helius_avx512_ifma, not(feature = "force-portable")))]
+#[cfg(all(narsil_avx512_ifma, not(feature = "force-portable")))]
 fn accumulate_window_ifma(
     buckets: &mut [G1Projective],
     terms: &mut [GlvTerm],
@@ -468,7 +468,7 @@ fn accumulate_window_ifma(
 /// `indices` are pairwise distinct. The referenced buckets were non-identity
 /// at enqueue time but may have become identity since (cancellation on the
 /// scalar conflict path), so re-check at flush.
-#[cfg(all(helius_avx512_ifma, not(feature = "force-portable")))]
+#[cfg(all(narsil_avx512_ifma, not(feature = "force-portable")))]
 fn flush_bucket_batch(buckets: &mut [G1Projective], indices: &[usize; 8], points: &[G1Affine; 8]) {
     let mut skip: u8 = 0;
     for lane in 0..8 {
@@ -499,16 +499,16 @@ fn flush_bucket_batch(buckets: &mut [G1Projective], indices: &[usize; 8], points
 }
 
 /// Minimum point count for batch-affine buckets on non-IFMA builds.
-#[cfg(not(all(helius_avx512_ifma, not(feature = "force-portable"))))]
+#[cfg(not(all(narsil_avx512_ifma, not(feature = "force-portable"))))]
 const BATCH_AFFINE_MIN_N: usize = 96;
 
 /// Pending-add count that triggers one Montgomery-trick batch inversion.
-#[cfg(any(test, not(all(helius_avx512_ifma, not(feature = "force-portable")))))]
+#[cfg(any(test, not(all(narsil_avx512_ifma, not(feature = "force-portable")))))]
 const BATCH_AFFINE_FLUSH: usize = 64;
 
 /// Scratch for batch-affine bucket accumulation, allocated once per MSM and
 /// reused across windows. Between accumulate calls everything is drained.
-#[cfg(any(test, not(all(helius_avx512_ifma, not(feature = "force-portable")))))]
+#[cfg(any(test, not(all(narsil_avx512_ifma, not(feature = "force-portable")))))]
 struct BatchAffineScratch {
     pending_bucket: Vec<u32>,
     pending_point: Vec<G1Affine>,
@@ -520,7 +520,7 @@ struct BatchAffineScratch {
     bucket_pending: Vec<bool>,
 }
 
-#[cfg(any(test, not(all(helius_avx512_ifma, not(feature = "force-portable")))))]
+#[cfg(any(test, not(all(narsil_avx512_ifma, not(feature = "force-portable")))))]
 impl BatchAffineScratch {
     fn new(buckets: usize) -> Self {
         Self {
@@ -540,7 +540,7 @@ impl BatchAffineScratch {
 /// enqueue their denominator for the next batch inversion. The caller must
 /// have excluded buckets with an add already pending: classification is only
 /// valid while the bucket stays stable until the flush.
-#[cfg(any(test, not(all(helius_avx512_ifma, not(feature = "force-portable")))))]
+#[cfg(any(test, not(all(narsil_avx512_ifma, not(feature = "force-portable")))))]
 fn batch_affine_add(
     buckets: &mut [G1Affine],
     scratch: &mut BatchAffineScratch,
@@ -572,7 +572,7 @@ fn batch_affine_add(
 }
 
 /// Apply every pending affine add with one batch inversion.
-#[cfg(any(test, not(all(helius_avx512_ifma, not(feature = "force-portable")))))]
+#[cfg(any(test, not(all(narsil_avx512_ifma, not(feature = "force-portable")))))]
 fn batch_affine_flush(buckets: &mut [G1Affine], scratch: &mut BatchAffineScratch) {
     let count = scratch.pending_bucket.len();
     if count == 0 {
@@ -613,14 +613,14 @@ fn batch_affine_flush(buckets: &mut [G1Affine], scratch: &mut BatchAffineScratch
     scratch.denom.clear();
 }
 
-#[cfg(any(test, not(all(helius_avx512_ifma, not(feature = "force-portable")))))]
+#[cfg(any(test, not(all(narsil_avx512_ifma, not(feature = "force-portable")))))]
 struct BatchAffineWindow<'a> {
     buckets: &'a mut [G1Affine],
     overflow: &'a mut [G1Projective],
     scratch: &'a mut BatchAffineScratch,
 }
 
-#[cfg(any(test, not(all(helius_avx512_ifma, not(feature = "force-portable")))))]
+#[cfg(any(test, not(all(narsil_avx512_ifma, not(feature = "force-portable")))))]
 #[derive(Clone, Copy)]
 struct SignedDigitWindow {
     width: usize,
@@ -629,7 +629,7 @@ struct SignedDigitWindow {
     radix: u128,
 }
 
-#[cfg(any(test, not(all(helius_avx512_ifma, not(feature = "force-portable")))))]
+#[cfg(any(test, not(all(narsil_avx512_ifma, not(feature = "force-portable")))))]
 fn accumulate_window_batch_affine(
     window: &mut BatchAffineWindow<'_>,
     terms: &mut [GlvTerm],
@@ -669,7 +669,7 @@ fn accumulate_window_batch_affine(
 /// schedule to [`msm_signed_pippenger_with`]. Only the bucket representation
 /// (affine + Jacobian overflow slot) and the per-add cost differ, and the
 /// window reduction's running accumulator gets mixed adds for free.
-#[cfg(any(test, not(all(helius_avx512_ifma, not(feature = "force-portable")))))]
+#[cfg(any(test, not(all(narsil_avx512_ifma, not(feature = "force-portable")))))]
 fn msm_signed_pippenger_batch_affine(
     points: &[G1Affine],
     scalars: &[[u64; 4]],

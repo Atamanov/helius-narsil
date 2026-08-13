@@ -1,7 +1,7 @@
 use crate::consts::ATE_LOOP_COUNT;
 use crate::fp::Fp;
 use crate::fp::avx512ifma::FpVec8;
-#[cfg(all(test, helius_avx512_ifma))]
+#[cfg(all(test, narsil_avx512_ifma))]
 use crate::fp12::X_W4;
 use crate::pairing::miller::{mul_by_char, twist_b_f2};
 use crate::{Fp2, Fp6, Fp12, G1Affine, G2Affine};
@@ -75,7 +75,7 @@ impl Fp2x8 {
     }
 
     #[inline(always)]
-    #[cfg(helius_avx512_ifma)]
+    #[cfg(narsil_avx512_ifma)]
     fn conjugate(&self) -> Self {
         Self {
             c0: self.c0,
@@ -84,13 +84,13 @@ impl Fp2x8 {
     }
 
     #[inline(always)]
-    #[cfg(helius_avx512_ifma)]
+    #[cfg(narsil_avx512_ifma)]
     fn zero_mask(&self) -> u8 {
         self.c0.is_zero_mask() & self.c1.is_zero_mask()
     }
 
     #[inline(always)]
-    #[cfg(helius_avx512_ifma)]
+    #[cfg(narsil_avx512_ifma)]
     fn select(mask: u8, if_true: &Self, if_false: &Self) -> Self {
         Self {
             c0: FpVec8::select(mask, &if_true.c0, &if_false.c0),
@@ -139,14 +139,14 @@ impl Fp2x8 {
 
 /// Evaluate the twist equation for eight already-canonical affine points.
 /// Identity lanes pass. Bit `i` corresponds to lane `i`.
-#[cfg(all(test, helius_avx512_ifma))]
+#[cfg(all(test, narsil_avx512_ifma))]
 pub(crate) fn g2_on_curve_mask8(points: &[G2Affine; 8]) -> u8 {
     let x = Fp2x8::load(&core::array::from_fn(|i| points[i].x));
     let y = Fp2x8::load(&core::array::from_fn(|i| points[i].y));
     g2_on_curve_mask8_resident(points, &x, &y)
 }
 
-#[cfg(helius_avx512_ifma)]
+#[cfg(narsil_avx512_ifma)]
 fn g2_on_curve_mask8_resident(points: &[G2Affine; 8], x: &Fp2x8, y: &Fp2x8) -> u8 {
     let b = Fp2x8::broadcast({
         let value = twist_b_f2();
@@ -159,7 +159,7 @@ fn g2_on_curve_mask8_resident(points: &[G2Affine; 8], x: &Fp2x8, y: &Fp2x8) -> u
 }
 
 /// Compute both validation masks from one initial canonical-to-radix52 load.
-#[cfg(helius_avx512_ifma)]
+#[cfg(narsil_avx512_ifma)]
 pub(crate) fn g2_validation_masks8(points: &[G2Affine; 8]) -> (u8, u8) {
     let x = Fp2x8::load(&core::array::from_fn(|i| points[i].x));
     let y = Fp2x8::load(&core::array::from_fn(|i| points[i].y));
@@ -201,7 +201,7 @@ pub(crate) struct Fp6x8 {
 }
 
 impl Fp6x8 {
-    #[cfg(all(test, helius_avx512_ifma))]
+    #[cfg(all(test, narsil_avx512_ifma))]
     fn load(v: &[Fp6; 8]) -> Self {
         Self {
             c0: Fp2x8::load(&core::array::from_fn(|i| v[i].c0)),
@@ -234,7 +234,7 @@ impl Fp6x8 {
     }
 
     #[inline(always)]
-    #[cfg(all(test, helius_avx512_ifma))]
+    #[cfg(all(test, narsil_avx512_ifma))]
     fn negate(&self) -> Self {
         Self {
             c0: self.c0.negate(),
@@ -275,7 +275,7 @@ impl Fp6x8 {
 
     /// Devegili cubic squaring (matches the scalar `Fp6::square`).
     #[inline(always)]
-    #[cfg(all(test, helius_avx512_ifma))]
+    #[cfg(all(test, narsil_avx512_ifma))]
     fn square(&self) -> Self {
         let s0 = self.c0.square();
         let s1 = self.c0.mul(&self.c1).double();
@@ -298,7 +298,7 @@ pub(crate) struct Fp12x8 {
 }
 
 impl Fp12x8 {
-    #[cfg(all(test, helius_avx512_ifma))]
+    #[cfg(all(test, narsil_avx512_ifma))]
     pub(crate) fn load(v: &[Fp12; 8]) -> Self {
         Self {
             c0: Fp6x8::load(&core::array::from_fn(|i| v[i].c0)),
@@ -312,7 +312,7 @@ impl Fp12x8 {
     }
 
     #[inline(always)]
-    #[cfg(all(test, helius_avx512_ifma))]
+    #[cfg(all(test, narsil_avx512_ifma))]
     fn conjugate(&self) -> Self {
         Self {
             c0: self.c0,
@@ -458,7 +458,7 @@ struct G2x8 {
 type EllCoeff8 = (Fp2x8, Fp2x8, Fp2x8);
 
 impl G2x8 {
-    #[cfg(helius_avx512_ifma)]
+    #[cfg(narsil_avx512_ifma)]
     fn identity() -> Self {
         Self {
             x: Fp2x8::zero(),
@@ -468,7 +468,7 @@ impl G2x8 {
     }
 
     #[inline(always)]
-    #[cfg(helius_avx512_ifma)]
+    #[cfg(narsil_avx512_ifma)]
     fn select(mask: u8, if_true: &Self, if_false: &Self) -> Self {
         Self {
             x: Fp2x8::select(mask, &if_true.x, &if_false.x),
@@ -524,7 +524,7 @@ impl G2x8 {
     }
 
     #[inline(always)]
-    #[cfg(helius_avx512_ifma)]
+    #[cfg(narsil_avx512_ifma)]
     fn double_point(self) -> Self {
         let x2 = self.x.square();
         let mut y2 = self.y.square();
@@ -541,7 +541,7 @@ impl G2x8 {
     }
 
     #[inline(always)]
-    #[cfg(helius_avx512_ifma)]
+    #[cfg(narsil_avx512_ifma)]
     fn add_mixed_point(self, qx: &Fp2x8, qy: &Fp2x8) -> Self {
         let z2 = self.z.square();
         let h = qx.mul(&z2).sub(&self.x);
@@ -569,7 +569,7 @@ impl G2x8 {
     }
 
     #[inline(always)]
-    #[cfg(helius_avx512_ifma)]
+    #[cfg(narsil_avx512_ifma)]
     fn add_point(self, other: Self) -> Self {
         let z1z1 = self.z.square();
         let z2z2 = other.z.square();
@@ -600,7 +600,7 @@ impl G2x8 {
     }
 
     #[inline(always)]
-    #[cfg(helius_avx512_ifma)]
+    #[cfg(narsil_avx512_ifma)]
     fn psi(self) -> Self {
         let px = Fp2x8::broadcast(crate::g2::PSI_X);
         let py = Fp2x8::broadcast(crate::g2::PSI_Y);
@@ -612,7 +612,7 @@ impl G2x8 {
     }
 
     #[inline(always)]
-    #[cfg(helius_avx512_ifma)]
+    #[cfg(narsil_avx512_ifma)]
     fn psi_squared(self) -> Self {
         let coefficient = unsafe { FpVec8::load(&[crate::g2::PSI2_X; 8]) };
         Self {
@@ -622,7 +622,7 @@ impl G2x8 {
         }
     }
 
-    #[cfg(helius_avx512_ifma)]
+    #[cfg(narsil_avx512_ifma)]
     fn mul_by_bn_x(qx: &Fp2x8, qy: &Fp2x8) -> Self {
         const NAF: [i8; 62] = crate::consts::derive::bn_x_naf_msb(crate::consts::BN_X);
         let nqy = qy.negate();
@@ -642,14 +642,14 @@ impl G2x8 {
 /// El Housni-Guillevic-Piellard subgroup predicate in eight independent lanes.
 /// `on_curve` identifies usable lanes. Identities pass without entering the
 /// projective schedule. False/off-curve lanes are replaced by a valid lane.
-#[cfg(all(test, helius_avx512_ifma))]
+#[cfg(all(test, narsil_avx512_ifma))]
 pub(crate) fn g2_subgroup_mask8(points: &[G2Affine; 8], on_curve: u8) -> u8 {
     let qx = Fp2x8::load(&core::array::from_fn(|lane| points[lane].x));
     let qy = Fp2x8::load(&core::array::from_fn(|lane| points[lane].y));
     g2_subgroup_mask8_resident(points, on_curve, qx, qy)
 }
 
-#[cfg(helius_avx512_ifma)]
+#[cfg(narsil_avx512_ifma)]
 fn g2_subgroup_mask8_resident(
     points: &[G2Affine; 8],
     on_curve: u8,
@@ -802,7 +802,7 @@ fn miller8_masked(p: &[G1Affine; 8], q: &[G2Affine; 8], active_mask: u8) -> Fp12
 /// SoS Fp4 square `(r0 + r1 y)^2`, `y^2 = xi`: `t0 = r0^2 + xi r1^2`,
 /// `t1 = 2 r0 r1`.
 #[inline(always)]
-#[cfg(all(test, helius_avx512_ifma))]
+#[cfg(all(test, narsil_avx512_ifma))]
 fn fp4_square8(r0: &Fp2x8, r1: &Fp2x8) -> (Fp2x8, Fp2x8) {
     let x = r1.mul_by_nonresidue();
     let t0 = r0.square().add(&x.mul(r1));
@@ -810,7 +810,7 @@ fn fp4_square8(r0: &Fp2x8, r1: &Fp2x8) -> (Fp2x8, Fp2x8) {
     (t0, t1)
 }
 
-#[cfg(all(test, helius_avx512_ifma))]
+#[cfg(all(test, narsil_avx512_ifma))]
 impl Fp12x8 {
     /// Apply a scalar Fp12 map per lane (store, map, load). Used for the
     /// constant-heavy Frobenius maps and the one-time inversion, which are cold
@@ -885,7 +885,7 @@ impl Fp12x8 {
 /// 8-wide final exponentiation `f^{(p^12-1)/r}`: easy part then the
 /// Fuentes-Castaneda hard part, mirroring the scalar `final_exponentiation`.
 /// The inversion and Frobenius maps run scalar-side per lane (cold path).
-#[cfg(all(test, helius_avx512_ifma))]
+#[cfg(all(test, narsil_avx512_ifma))]
 pub(crate) fn final_exp8(f: &Fp12x8) -> Fp12x8 {
     // Easy: f^{(p^6-1)(p^2+1)}.
     let f1 = f.conjugate();
@@ -917,7 +917,7 @@ pub(crate) fn final_exp8(f: &Fp12x8) -> Fp12x8 {
 }
 
 /// 8-wide full pairing: `miller8` then `final_exp8`.
-#[cfg(all(test, helius_avx512_ifma))]
+#[cfg(all(test, narsil_avx512_ifma))]
 pub(crate) fn pairing8(p: &[G1Affine; 8], q: &[G2Affine; 8]) -> Fp12x8 {
     final_exp8(&miller8(p, q))
 }
@@ -1030,7 +1030,7 @@ pub(crate) fn ifma_available() -> bool {
 // These white-box tests call IFMA helpers directly and therefore require an
 // IFMA target baseline. Generic x86 test binaries cover the runtime-isolated
 // path through the public byte facade instead.
-#[cfg(all(test, helius_avx512_ifma))]
+#[cfg(all(test, narsil_avx512_ifma))]
 mod tests {
     use super::*;
 

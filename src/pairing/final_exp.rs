@@ -23,7 +23,7 @@ pub fn final_exponentiation(f: &Fp12) -> Fp12 {
 
     #[cfg(all(
         feature = "std",
-        any(helius_avx512_ifma, helius_x86_runtime_ifma),
+        any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
         not(feature = "force-portable")
     ))]
     if let Some(ifma) = crate::x86_runtime::avx512_ifma() {

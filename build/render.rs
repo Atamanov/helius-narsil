@@ -15,27 +15,27 @@ use super::schedule::{
     mont4_mulpre_x86, mont4_redc_x86, mont4_sqr, sos_rolled, sosd2_small_x86, sosd2_x86, sosd6_x86,
 };
 
-pub const MUL_SYMBOL: &str = "helius_mont4_mul_x86";
-pub const SQR_SYMBOL: &str = "helius_mont4_sqr_x86";
-pub const SOS_SYMBOL: &str = "helius_sos_x86";
-pub const SOSD2_SYMBOL: &str = "helius_sosd2_x86";
-pub const SOSD2_SMALL_SYMBOL: &str = "helius_sosd2_small_x86";
-pub const FP6_SYMBOL: &str = "helius_fp6_mul_x86";
-pub const FP12_034_SYMBOL: &str = "helius_fp12_034_x86";
-pub const FP4_SQR_SYMBOL: &str = "helius_fp4_sqr_x86";
-pub const FP12_SQR_SYMBOL: &str = "helius_fp12_sqr_x86";
-pub const FP12_MUL_SYMBOL: &str = "helius_fp12_mul_x86";
-pub const CYC_SQR_SYMBOL: &str = "helius_cyc_sqr_x86";
-pub const FP12_034L_SYMBOL: &str = "helius_fp12_034l_x86";
-pub const FP12_034K_SYMBOL: &str = "helius_fp12_034k_x86";
-pub const SOSD6_SYMBOL: &str = "helius_sosd6_x86";
-pub const MULPRE_SYMBOL: &str = "helius_mont4_mulpre_x86";
-pub const REDC_SYMBOL: &str = "helius_mont4_redc_x86";
-pub const FP2_XI_COMPACT_SYMBOL: &str = "helius_fp2_xi_compact_x86";
-pub const FP12_SQR_MCL_SYMBOL: &str = "helius_fp12_sqr_mcl_x86";
-pub const F2SQR_SYMBOL: &str = "helius_f2sqr_x86";
-pub const F2SQR_SMALL_SYMBOL: &str = "helius_f2sqr_small_x86";
-pub const G2_YSQR_SYMBOL: &str = "helius_g2_ysqr_x86";
+pub const MUL_SYMBOL: &str = "narsil_mont4_mul_x86";
+pub const SQR_SYMBOL: &str = "narsil_mont4_sqr_x86";
+pub const SOS_SYMBOL: &str = "narsil_sos_x86";
+pub const SOSD2_SYMBOL: &str = "narsil_sosd2_x86";
+pub const SOSD2_SMALL_SYMBOL: &str = "narsil_sosd2_small_x86";
+pub const FP6_SYMBOL: &str = "narsil_fp6_mul_x86";
+pub const FP12_034_SYMBOL: &str = "narsil_fp12_034_x86";
+pub const FP4_SQR_SYMBOL: &str = "narsil_fp4_sqr_x86";
+pub const FP12_SQR_SYMBOL: &str = "narsil_fp12_sqr_x86";
+pub const FP12_MUL_SYMBOL: &str = "narsil_fp12_mul_x86";
+pub const CYC_SQR_SYMBOL: &str = "narsil_cyc_sqr_x86";
+pub const FP12_034L_SYMBOL: &str = "narsil_fp12_034l_x86";
+pub const FP12_034K_SYMBOL: &str = "narsil_fp12_034k_x86";
+pub const SOSD6_SYMBOL: &str = "narsil_sosd6_x86";
+pub const MULPRE_SYMBOL: &str = "narsil_mont4_mulpre_x86";
+pub const REDC_SYMBOL: &str = "narsil_mont4_redc_x86";
+pub const FP2_XI_COMPACT_SYMBOL: &str = "narsil_fp2_xi_compact_x86";
+pub const FP12_SQR_MCL_SYMBOL: &str = "narsil_fp12_sqr_mcl_x86";
+pub const F2SQR_SYMBOL: &str = "narsil_f2sqr_x86";
+pub const F2SQR_SMALL_SYMBOL: &str = "narsil_f2sqr_small_x86";
+pub const G2_YSQR_SYMBOL: &str = "narsil_g2_ysqr_x86";
 
 struct Kernel {
     symbol: &'static str,
@@ -215,7 +215,7 @@ pub fn render_mont4_x86_64() -> String {
 
     line("/* @generated at build time by the helius-narsil build script.");
     line("   Source of truth: crates/helius-narsil/build/schedule.rs (ADR 0001).");
-    line("   Inspect a copy: HELIUS_DUMP_ASM=<absolute dir> cargo build.");
+    line("   Inspect a copy: NARSIL_DUMP_ASM=<absolute dir> cargo build.");
     line("   Verified by: tests/kernelgen_verify.rs (interpreter + determinism).");
     line("");
     for kernel in &kernels {
@@ -250,7 +250,7 @@ pub fn render_mont4_x86_64() -> String {
     line("                     *const u64x4 at most p, consts as above);");
     line("   lane0 = (x0*y0 + x1*(p - y1))/R, lane1 = (x0*y1 + x1*y0)/R mod p.");
     line("   sosd2_small: identical contract, rolled rounds (op-cache-compact);");
-    line("   the Rust wrapper picks one at build time (HELIUS_SOSD2_SMALL).");
+    line("   the Rust wrapper picks one at build time (NARSIL_SOSD2_SMALL).");
     line("   fp6_mul arguments: (z: *mut u64x24, a, b: *const u64x24 in repr(C)");
     line("                       Fp6 order c0.re, c0.im, .., c2.im, all Fp < p;");
     line("                       consts: *const { p: [u64; 4], neg_p_inv: u64,");
@@ -320,7 +320,7 @@ pub fn render_mont4_x86_64() -> String {
     line("   lane0 = ((x0+x1)*(x0-x1))/R, lane1 = (x0*(2*x1))/R mod p, the");
     line("   complex square of x0 + x1*u with both Montgomery chains");
     line("   interleaved; both lanes canonical. f2sqr_small is the rolled");
-    line("   twin with the identical contract (HELIUS_F2SQR_SMALL picks one).");
+    line("   twin with the identical contract (NARSIL_F2SQR_SMALL picks one).");
     line("   g2_ysqr arguments: (z: *mut u64x8, g, e, f: *const u64x8 in");
     line("                       repr(C) Fp2 order with f = 3e, all Fp < p;");
     line("                       consts as mont4), z distinct from g, e, f;");

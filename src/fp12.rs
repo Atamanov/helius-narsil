@@ -95,9 +95,9 @@ impl Fp12 {
     pub fn square_in_place(&mut self) {
         // The compact Fp6 route takes precedence when both square routes exist.
         #[cfg(all(
-            helius_mont4_x86_64_adx,
-            helius_fp6_asm,
-            helius_fp12_sqr_mcl_asm,
+            narsil_mont4_x86_64_adx,
+            narsil_fp6_asm,
+            narsil_fp12_sqr_mcl_asm,
             not(feature = "force-portable")
         ))]
         {
@@ -105,17 +105,17 @@ impl Fp12 {
         }
         // The whole-operation route keeps products double width until reduction.
         #[cfg(all(
-            helius_mont4_x86_64_adx,
-            helius_fp12_sqr_asm,
-            not(all(helius_fp6_asm, helius_fp12_sqr_mcl_asm)),
+            narsil_mont4_x86_64_adx,
+            narsil_fp12_sqr_asm,
+            not(all(narsil_fp6_asm, narsil_fp12_sqr_mcl_asm)),
             not(feature = "force-portable")
         ))]
         {
             crate::fp::x86_64::fp12_sqr_assign(self);
         }
         #[cfg(not(all(
-            helius_mont4_x86_64_adx,
-            any(all(helius_fp6_asm, helius_fp12_sqr_mcl_asm), helius_fp12_sqr_asm),
+            narsil_mont4_x86_64_adx,
+            any(all(narsil_fp6_asm, narsil_fp12_sqr_mcl_asm), narsil_fp12_sqr_asm),
             not(feature = "force-portable")
         )))]
         {
@@ -137,8 +137,8 @@ impl Fp12 {
     /// exactly this value with 36 products + 12 reductions.
     #[cfg_attr(
         all(
-            helius_mont4_x86_64_adx,
-            any(all(helius_fp6_asm, helius_fp12_sqr_mcl_asm), helius_fp12_sqr_asm),
+            narsil_mont4_x86_64_adx,
+            any(all(narsil_fp6_asm, narsil_fp12_sqr_mcl_asm), narsil_fp12_sqr_asm),
             not(test)
         ),
         allow(dead_code)
@@ -277,8 +277,8 @@ impl Fp12 {
     #[cfg(any(
         test,
         not(all(
-            helius_mont4_x86_64_adx,
-            helius_fp12_mul_asm,
+            narsil_mont4_x86_64_adx,
+            narsil_fp12_mul_asm,
             not(feature = "force-portable")
         ))
     ))]
@@ -312,19 +312,19 @@ impl Fp12 {
     /// `t0 = r0^2 + xir1^2 = r0*r0 + (xir1)*r1`, `t1 = 2r0r1 = (2r0)*r1`.
     #[inline(always)]
     fn fp4_square_sos(r0: Fp2, r1: Fp2) -> (Fp2, Fp2) {
-        // Whole-op leaf (HELIUS_FP4_SQR_ASM=1): same math as the composed
+        // Whole-op leaf (NARSIL_FP4_SQR_ASM=1): same math as the composed
         // path below in one call. The composed path stays the reference.
         #[cfg(all(
-            helius_mont4_x86_64_adx,
-            helius_fp4_sqr_asm,
+            narsil_mont4_x86_64_adx,
+            narsil_fp4_sqr_asm,
             not(feature = "force-portable")
         ))]
         {
             crate::fp::x86_64::fp4_sqr(&r0, &r1)
         }
         #[cfg(not(all(
-            helius_mont4_x86_64_adx,
-            helius_fp4_sqr_asm,
+            narsil_mont4_x86_64_adx,
+            narsil_fp4_sqr_asm,
             not(feature = "force-portable")
         )))]
         {
@@ -338,8 +338,8 @@ impl Fp12 {
     #[cfg(any(
         test,
         not(all(
-            helius_mont4_x86_64_adx,
-            helius_fp4_sqr_asm,
+            narsil_mont4_x86_64_adx,
+            narsil_fp4_sqr_asm,
             not(feature = "force-portable")
         ))
     ))]
@@ -370,12 +370,12 @@ impl Fp12 {
     /// outlined form pays a 384-byte copy in and out per call.
     #[inline(always)]
     pub fn cyclotomic_square(self) -> Self {
-        // Whole-op lazy double-width leaf (HELIUS_CYC_SQR_ASM=1): mcl's
+        // Whole-op lazy double-width leaf (NARSIL_CYC_SQR_ASM=1): mcl's
         // 18-product fasterSqr shape, updating in place (z == f). The
         // composed path below stays the reference.
         #[cfg(all(
-            helius_mont4_x86_64_adx,
-            helius_cyc_sqr_asm,
+            narsil_mont4_x86_64_adx,
+            narsil_cyc_sqr_asm,
             not(feature = "force-portable")
         ))]
         {
@@ -384,8 +384,8 @@ impl Fp12 {
             out
         }
         #[cfg(not(all(
-            helius_mont4_x86_64_adx,
-            helius_cyc_sqr_asm,
+            narsil_mont4_x86_64_adx,
+            narsil_cyc_sqr_asm,
             not(feature = "force-portable")
         )))]
         {
@@ -400,8 +400,8 @@ impl Fp12 {
     #[cfg(any(
         test,
         not(all(
-            helius_mont4_x86_64_adx,
-            helius_cyc_sqr_asm,
+            narsil_mont4_x86_64_adx,
+            narsil_cyc_sqr_asm,
             not(feature = "force-portable")
         ))
     ))]
@@ -553,8 +553,8 @@ impl Fp12 {
     pub fn mul_by_034_assign(&mut self, c0: Fp2, c3: Fp2, c4: Fp2) {
         // The Karatsuba leaf takes precedence over the lazy and v1 leaves.
         #[cfg(all(
-            helius_mont4_x86_64_adx,
-            helius_fp12_034k_asm,
+            narsil_mont4_x86_64_adx,
+            narsil_fp12_034k_asm,
             not(feature = "force-portable")
         ))]
         {
@@ -562,9 +562,9 @@ impl Fp12 {
         }
         // The lazy leaf takes precedence over the v1 leaf.
         #[cfg(all(
-            helius_mont4_x86_64_adx,
-            helius_fp12_034l_asm,
-            not(helius_fp12_034k_asm),
+            narsil_mont4_x86_64_adx,
+            narsil_fp12_034l_asm,
+            not(narsil_fp12_034k_asm),
             not(feature = "force-portable")
         ))]
         {
@@ -572,18 +572,18 @@ impl Fp12 {
         }
         // The v1 leaf implements the same field equations as the Rust path.
         #[cfg(all(
-            helius_mont4_x86_64_adx,
-            helius_fp12_034_asm,
-            not(helius_fp12_034l_asm),
-            not(helius_fp12_034k_asm),
+            narsil_mont4_x86_64_adx,
+            narsil_fp12_034_asm,
+            not(narsil_fp12_034l_asm),
+            not(narsil_fp12_034k_asm),
             not(feature = "force-portable")
         ))]
         {
             crate::fp::x86_64::fp12_034_assign(self, &c0, &c3, &c4);
         }
         #[cfg(not(all(
-            helius_mont4_x86_64_adx,
-            any(helius_fp12_034_asm, helius_fp12_034l_asm, helius_fp12_034k_asm),
+            narsil_mont4_x86_64_adx,
+            any(narsil_fp12_034_asm, narsil_fp12_034l_asm, narsil_fp12_034k_asm),
             not(feature = "force-portable")
         )))]
         {
@@ -596,8 +596,8 @@ impl Fp12 {
     /// leaves, which compute exactly this in one call.
     #[cfg_attr(
         all(
-            helius_mont4_x86_64_adx,
-            any(helius_fp12_034_asm, helius_fp12_034l_asm, helius_fp12_034k_asm),
+            narsil_mont4_x86_64_adx,
+            any(narsil_fp12_034_asm, narsil_fp12_034l_asm, narsil_fp12_034k_asm),
             not(test)
         ),
         allow(dead_code)
@@ -1160,19 +1160,19 @@ impl Mul for Fp12 {
 }
 impl MulAssign for Fp12 {
     fn mul_assign(&mut self, rhs: Self) {
-        // Whole-op lazy double-width leaf (HELIUS_FP12_MUL_ASM=1): mcl's
+        // Whole-op lazy double-width leaf (NARSIL_FP12_MUL_ASM=1): mcl's
         // 54-product shape. The composed path below stays the reference.
         #[cfg(all(
-            helius_mont4_x86_64_adx,
-            helius_fp12_mul_asm,
+            narsil_mont4_x86_64_adx,
+            narsil_fp12_mul_asm,
             not(feature = "force-portable")
         ))]
         {
             crate::fp::x86_64::fp12_mul_assign(self, &rhs);
         }
         #[cfg(not(all(
-            helius_mont4_x86_64_adx,
-            helius_fp12_mul_asm,
+            narsil_mont4_x86_64_adx,
+            narsil_fp12_mul_asm,
             not(feature = "force-portable")
         )))]
         {

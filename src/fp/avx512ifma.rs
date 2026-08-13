@@ -831,7 +831,7 @@ impl FpVec8 {
 
     /// Dedicated squaring entry point. Currently the general product (a
     /// 15-vs-25 partial-product schedule is a follow-up if the tier lands).
-    #[cfg(helius_avx512_ifma)]
+    #[cfg(narsil_avx512_ifma)]
     #[inline(always)]
     pub(crate) fn square(&self) -> Self {
         self.mul(self)
@@ -1059,7 +1059,7 @@ impl FpVec8 {
 
     /// Per-lane zero test (canonical representation makes this exact).
     #[inline(always)]
-    #[cfg(helius_avx512_ifma)]
+    #[cfg(narsil_avx512_ifma)]
     pub(crate) fn is_zero_mask(&self) -> u8 {
         unsafe {
             let all = _mm512_or_si512(
@@ -1072,7 +1072,7 @@ impl FpVec8 {
 
     /// Per-lane selection without leaving the resident radix-52 domain.
     #[inline(always)]
-    #[cfg(any(feature = "std", helius_avx512_ifma))]
+    #[cfg(any(feature = "std", narsil_avx512_ifma))]
     pub(crate) fn select(mask: u8, if_true: &Self, if_false: &Self) -> Self {
         unsafe {
             Self {
@@ -1416,7 +1416,7 @@ impl<const B: u64> FpVec8L<B> {
 ///
 /// 11 batched muls (3 of them squarings) + 7 batched subs + 8 domain
 /// conversions, versus 8 x 11 scalar muls on the scalar path.
-#[cfg(helius_avx512_ifma)]
+#[cfg(narsil_avx512_ifma)]
 pub(crate) fn g1_madd_batch8(
     x1: &[Fp; 8],
     y1: &[Fp; 8],
@@ -1449,7 +1449,7 @@ pub(crate) fn g1_madd_batch8(
 // Direct intrinsic tests intentionally require an IFMA target baseline. A
 // generic test binary must exercise this module only through runtime dispatch,
 // so running the suite on an older CPU can never enter an unguarded helper.
-#[cfg(all(test, helius_avx512_ifma))]
+#[cfg(all(test, narsil_avx512_ifma))]
 mod tests {
     use super::*;
 

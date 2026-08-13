@@ -17,7 +17,7 @@
 extern crate alloc;
 
 #[cfg(any(
-    all(helius_mont4_x86_64_adx, not(feature = "force-portable")),
+    all(narsil_mont4_x86_64_adx, not(feature = "force-portable")),
     all(
         target_arch = "aarch64",
         target_vendor = "apple",
@@ -27,19 +27,19 @@ extern crate alloc;
 mod abi;
 pub mod batch;
 #[cfg(all(
-    any(helius_avx512_ifma, helius_x86_runtime_ifma),
+    any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
     not(feature = "force-portable")
 ))]
 mod batch8;
 /// Compute eight pairing products with AVX-512 IFMA.
-#[cfg(all(helius_avx512_ifma, not(feature = "force-portable")))]
+#[cfg(all(narsil_avx512_ifma, not(feature = "force-portable")))]
 pub use batch8::multi_pairing8;
 
 mod const_tower;
 pub mod consts;
 #[cfg(all(
     feature = "std",
-    any(helius_avx512_ifma, helius_x86_runtime_ifma),
+    any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
     not(feature = "force-portable")
 ))]
 mod final_exp_ifma;
@@ -56,7 +56,7 @@ mod g2_fast;
 mod limb;
 #[cfg(all(
     feature = "std",
-    any(helius_avx512_ifma, helius_x86_runtime_ifma),
+    any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
     not(feature = "force-portable")
 ))]
 mod miller_coeff_ifma;
@@ -78,7 +78,7 @@ mod wnaf;
 #[cfg(any(
     all(
         any(target_arch = "x86", target_arch = "x86_64"),
-        any(all(helius_x86_runtime_ifma, not(feature = "force-portable")), test)
+        any(all(narsil_x86_runtime_ifma, not(feature = "force-portable")), test)
     ),
     feature = "backend-report"
 ))]

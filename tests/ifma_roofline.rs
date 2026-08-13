@@ -244,7 +244,7 @@ fn split_arity_occupancy_and_schedule_counts_hold() {
 /// the equality stays meaningful but stops being a cross-engine check.
 #[cfg(all(
     target_arch = "x86_64",
-    any(helius_avx512_ifma, helius_x86_runtime_ifma),
+    any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
     feature = "std",
     not(feature = "force-portable")
 ))]

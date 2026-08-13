@@ -713,7 +713,7 @@ impl Machine for Interp {
             "System V stack must be 16-byte aligned before calling {symbol}",
         );
         match symbol {
-            "helius_fp6_mul_x86" => {
+            "narsil_fp6_mul_x86" => {
                 let z = self.read_reg(Reg::Rdi);
                 let a_base = self.read_reg(Reg::Rsi);
                 let b_base = self.read_reg(Reg::Rdx);
@@ -735,7 +735,7 @@ impl Machine for Interp {
                 super::schedule::fp6_mul_x86(&mut child);
                 self.copy_words_from(&child, OUT_ADDR, z, 24);
             }
-            "helius_fp2_xi_compact_x86" => {
+            "narsil_fp2_xi_compact_x86" => {
                 let z = self.read_reg(Reg::Rdi);
                 let x_base = self.read_reg(Reg::Rsi);
                 let constants = self.read_reg(Reg::Rdx);

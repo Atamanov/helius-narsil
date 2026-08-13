@@ -685,7 +685,7 @@ unsafe fn hard_part_ifma(value: Fp12) -> Fp12 {
     y15.mul(y14).store()
 }
 
-#[cfg(all(test, helius_avx512_ifma))]
+#[cfg(all(test, narsil_avx512_ifma))]
 mod tests {
     use super::*;
 

@@ -225,7 +225,7 @@ trait HeliusField:
     fn invert(self) -> Option<Self>;
 }
 
-macro_rules! impl_helius_field {
+macro_rules! impl_narsil_field {
     ($field:ty) => {
         impl HeliusField for $field {
             const ZERO: Self = <$field>::ZERO;
@@ -250,11 +250,11 @@ macro_rules! impl_helius_field {
     };
 }
 
-impl_helius_field!(Fp);
-impl_helius_field!(Fr);
-impl_helius_field!(Fp2);
-impl_helius_field!(Fp6);
-impl_helius_field!(Fp12);
+impl_narsil_field!(Fp);
+impl_narsil_field!(Fr);
+impl_narsil_field!(Fp2);
+impl_narsil_field!(Fp6);
+impl_narsil_field!(Fp12);
 
 trait ArkBridge: ArkField + UniformRand + Copy {
     type Helius: HeliusField;
@@ -379,7 +379,7 @@ trait HeliusSqrtField: HeliusField {
     fn sqrt(self) -> Option<Self>;
 }
 
-macro_rules! impl_helius_sqrt_field {
+macro_rules! impl_narsil_sqrt_field {
     ($field:ty) => {
         impl HeliusSqrtField for $field {
             fn sqrt(self) -> Option<Self> {
@@ -389,8 +389,8 @@ macro_rules! impl_helius_sqrt_field {
     };
 }
 
-impl_helius_sqrt_field!(Fp);
-impl_helius_sqrt_field!(Fp2);
+impl_narsil_sqrt_field!(Fp);
+impl_narsil_sqrt_field!(Fp2);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum SquareClass {
@@ -594,7 +594,7 @@ fn random_limbs<const N: usize>(rng: &mut impl RngCore) -> [u64; N] {
 fn run_prime_pow<A: ArkBridge>(
     seed: u64,
     modulus: [u64; 4],
-    helius_pow: fn(A::Helius, &[u64; 4]) -> A::Helius,
+    narsil_pow: fn(A::Helius, &[u64; 4]) -> A::Helius,
 ) {
     let mut rng = StdRng::seed_from_u64(seed);
     for sample in 0..(FIELD_ITERATIONS / 10) {
@@ -602,7 +602,7 @@ fn run_prime_pow<A: ArkBridge>(
             let a = A::rand(&mut rng);
             let ha = a.to_helius();
             let limbs = [exponent, 0, 0, 0];
-            let computed = helius_pow(ha, &limbs);
+            let computed = narsil_pow(ha, &limbs);
             let mut repeated = A::Helius::ONE;
             for _ in 0..exponent {
                 repeated = repeated * ha;
@@ -613,7 +613,7 @@ fn run_prime_pow<A: ArkBridge>(
 
         let a = A::rand(&mut rng);
         let ha = a.to_helius();
-        assert_eq!(helius_pow(ha, &modulus), a.to_helius(), "sample {sample}");
+        assert_eq!(narsil_pow(ha, &modulus), a.to_helius(), "sample {sample}");
 
         let e1 = random_limbs::<10>(&mut rng);
         let e2 = random_limbs::<10>(&mut rng);
@@ -683,15 +683,15 @@ mod fields {
                 .expect("nonempty in-cap lincomb")
                 .to_fr()
                 .expect("Helius emits a canonical scalar");
-            let helius_naive = a.iter().zip(b).fold(Fr::ZERO, |sum, (&left, &right)| {
+            let narsil_naive = a.iter().zip(b).fold(Fr::ZERO, |sum, (&left, &right)| {
                 sum + fr_to_fr(left) * fr_to_fr(right)
             });
             let ark_naive = a
                 .iter()
                 .zip(b)
                 .fold(ArkFr::ZERO, |sum, (&left, &right)| sum + left * right);
-            assert_eq!(computed, helius_naive, "{context}");
-            assert_eq!(helius_naive, fr_to_fr(ark_naive), "Ark oracle: {context}");
+            assert_eq!(computed, narsil_naive, "{context}");
+            assert_eq!(narsil_naive, fr_to_fr(ark_naive), "Ark oracle: {context}");
         }
 
         ark_adapted_case! {
@@ -966,9 +966,9 @@ mod fields {
                     assert_eq!(root.square(), a.square().to_helius(), "sample {sample}");
 
                     let ark_root = a.sqrt();
-                    let helius_root = h.sqrt();
-                    assert_eq!(helius_root.is_some(), ark_root.is_some(), "sample {sample}");
-                    if let Some(root) = helius_root {
+                    let narsil_root = h.sqrt();
+                    assert_eq!(narsil_root.is_some(), ark_root.is_some(), "sample {sample}");
+                    if let Some(root) = narsil_root {
                         assert_eq!(root.square(), h, "sample {sample}");
                     }
 
@@ -1099,7 +1099,7 @@ mod fields {
         }
 
         #[test]
-        fn helius_sqrt_matches_ark() {
+        fn narsil_sqrt_matches_ark() {
             let mut rng = StdRng::seed_from_u64(0x4651_3253_5152_0001);
             assert_eq!(Fp2::ZERO.sqrt(), Some(Fp2::ZERO));
             for sample in 0..FIELD_ITERATIONS {
@@ -1111,9 +1111,9 @@ mod fields {
                 assert_eq!(root.square(), a.square().to_helius(), "sample {sample}");
 
                 let ark_root = a.sqrt();
-                let helius_root = h.sqrt();
-                assert_eq!(helius_root.is_some(), ark_root.is_some(), "sample {sample}");
-                if let Some(root) = helius_root {
+                let narsil_root = h.sqrt();
+                assert_eq!(narsil_root.is_some(), ark_root.is_some(), "sample {sample}");
+                if let Some(root) = narsil_root {
                     assert_eq!(root.square(), h, "sample {sample}");
                 }
 
@@ -1584,7 +1584,7 @@ trait HeliusCurveGroup: Copy {
     fn add(self, other: Self) -> Self;
 }
 
-macro_rules! impl_helius_curve_group {
+macro_rules! impl_narsil_curve_group {
     ($group:ty) => {
         impl HeliusCurveGroup for $group {
             fn identity() -> Self {
@@ -1602,8 +1602,8 @@ macro_rules! impl_helius_curve_group {
     };
 }
 
-impl_helius_curve_group!(G1Projective);
-impl_helius_curve_group!(G2Projective);
+impl_narsil_curve_group!(G1Projective);
+impl_narsil_curve_group!(G2Projective);
 
 /// Independent test-side double-and-add for template claims that Ark expresses
 /// through configurable wNAF or batch-preprocessing facades.
@@ -1624,7 +1624,7 @@ macro_rules! port_group_tests {
     (
         $module:ident,
         $ark_projective:ty,
-        $helius_projective:ty,
+        $narsil_projective:ty,
         $convert:ident,
         $seed:expr
         $(, { $($extra:item)* })?
@@ -1676,7 +1676,7 @@ macro_rules! port_group_tests {
                         c: $ark_projective,
                         sample: usize,
                     ) {
-                        let zero = <$helius_projective>::identity();
+                        let zero = <$narsil_projective>::identity();
                         let points = [
                             ("a", $convert(a.into_affine()).to_curve()),
                             ("b", $convert(b.into_affine()).to_curve()),
@@ -1714,7 +1714,7 @@ macro_rules! port_group_tests {
                         c: $ark_projective,
                         sample: usize,
                     ) {
-                        let zero = <$helius_projective>::identity();
+                        let zero = <$narsil_projective>::identity();
                         for (point, ark) in [
                             ($convert(a.into_affine()).to_curve(), a),
                             ($convert(b.into_affine()).to_curve(), b),
@@ -1752,7 +1752,7 @@ macro_rules! port_group_tests {
                 }
                 fn test_sub_properties() {
                     let mut rng = StdRng::seed_from_u64($seed ^ 0x5355_4200_0000_0002);
-                    let zero = <$helius_projective>::identity();
+                    let zero = <$narsil_projective>::identity();
                     for sample in 0..GROUP_ITERATIONS {
                         let a = <$ark_projective>::rand(&mut rng);
                         let b = <$ark_projective>::rand(&mut rng);
@@ -1822,22 +1822,22 @@ macro_rules! port_group_tests {
                             "distributivity sample {sample}"
                         );
 
-                        let expected = mul_group_words::<$helius_projective>(ha, b.into_bigint().0).to_affine();
+                        let expected = mul_group_words::<$narsil_projective>(ha, b.into_bigint().0).to_affine();
                         assert_eq!(ha.mul_scalar(hb).to_affine(), expected);
                         assert_eq!(
-                            crate::wnaf::mul_group::<$helius_projective, 2, 1, 257>(ha, hb).to_affine(),
+                            crate::wnaf::mul_group::<$narsil_projective, 2, 1, 257>(ha, hb).to_affine(),
                             expected
                         );
                         assert_eq!(
-                            crate::wnaf::mul_group::<$helius_projective, 3, 2, 257>(ha, hb).to_affine(),
+                            crate::wnaf::mul_group::<$narsil_projective, 3, 2, 257>(ha, hb).to_affine(),
                             expected
                         );
                         assert_eq!(
-                            crate::wnaf::mul_group::<$helius_projective, 4, 4, 257>(ha, hb).to_affine(),
+                            crate::wnaf::mul_group::<$narsil_projective, 4, 4, 257>(ha, hb).to_affine(),
                             expected
                         );
                         assert_eq!(
-                            crate::wnaf::mul_group::<$helius_projective, 5, 8, 257>(ha, hb).to_affine(),
+                            crate::wnaf::mul_group::<$narsil_projective, 5, 8, 257>(ha, hb).to_affine(),
                             expected
                         );
                         assert_eq!(expected, $convert((a * b).into_affine()));
@@ -1850,7 +1850,7 @@ macro_rules! port_group_tests {
                         let naive: Vec<_> = scalars
                             .iter()
                             .map(|scalar| {
-                                mul_group_words::<$helius_projective>(
+                                mul_group_words::<$narsil_projective>(
                                     ha,
                                     scalar.into_bigint().0,
                                 )
@@ -1895,8 +1895,8 @@ macro_rules! port_group_tests {
                         for _ in 0..5 {
                             let index = rng.next_u64() as usize % GROUP_ITERATIONS;
                             values[index] = (
-                                <$helius_projective>::identity(),
-                                <$helius_projective>::identity().to_affine(),
+                                <$narsil_projective>::identity(),
+                                <$narsil_projective>::identity().to_affine(),
                             );
                         }
                         for _ in 0..5 {

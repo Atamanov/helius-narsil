@@ -8,17 +8,17 @@ use crate::fp::Fp;
 use crate::fp2::Fp2;
 use crate::fp2_fast::{F2, f2_add, f2_dbl, f2_from, f2_mul_fp, f2_neg, f2_one, f2_sub, f2_to};
 // The ADX square uses two products. Other targets use the fused SoS kernel.
-#[cfg(not(all(helius_mont4_x86_64_adx, not(feature = "force-portable"))))]
+#[cfg(not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable"))))]
 use crate::fp2_fast::f2_sqr as f2_sqr_g2;
 #[cfg(all(
-    helius_mont4_x86_64_adx,
-    not(helius_f2sqr_asm),
+    narsil_mont4_x86_64_adx,
+    not(narsil_f2sqr_asm),
     not(feature = "force-portable")
 ))]
 use crate::fp2_fast::f2_sqr_lazy as f2_sqr_g2;
 // The generated leaf computes the same two products with both Montgomery
 // chains interleaved.
-#[cfg(all(helius_f2sqr_asm, not(feature = "force-portable")))]
+#[cfg(all(narsil_f2sqr_asm, not(feature = "force-portable")))]
 use crate::fp2_fast::f2_sqr_fused as f2_sqr_g2;
 // All x86 tiers use the fused dual kernel. The Intel three-product route
 // lost 21% of line generation on Granite Rapids against one-call SoS.
@@ -95,11 +95,11 @@ impl G2Hom {
         self.x = f2_mul_g2(a, f2_sub(b, f));
         // y = g^2 - 3e^2. The lazy leaf holds both squares at double width
         // and reduces once per output half.
-        #[cfg(all(helius_g2_ysqr_asm, not(feature = "force-portable")))]
+        #[cfg(all(narsil_g2_ysqr_asm, not(feature = "force-portable")))]
         {
             self.y = crate::fp2_fast::f2_ysqr(g, e, f);
         }
-        #[cfg(not(all(helius_g2_ysqr_asm, not(feature = "force-portable"))))]
+        #[cfg(not(all(narsil_g2_ysqr_asm, not(feature = "force-portable"))))]
         {
             let e_square = f2_sqr_g2(e);
             self.y = f2_sub(f2_sqr_g2(g), f2_add(f2_dbl(e_square), e_square));
@@ -181,8 +181,8 @@ impl G1LineScalars {
 }
 
 /// The exact `mul_by_034` operands of one raw doubling record.
-#[cfg_attr(not(helius_miller_inline), inline(never))]
-#[cfg_attr(helius_miller_inline, inline(always))]
+#[cfg_attr(not(narsil_miller_inline), inline(never))]
+#[cfg_attr(narsil_miller_inline, inline(always))]
 fn scale_doubling(coeffs: &EllCoeff, s: &G1LineScalars) -> ScaledCoeffs {
     (
         f2_to(f2_mul_fp(coeffs.0, &s.neg_py)),
@@ -192,8 +192,8 @@ fn scale_doubling(coeffs: &EllCoeff, s: &G1LineScalars) -> ScaledCoeffs {
 }
 
 /// The exact `mul_by_034` operands of one raw addition record.
-#[cfg_attr(not(helius_miller_inline), inline(never))]
-#[cfg_attr(helius_miller_inline, inline(always))]
+#[cfg_attr(not(narsil_miller_inline), inline(never))]
+#[cfg_attr(narsil_miller_inline, inline(always))]
 fn scale_addition(coeffs: &EllCoeff, s: &G1LineScalars) -> ScaledCoeffs {
     (
         f2_to(f2_mul_fp(coeffs.0, &s.py)),
@@ -307,8 +307,8 @@ fn half4(v: &[u64; 4]) -> [u64; 4] {
 }
 
 /// x86 uses one outlined body to limit instruction-cache use.
-#[cfg_attr(all(target_arch = "x86_64", not(helius_miller_inline)), inline(never))]
-#[cfg_attr(any(not(target_arch = "x86_64"), helius_miller_inline), inline(always))]
+#[cfg_attr(all(target_arch = "x86_64", not(narsil_miller_inline)), inline(never))]
+#[cfg_attr(any(not(target_arch = "x86_64"), narsil_miller_inline), inline(always))]
 fn f2_half(a: F2) -> F2 {
     (half4(&a.0), half4(&a.1))
 }
@@ -343,7 +343,7 @@ pub fn miller_loop(p: &G1Affine, q: &G2Affine) -> Fp12 {
     // The capability proves CPU and OS support before the IFMA entry.
     #[cfg(all(
         feature = "std",
-        any(helius_avx512_ifma, helius_x86_runtime_ifma),
+        any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
         not(feature = "force-portable")
     ))]
     if let Some(ifma) = crate::x86_runtime::avx512_ifma() {
@@ -364,7 +364,7 @@ fn miller_loop_live_nonidentity(p: &G1Affine, q: &G2Affine) -> Fp12 {
 
     #[cfg(all(
         feature = "std",
-        any(helius_avx512_ifma, helius_x86_runtime_ifma),
+        any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
         not(feature = "force-portable")
     ))]
     if let Some(ifma) = crate::x86_runtime::avx512_ifma() {
@@ -453,7 +453,7 @@ pub(crate) fn miller_loop_live_for_test(p: &G1Affine, q: &G2Affine) -> Fp12 {
     }
 }
 
-#[cfg(all(test, feature = "std", helius_avx512_ifma))]
+#[cfg(all(test, feature = "std", narsil_avx512_ifma))]
 pub(crate) fn miller_loop_scalar_for_test(p: &G1Affine, q: &G2Affine) -> Fp12 {
     if p.is_identity() || q.is_identity() {
         Fp12::ONE
@@ -468,7 +468,7 @@ pub(crate) fn miller_loop_scalar_for_test(p: &G1Affine, q: &G2Affine) -> Fp12 {
 /// Granite Rapids the lane engine loses at three terms and wins from four,
 /// so the crossover sits at four.
 #[cfg(all(
-    any(helius_avx512_ifma, helius_x86_runtime_ifma),
+    any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
     not(feature = "force-portable")
 ))]
 pub(crate) const VERTICAL_MIN_MILLER_TERMS: usize = 4;
@@ -482,7 +482,7 @@ pub(crate) const VERTICAL_MIN_MILLER_TERMS: usize = 4;
 /// reduces, so the result is the shared-accumulator product bit for bit.
 pub fn multi_miller_loop(pairs: &[(&G1Affine, &G2Affine)]) -> Fp12 {
     #[cfg(all(
-        any(helius_avx512_ifma, helius_x86_runtime_ifma),
+        any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
         not(feature = "force-portable")
     ))]
     if crate::batch8::ifma_available() {
@@ -777,7 +777,7 @@ pub(crate) trait ActiveMillerLineSink {
     test,
     all(
         feature = "std",
-        any(helius_avx512_ifma, helius_x86_runtime_ifma),
+        any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
         not(feature = "force-portable")
     )
 ))]
@@ -805,7 +805,7 @@ fn push_signed_addition<S: ActiveMillerLineSink>(
     test,
     all(
         feature = "std",
-        any(helius_avx512_ifma, helius_x86_runtime_ifma),
+        any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
         not(feature = "force-portable")
     )
 ))]
@@ -855,7 +855,7 @@ pub(crate) fn stream_line_coeffs<S: MillerLineSink>(
     any(
         test,
         all(
-            any(helius_avx512_ifma, helius_x86_runtime_ifma),
+            any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
             not(feature = "force-portable")
         )
     )
@@ -945,7 +945,7 @@ pub fn miller_loop_prepared(p: &G1Affine, q: &G2Prepared) -> Fp12 {
 
     // The capability proves CPU and OS support before the IFMA entry.
     #[cfg(all(
-        any(helius_avx512_ifma, helius_x86_runtime_ifma),
+        any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
         not(feature = "force-portable")
     ))]
     if let Some(ifma) = crate::x86_runtime::avx512_ifma() {
@@ -1374,7 +1374,7 @@ pub(crate) fn stream_mixed_line_coeffs<S: MillerLineSink>(
 #[cfg(feature = "std")]
 pub(crate) fn multi_miller_loop_mixed(pairs: &[(&G1Affine, G2Miller<'_>)]) -> Fp12 {
     #[cfg(all(
-        any(helius_avx512_ifma, helius_x86_runtime_ifma),
+        any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
         not(feature = "force-portable")
     ))]
     if let Some(ifma) = crate::x86_runtime::avx512_ifma() {
@@ -1541,11 +1541,11 @@ mod tests {
 
     #[cfg(all(feature = "std", not(feature = "force-portable")))]
     fn typed_miller_bypasses_cache() -> bool {
-        #[cfg(any(helius_avx512_ifma, helius_x86_runtime_ifma))]
+        #[cfg(any(narsil_avx512_ifma, narsil_x86_runtime_ifma))]
         {
             crate::batch8::ifma_available()
         }
-        #[cfg(not(any(helius_avx512_ifma, helius_x86_runtime_ifma)))]
+        #[cfg(not(any(narsil_avx512_ifma, narsil_x86_runtime_ifma)))]
         {
             false
         }

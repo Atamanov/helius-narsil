@@ -167,7 +167,7 @@ mod validated_g2_cache {
     /// and LRU-motion rules. The caller proves the point decoded from `key`
     /// and passed the curve and subgroup checks. Without this insert a
     /// batch-validated small product never warms the prepared-schedule LRU.
-    #[cfg(helius_avx512_ifma)]
+    #[cfg(narsil_avx512_ifma)]
     pub(super) fn retain_batch_validated(key: &G2Bytes, point: &G2Affine, retain: bool) {
         CACHE.with(|cell| {
             let mut cache = cell.borrow_mut();
@@ -507,7 +507,7 @@ pub fn pairing_product_is_one(pairs: &[PairBytes]) -> Result<bool, InputError> {
     let mut decoded = Vec::with_capacity(pairs.len());
     let mut validated_g2 = Vec::<(G2Bytes, G2Affine)>::with_capacity(pairs.len());
 
-    #[cfg(all(helius_avx512_ifma, not(feature = "force-portable")))]
+    #[cfg(all(narsil_avx512_ifma, not(feature = "force-portable")))]
     {
         if should_batch_validate_g2(pairs) {
             for chunk in pairs.chunks(8) {
@@ -575,7 +575,7 @@ pub fn pairing_product_is_one(pairs: &[PairBytes]) -> Result<bool, InputError> {
             }
         }
     }
-    #[cfg(not(all(helius_avx512_ifma, not(feature = "force-portable"))))]
+    #[cfg(not(all(narsil_avx512_ifma, not(feature = "force-portable"))))]
     for pair in pairs {
         let g1 = pair.g1.to_affine()?;
         let g2 = if let Some((_, point)) = validated_g2.iter().find(|(key, _)| key == &pair.g2) {
@@ -610,7 +610,7 @@ pub fn pairing_product_is_one(pairs: &[PairBytes]) -> Result<bool, InputError> {
     // accumulator's dependent chain grows with the term count, the masked
     // eight-lane engine's does not. Two terms keep the prepared route below.
     #[cfg(all(
-        any(helius_avx512_ifma, helius_x86_runtime_ifma),
+        any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
         not(feature = "force-portable")
     ))]
     if routed.len() >= crate::pairing::miller::VERTICAL_MIN_MILLER_TERMS
@@ -672,7 +672,7 @@ fn should_group_pairs(live_count: usize, group_count: usize) -> bool {
 }
 
 #[inline]
-#[cfg(any(test, all(helius_avx512_ifma, not(feature = "force-portable"))))]
+#[cfg(any(test, all(narsil_avx512_ifma, not(feature = "force-portable"))))]
 fn should_batch_validate_g2(pairs: &[PairBytes]) -> bool {
     let first = &pairs[0].g2;
     let mut second = None;
@@ -1388,13 +1388,13 @@ mod tests {
             .collect();
         let first = pairing_product_is_one(&pairs).unwrap();
         let cold = validated_g2_cache::snapshot();
-        #[cfg(any(helius_avx512_ifma, helius_x86_runtime_ifma))]
+        #[cfg(any(narsil_avx512_ifma, narsil_x86_runtime_ifma))]
         let expected = if crate::batch8::ifma_available() {
             (validated_g2_cache::CAPACITY, 0)
         } else {
             (validated_g2_cache::CAPACITY, validated_g2_cache::CAPACITY)
         };
-        #[cfg(not(any(helius_avx512_ifma, helius_x86_runtime_ifma)))]
+        #[cfg(not(any(narsil_avx512_ifma, narsil_x86_runtime_ifma)))]
         let expected = (validated_g2_cache::CAPACITY, validated_g2_cache::CAPACITY);
         assert_eq!(cold.keys.len(), expected.0);
         // Every tier retains the four keys that survive the bounded LRU, so a

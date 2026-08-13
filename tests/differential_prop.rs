@@ -13,7 +13,7 @@
 //! The lazy radix-52 forms of the IFMA backend (`FpVec8L<B>`, `LAZY_CAP`) are
 //! crate-private, so no test can call them. Their public drivers are the
 //! eight-lane batch entries, which this file exercises under
-//! `helius_avx512_ifma` against the scalar composition. The bound algebra
+//! `narsil_avx512_ifma` against the scalar composition. The bound algebra
 //! behind them is proved separately in `src/verify_kani.rs`.
 //!
 //! Failure persistence: every block below uses [`config`], which pins the
@@ -601,7 +601,7 @@ mod batch_scalar {
 /// radix-52 forms, so on an IFMA host these equalities are the differential
 /// that covers `FpVec8L` bound tracking, the fold trajectories, and the
 /// cross-chunk lane accumulation against the scalar route.
-#[cfg(all(helius_avx512_ifma, not(feature = "force-portable")))]
+#[cfg(all(narsil_avx512_ifma, not(feature = "force-portable")))]
 mod lazy_ifma {
     use super::*;
     use helius_narsil::multi_pairing8;

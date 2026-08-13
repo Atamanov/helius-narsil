@@ -204,20 +204,20 @@ impl Mul for Fp6 {
     type Output = Self;
     #[inline(always)]
     fn mul(self, rhs: Self) -> Self {
-        // Whole-Fp6 leaf (HELIUS_FP6_ASM=1): same math as the composed path
+        // Whole-Fp6 leaf (NARSIL_FP6_ASM=1): same math as the composed path
         // below, one call instead of six sosd6 lane dispatches plus two Rust
         // xi scalings. The composed path stays the reference.
         #[cfg(all(
-            helius_mont4_x86_64_adx,
-            helius_fp6_asm,
+            narsil_mont4_x86_64_adx,
+            narsil_fp6_asm,
             not(feature = "force-portable")
         ))]
         {
             crate::fp::x86_64::fp6_mul(&self, &rhs)
         }
         #[cfg(not(all(
-            helius_mont4_x86_64_adx,
-            helius_fp6_asm,
+            narsil_mont4_x86_64_adx,
+            narsil_fp6_asm,
             not(feature = "force-portable")
         )))]
         {
@@ -236,8 +236,8 @@ impl Fp6 {
     #[cfg(any(
         test,
         not(all(
-            helius_mont4_x86_64_adx,
-            helius_fp6_asm,
+            narsil_mont4_x86_64_adx,
+            narsil_fp6_asm,
             not(feature = "force-portable")
         ))
     ))]

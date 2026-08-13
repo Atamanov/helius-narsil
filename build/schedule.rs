@@ -38,7 +38,7 @@ use super::machine::Reg::{
 };
 use super::machine::{LoopEnd, Machine, Mem, Reg};
 
-/// Register roles for `helius_mont4_mul_x86`. All fifteen usable GPRs are
+/// Register roles for `narsil_mont4_mul_x86`. All fifteen usable GPRs are
 /// live. There are no spills.
 pub const MUL_REGISTER_MAP: &[(Reg, &str)] = &[
     (Rdi, "z: result pointer (argument 1, live throughout)"),
@@ -70,7 +70,7 @@ pub const MUL_REGISTER_MAP: &[(Reg, &str)] = &[
     (Rbx, "high half of the current product"),
 ];
 
-/// Register roles for `helius_mont4_sqr_x86`.
+/// Register roles for `narsil_mont4_sqr_x86`.
 pub const SQR_REGISTER_MAP: &[(Reg, &str)] = &[
     (Rdi, "z: result pointer (argument 1, live throughout)"),
     (Rsi, "x pointer on entry; then cross-product word C6 / T6"),
@@ -234,7 +234,7 @@ fn reduce_and_store<M: Machine>(m: &mut M, value: [Reg; 4], keep: [Reg; 4]) {
     m.ret();
 }
 
-/// `helius_mont4_mul_x86`: fully unrolled CIOS Montgomery multiplication.
+/// `narsil_mont4_mul_x86`: fully unrolled CIOS Montgomery multiplication.
 ///
 /// Round r: `t += a * b_r` (product row), then one [`cancel_low_word`]
 /// (cancel row), then the shift-by-renaming. Round 0 builds `t` directly from
@@ -293,7 +293,7 @@ pub fn mont4_mul<M: Machine>(m: &mut M) {
     reduce_and_store(m, result, A);
 }
 
-/// `helius_mont4_sqr_x86`: dedicated Montgomery squaring.
+/// `narsil_mont4_sqr_x86`: dedicated Montgomery squaring.
 ///
 /// Ten products instead of sixteen: six cross products summed once and
 /// doubled by an add-to-self chain, then four diagonal squares folded in.
@@ -500,7 +500,7 @@ pub fn mont4_redc_x86<M: Machine>(m: &mut M) {
     reduce_and_store(m, [R12, R13, R14, R15], [R8, R9, R10, R11]);
 }
 
-/// Register roles for `helius_sos_x86`.
+/// Register roles for `narsil_sos_x86`.
 pub const SOS_REGISTER_MAP: &[(Reg, &str)] = &[
     (
         Rdi,
@@ -568,7 +568,7 @@ fn sos_row<M: Machine>(m: &mut M, b: Reg, product: &str) {
     sos_row_at(m, b, 0, product);
 }
 
-/// Register roles for `helius_sosd2_x86`.
+/// Register roles for `narsil_sosd2_x86`.
 pub const SOSD2_REGISTER_MAP: &[(Reg, &str)] = &[
     (Rdi, "z on entry (spilled at once); then lane1 accumulator"),
     (Rsi, "x0 pointer on entry; then reloaded pointer scratch"),
@@ -803,7 +803,7 @@ pub fn sosd2_x86<M: Machine>(m: &mut M) {
     m.ret();
 }
 
-/// Register roles for `helius_sosd2_small_x86`.
+/// Register roles for `narsil_sosd2_small_x86`.
 pub const SOSD2_SMALL_REGISTER_MAP: &[(Reg, &str)] = &[
     (
         Rdi,
@@ -845,7 +845,7 @@ pub const SOSD2_SMALL_REGISTER_MAP: &[(Reg, &str)] = &[
 const CONSTS_PTR_OFF: i32 = 96;
 const SOSD2_SMALL_FRAME: i32 = 104;
 
-/// `helius_sosd2_small_x86`: the rolled, size-compact variant of
+/// `narsil_sosd2_small_x86`: the rolled, size-compact variant of
 /// [`sosd2_x86`] -- same lanes, same contract, same spill-frame design, but
 /// the four reduction rounds share one loop body so the text stays op-cache
 /// friendly inside the combined pairing loop (the unrolled kernel's 2.4 KiB
@@ -997,7 +997,7 @@ pub fn sosd2_small_x86<M: Machine>(m: &mut M) {
     m.ret();
 }
 
-/// Register roles for `helius_f2sqr_x86` and its rolled twin. The two lanes
+/// Register roles for `narsil_f2sqr_x86` and its rolled twin. The two lanes
 /// reuse the sosd2 accumulator banks, so the same fifteen roles apply.
 pub const F2SQR_REGISTER_MAP: &[(Reg, &str)] = &[
     (
@@ -1211,7 +1211,7 @@ fn f2sqr_store_lanes<M: Machine>(m: &mut M, lane0: [Reg; 4], lane1: [Reg; 4], z:
     m.ret();
 }
 
-/// `helius_f2sqr_x86`: the complex Fp2 square `(x0 + x1*u)^2` over
+/// `narsil_f2sqr_x86`: the complex Fp2 square `(x0 + x1*u)^2` over
 /// `Fp2 = Fp[u]/(u^2 + 1)` as one leaf with two interleaved Montgomery
 /// chains -- `lane0 = (x0 + x1)(x0 - x1)/R`, `lane1 = x0*(2*x1)/R`.
 ///
@@ -1286,7 +1286,7 @@ pub fn f2sqr_x86<M: Machine>(m: &mut M) {
     f2sqr_store_lanes(m, lane0, lane1, t[4]);
 }
 
-/// `helius_f2sqr_small_x86`: the rolled twin of [`f2sqr_x86`] -- same lanes,
+/// `narsil_f2sqr_small_x86`: the rolled twin of [`f2sqr_x86`] -- same lanes,
 /// same contract, same bounds, one shared round body so the text stays
 /// op-cache compact inside the Miller loop.
 ///
@@ -1354,7 +1354,7 @@ pub fn f2sqr_small_x86<M: Machine>(m: &mut M) {
     );
 }
 
-/// Register roles for `helius_g2_ysqr_x86`. The product walk holds a
+/// Register roles for `narsil_g2_ysqr_x86`. The product walk holds a
 /// six-word raw accumulator plus three frame pointers, the reduction walk an
 /// eight-word double-width value plus the two Montgomery scratch halves, so
 /// no computed state ever leaves a register.
@@ -1641,7 +1641,7 @@ fn g2y_sub_mod_row<M: Machine>(m: &mut M) {
     fsq_csub_store(m, [R12, R13, R14, R15], [Rax, Rbx, MULTIPLIER, Rcx], Rdi, 0);
 }
 
-/// `helius_g2_ysqr_x86`: the Miller doubling step's `y = g^2 - 3*e^2` over
+/// `narsil_g2_ysqr_x86`: the Miller doubling step's `y = g^2 - 3*e^2` over
 /// Fp2, in mcl's lazy double-width shape -- 4 raw 4x4 products and 2
 /// Montgomery reductions where the composed route pays 4 products and 4
 /// reductions plus three Fp2 helper round trips.
@@ -1798,7 +1798,7 @@ pub fn g2_ysqr_x86<M: Machine>(m: &mut M) {
     m.ret();
 }
 
-/// Register roles for `helius_fp6_mul_x86`.
+/// Register roles for `narsil_fp6_mul_x86`.
 pub const FP6_REGISTER_MAP: &[(Reg, &str)] = &[
     (
         Rdi,
@@ -2161,7 +2161,7 @@ fn t6_cancel_shift<M: Machine>(m: &mut M) {
     m.xor_clear(T[5], "t5 = 0 (CF/OF stay clear)");
 }
 
-/// `helius_fp6_mul_x86`: one whole Fp6 = Fp2[v]/(v^3 - xi) product,
+/// `narsil_fp6_mul_x86`: one whole Fp6 = Fp2[v]/(v^3 - xi) product,
 /// `z = a * b` with `xi = 9 + u`, in a single leaf call.
 ///
 /// Semantics (exactly `Fp6::mul`'s SoS schoolbook, Longa 2022/367 Eq. 9,
@@ -2346,7 +2346,7 @@ pub const FP2_XI_COMPACT_REGISTER_MAP: &[(Reg, &str)] = &[
     (Rax, "borrow mask"),
 ];
 
-/// Register roles for `helius_fp12_sqr_mcl_x86`.
+/// Register roles for `narsil_fp12_sqr_mcl_x86`.
 pub const FP12_SQR_MCL_REGISTER_MAP: &[(Reg, &str)] = &[
     (
         Rdi,
@@ -2652,7 +2652,7 @@ pub fn fp12_sqr_mcl_x86<M: Machine>(m: &mut M) {
     m.mov(Rdx, Rbx, "b");
     m.add_imm(Rdx, 192, "");
     m.mov(Rcx, Rbp, "constants");
-    m.call("helius_fp6_mul_x86");
+    m.call("narsil_fp6_mul_x86");
 
     m.comment("t0 = a+b: six canonical Fp rows");
     m.mov(Rdi, rsp, "t0");
@@ -2674,7 +2674,7 @@ pub fn fp12_sqr_mcl_x86<M: Machine>(m: &mut M) {
     m.mov(Rsi, Rbx, "b.c2");
     m.add_imm(Rsi, 320, "");
     m.mov(Rdx, Rbp, "constants");
-    m.call("helius_fp2_xi_compact_x86");
+    m.call("narsil_fp2_xi_compact_x86");
     m.mov(Rdi, rsp, "t1.c0");
     m.add_imm(Rdi, F12C_T1, "");
     m.mov(Rsi, Rdi, "xi*b.c2");
@@ -2709,7 +2709,7 @@ pub fn fp12_sqr_mcl_x86<M: Machine>(m: &mut M) {
     m.mov(Rdx, rsp, "t1");
     m.add_imm(Rdx, F12C_T1, "");
     m.mov(Rcx, Rbp, "constants");
-    m.call("helius_fp6_mul_x86");
+    m.call("narsil_fp6_mul_x86");
 
     m.comment("scratch = xi*ab.c2");
     m.mov(Rdi, rsp, "scratch");
@@ -2717,7 +2717,7 @@ pub fn fp12_sqr_mcl_x86<M: Machine>(m: &mut M) {
     m.mov(Rsi, rsp, "ab.c2");
     m.add_imm(Rsi, F12C_AB + 128, "");
     m.mov(Rdx, Rbp, "constants");
-    m.call("helius_fp2_xi_compact_x86");
+    m.call("narsil_fp2_xi_compact_x86");
 
     m.comment("c0.c0 = st.c0 - xi*ab.c2 - ab.c0");
     m.mov(Rdi, Rbx, "st.c0");
@@ -2790,7 +2790,7 @@ pub fn fp12_sqr_mcl_x86<M: Machine>(m: &mut M) {
     m.ret();
 }
 
-/// Register roles for `helius_fp12_034_x86`.
+/// Register roles for `narsil_fp12_034_x86`.
 pub const FP12_034_REGISTER_MAP: &[(Reg, &str)] = &[
     (
         Rdi,
@@ -2853,7 +2853,7 @@ const F034_YB: i32 = 152;
 const F034_G: i32 = 632;
 const F034_FRAME: i32 = 1400;
 
-/// `helius_fp12_034_x86`: the whole sparse Fp12 product of the Miller loop,
+/// `narsil_fp12_034_x86`: the whole sparse Fp12 product of the Miller loop,
 /// `z = f * (c0 + c3*w + c4*v*w)` with `w^2 = v`, `v^3 = xi = 9 + u`, in a
 /// single leaf call (arkworks `mul_by_034`, D-type lines).
 ///
@@ -3107,7 +3107,7 @@ pub fn fp12_034_x86<M: Machine>(m: &mut M) {
     m.ret();
 }
 
-/// Register roles for `helius_fp4_sqr_x86`.
+/// Register roles for `narsil_fp4_sqr_x86`.
 pub const FP4_SQR_REGISTER_MAP: &[(Reg, &str)] = &[
     (
         Rdi,
@@ -3171,7 +3171,7 @@ const FP4_X: i32 = 360;
 const FP4_D: i32 = 424;
 const FP4_FRAME: i32 = 488;
 
-/// `helius_fp4_sqr_x86`: the whole Fp4 square of the Granger-Scott
+/// `narsil_fp4_sqr_x86`: the whole Fp4 square of the Granger-Scott
 /// cyclotomic square, `(r0 + r1*y)^2` with `y^2 = xi = 9 + u`, in a single
 /// leaf call -- the hottest final-exponentiation kernel (three calls per
 /// cyclotomic square, 576 per final exp).
@@ -3209,7 +3209,7 @@ const FP4_FRAME: i32 = 488;
 /// window and its end bound, so both components share every loop body.
 /// Latency note: the pow_x chain runs through t0 (cyclotomic_square feeds
 /// t0/t1 back through z0..z5), and the lane-block shape keeps each lane's
-/// four cancels serial exactly as two `helius_sos_x86` calls would be --
+/// four cancels serial exactly as two `narsil_sos_x86` calls would be --
 /// this leaf deletes the call/marshal overhead (four calls, 24 pointer
 /// stores, two negp temps, a Rust xi scaling and an Fp2 double per
 /// fp4_square_sos), not the dependent-chain structure.
@@ -3459,7 +3459,7 @@ pub fn fp4_sqr_x86<M: Machine>(m: &mut M) {
     m.ret();
 }
 
-/// Register roles for `helius_fp12_sqr_x86`.
+/// Register roles for `narsil_fp12_sqr_x86`.
 pub const FP12_SQR_REGISTER_MAP: &[(Reg, &str)] = &[
     (
         Rdi,
@@ -3852,7 +3852,7 @@ fn fsq_mu_reduce5<M: Machine>(m: &mut M, v: [Reg; 5], s: [Reg; 5]) {
     m.claim_zero(v[4], "value - q*p < 1.33p < 2^255 fits four limbs");
 }
 
-/// `helius_fp12_sqr_x86`: the whole Fp12 square in mcl's lazy double-width
+/// `narsil_fp12_sqr_x86`: the whole Fp12 square in mcl's lazy double-width
 /// shape -- 36 raw 4x4 products and 12 Montgomery reductions where the
 /// composed SoS path pays 84 products and 12 interleaved reductions.
 ///
@@ -4636,7 +4636,7 @@ fn fsq_mod_walk<M: Machine>(m: &mut M) {
     );
 }
 
-/// Register roles for `helius_fp12_mul_x86` (the fp12_sqr roles verbatim:
+/// Register roles for `narsil_fp12_mul_x86` (the fp12_sqr roles verbatim:
 /// every phase is a shared walk body).
 pub const FP12_MUL_REGISTER_MAP: &[(Reg, &str)] = &[
     (
@@ -4870,7 +4870,7 @@ fn fmu_walk_setup_ctx<M: Machine>(m: &mut M, cursor: Reg, start: i32, ctx_end: i
     m.add_imm(cursor, start, "walk start");
 }
 
-/// `helius_fp12_mul_x86`: the whole Fp12 product in mcl's lazy double-width
+/// `narsil_fp12_mul_x86`: the whole Fp12 product in mcl's lazy double-width
 /// shape -- 54 raw 4x4 products and 12 Montgomery reductions where the
 /// composed path (Karatsuba over three Fp6 products) pays 108 products and
 /// 18 reductions.
@@ -5119,7 +5119,7 @@ pub fn fp12_mul_x86<M: Machine>(m: &mut M) {
     m.ret();
 }
 
-/// Register roles for `helius_cyc_sqr_x86` (walk bodies shared with
+/// Register roles for `narsil_cyc_sqr_x86` (walk bodies shared with
 /// fp12_sqr/fp12_mul, so the roles mirror theirs).
 pub const CYC_SQR_REGISTER_MAP: &[(Reg, &str)] = &[
     (
@@ -5387,7 +5387,7 @@ fn cyc_walk_bound<M: Machine>(m: &mut M, end_off: i32) {
     m.store(Mem::new(Reg::Rsp, FSQ_WALK_END), Rax, "walk bound");
 }
 
-/// `helius_cyc_sqr_x86`: the Granger-Scott cyclotomic square in mcl's lazy
+/// `narsil_cyc_sqr_x86`: the Granger-Scott cyclotomic square in mcl's lazy
 /// double-width shape -- 18 raw 4x4 products and 12 Montgomery reductions
 /// where the composed SoS path pays 36 products and 12 interleaved
 /// reductions. The single hottest final-exponentiation shape: 192 calls per
@@ -5656,7 +5656,7 @@ pub fn cyc_sqr_x86<M: Machine>(m: &mut M) {
     m.ret();
 }
 
-/// Register roles for `helius_fp12_034l_x86` (walk bodies shared with
+/// Register roles for `narsil_fp12_034l_x86` (walk bodies shared with
 /// fp12_sqr/fp12_mul/cyc_sqr, so the roles mirror theirs).
 pub const FP12_034L_REGISTER_MAP: &[(Reg, &str)] = &[
     (
@@ -5940,10 +5940,10 @@ fn f34l_stage_blocks<M: Machine>(m: &mut M, count: i32, label: &str) {
     });
 }
 
-/// `helius_fp12_034l_x86`: the Miller loop's sparse Fp12 line update
+/// `narsil_fp12_034l_x86`: the Miller loop's sparse Fp12 line update
 /// `z = f * (c0 + c3*w + c4*v*w)` in mcl's lazy double-width shape (mcl
 /// `mul_403`, pairing_impl.hpp) -- 39 raw 4x4 products and 12 Montgomery
-/// reductions where the v1 leaf (`helius_fp12_034_x86`) pays 72 products
+/// reductions where the v1 leaf (`narsil_fp12_034_x86`) pays 72 products
 /// and 12 interleaved reductions and mcl itself pays 39 + 18 (this kernel
 /// defers mcl's per-stage `Fp2Dbl::mod` to one reduction per output Fp).
 ///
@@ -6209,7 +6209,7 @@ pub fn fp12_034l_x86<M: Machine>(m: &mut M) {
     m.ret();
 }
 
-/// Register roles for `helius_fp12_034k_x86` (walk bodies shared with
+/// Register roles for `narsil_fp12_034k_x86` (walk bodies shared with
 /// fp12_sqr/fp12_mul/cyc_sqr/fp12_034l, so the roles mirror theirs).
 pub const FP12_034K_REGISTER_MAP: &[(Reg, &str)] = &[
     (
@@ -6358,10 +6358,10 @@ fn fp12_034k_tables() -> Vec<u64> {
     t
 }
 
-/// `helius_fp12_034k_x86`: the Miller loop's sparse Fp12 line update
+/// `narsil_fp12_034k_x86`: the Miller loop's sparse Fp12 line update
 /// `z = f * (c0 + c3*w + c4*v*w)` in the v1 leaf's uniform W-basis walk
 /// shape with Karatsuba inside every Fp2 product -- 54 raw 4x4 products and
-/// 12 Montgomery reductions where the v1 leaf (`helius_fp12_034_x86`) pays
+/// 12 Montgomery reductions where the v1 leaf (`narsil_fp12_034_x86`) pays
 /// 72 products and 12 interleaved reductions. The lazy 034l leaf reaches 39
 /// products but through a serial staged DAG. This kernel keeps v1's
 /// execution shape (six identical, independent coefficient bodies) and cuts
@@ -6781,7 +6781,7 @@ pub fn fp12_034k_x86<M: Machine>(m: &mut M) {
     m.ret();
 }
 
-/// `helius_sos_x86`: rolled sum-of-products Montgomery reduction
+/// `narsil_sos_x86`: rolled sum-of-products Montgomery reduction
 /// (Longa, ePrint 2022/367, Alg. 2, B = 1) with runtime product count.
 ///
 /// Computes `(sum_{i<T} a_i * b_i) * R^{-1} mod p` for `T` operand pairs
@@ -6900,7 +6900,7 @@ pub fn sos_rolled<M: Machine>(m: &mut M) {
     m.ret();
 }
 
-/// Register roles for `helius_sosd6_x86`.
+/// Register roles for `narsil_sosd6_x86`.
 pub const SOSD6_REGISTER_MAP: &[(Reg, &str)] = &[
     (Rdi, "z on entry (spilled at once); then lane1 word 4"),
     (
@@ -7072,7 +7072,7 @@ fn sosd6_cancel_shift<M: Machine>(m: &mut M, t: [Reg; 5], lane: &str) {
     );
 }
 
-/// `helius_sosd6_x86`: dedicated dual-lane sum of products, fixed T = 6 per
+/// `narsil_sosd6_x86`: dedicated dual-lane sum of products, fixed T = 6 per
 /// lane -- both Fp components of `sum_{i<3} x_i * y_i` over Fp2 in one leaf:
 ///
 /// * lane0 = `(sum x_i0*y_i0 + x_i1*(p - y_i1)) * R^-1 mod p`,
@@ -7082,7 +7082,7 @@ fn sosd6_cancel_shift<M: Machine>(m: &mut M, t: [Reg; 5], lane: &str) {
 /// portable `sosd6`, with the three `p - y_i1` images computed in-kernel.
 /// This is the tower's hottest dual-lane shape (each composed Fp12 square
 /// dispatches it six times, each mul_by_034 six, each Fp6 mul three), and
-/// the composed route pays it as two serial `helius_sos_x86` calls whose
+/// the composed route pays it as two serial `narsil_sos_x86` calls whose
 /// ~700-instruction single-lane carry chains cannot overlap.
 ///
 /// # ABI: one caller-staged block
@@ -7102,7 +7102,7 @@ fn sosd6_cancel_shift<M: Machine>(m: &mut M, t: [Reg; 5], lane: &str) {
 ///   kernel frame instead.
 ///
 /// Twelve SysV pointer arguments do not exist, so the ABI choice is between
-/// a 12-pointer table (the `helius_sos_x86` shape) and this staged block.
+/// a 12-pointer table (the `narsil_sos_x86` shape) and this staged block.
 /// The block wins on total overhead: a table costs the kernel twelve
 /// pointer loads plus 48 double-indirected limb loads and ~60 stores of
 /// prologue staging on every call (the rounds must read y via rsp and the
