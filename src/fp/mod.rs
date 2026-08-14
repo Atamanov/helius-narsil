@@ -412,9 +412,8 @@ mod tests {
         assert_eq!(a * inv, Fp::ONE);
     }
 
-    /// from_raw must reduce unreduced limbs before the kernel: the x86
-    /// dual-chain schedule miscomputes for a >= p (found on Zen 4). Runs on
-    /// every backend so any tier regression surfaces in its own CI.
+    /// `from_raw` must reduce unreduced limbs before passing them to kernels
+    /// whose input contract requires canonical field elements.
     #[test]
     fn from_raw_reduces_unreduced_limbs_on_every_backend() {
         use rand::{RngCore, SeedableRng, rngs::StdRng};
@@ -428,7 +427,7 @@ mod tests {
             P,
             [P[0] + 1, P[1], P[2], P[3]],
             [u64::MAX; 4],
-            // Zen 4 failing probe shape: high limb far above p.
+            // Adversarial shape with a high limb far above p.
             [
                 0x57d8_57d8_57d8_57d8,
                 u64::MAX,

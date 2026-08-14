@@ -345,8 +345,8 @@ impl Fp12 {
     ))]
     #[inline(always)]
     pub(crate) fn fp4_square_sos_composed(r0: Fp2, r1: Fp2) -> (Fp2, Fp2) {
-        // Single-lane kernels: the dual variants spill their two accumulator
-        // sets on x86 (16 GPRs) and measurably slow the pow_x chain.
+        // Single-lane kernels bound the number of simultaneously live
+        // accumulator sets on x86.
         use crate::fp::sos::{negp, sos2, sos4};
         let x = r1.mul_by_nonresidue();
         let d = r0.double();
@@ -714,10 +714,9 @@ impl Fp12 {
     }
 
     /// Karabina compressed cyclotomic squarings (eprint 2010/542) over the NAF
-    /// of x, one batched Fp2 inversion for decompression. On x's dense NAF
-    /// (HW 24) the 23 decompressions plus the inversion outweigh the 6->4 Fp2
-    /// muls saved per square, so this measures slower than `pow_x`. Kept for
-    /// evaluation. Degenerate inputs fall back to the Granger-Scott ladder.
+    /// of x, with one batched Fp2 inversion for decompression. Retained as an
+    /// independent compressed-form oracle. Degenerate inputs fall back to
+    /// the Granger-Scott ladder.
     #[cfg(test)]
     fn pow_x_karabina(self) -> Self {
         let mut rec = [(Compressed::ZERO, false); X_NAF_TAIL_NONZERO];

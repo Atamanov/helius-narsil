@@ -60,9 +60,9 @@ pub fn f2_to(f: F2) -> Fp2 {
     }
 }
 
-// X86 outlines these operations to keep the Miller loop within its instruction
-// cache. AArch64 keeps them inline, and NARSIL_MILLER_INLINE re-screens the
-// x86 choice against a host whose accumulator has moved to the vector side.
+// X86 may outline these operations to bound the Miller loop's instruction
+// footprint. Other targets inline them. NARSIL_MILLER_INLINE selects the x86
+// inline variant.
 macro_rules! miller_helper {
     ($(#[$doc:meta])* pub fn $name:ident $signature:tt -> F2 $body:block) => {
         $(#[$doc])*
@@ -114,10 +114,8 @@ pub fn f2_sqr(a: F2) -> F2 {
 }
 
 /// Karatsuba: 3 Montgomery products + 3 reductions vs `f2_mul`'s fused
-/// 4 + 2, for five extra modular add/subs. Canonical in/out. The
-/// differential-test reference. No production tier routes here now, the
-/// three-call form loses to the one-call fused dual kernel on every
-/// measured x86 host.
+/// 4 + 2, for five extra modular add/subs. Canonical in/out. Retained as a
+/// differential-test reference; production uses the fused dual kernel.
 #[cfg(test)]
 #[cfg_attr(target_arch = "x86_64", inline(never))]
 #[cfg_attr(not(target_arch = "x86_64"), inline(always))]
@@ -130,8 +128,8 @@ pub fn f2_mul_karatsuba(a: F2, b: F2) -> F2 {
 
 /// (a+bu)^2 = (a+b)(a-b) + 2ab u: 2 Montgomery products + 2 reductions vs
 /// `f2_sqr`'s fused 4 + 2, for three extra modular add/subs. Canonical
-/// in/out. The ADX tier routes the Miller G2-step squares here (mont_mul
-/// dominates there). Other tiers keep the fused dual kernel.
+/// in/out. The ADX tier routes Miller G2-step squares here; other tiers use
+/// the fused dual kernel.
 #[cfg(any(test, all(narsil_mont4_x86_64_adx, not(feature = "force-portable"))))]
 #[cfg_attr(target_arch = "x86_64", inline(never))]
 #[cfg_attr(not(target_arch = "x86_64"), inline(always))]

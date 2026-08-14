@@ -149,10 +149,10 @@ mod tests {
             let portable = portable::mont_mul(&a, &b);
             assert_eq!(portable, mont_mul(&a, &b), "assembly case {case}");
 
-            // Arkworks and Helius use the same four-limb R=2^256 Montgomery
+            // Arkworks and Narsil use the same four-limb R=2^256 Montgomery
             // representation. `new_unchecked` deliberately consumes those raw
             // limbs, so this oracle compares the kernel result directly: no
-            // Helius conversion path can mask a common error.
+            // Narsil conversion path can mask a common error.
             let ark_a = ark_bn254::Fq::new_unchecked(BigInt::new(a));
             let ark_b = ark_bn254::Fq::new_unchecked(BigInt::new(b));
             let ark_product = (ark_a * ark_b).0.0;

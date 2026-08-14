@@ -1,4 +1,4 @@
-//! Pins every compile-time-derived Helius constant to its arkworks 0.5
+//! Pins every compile-time-derived Narsil constant to its arkworks 0.5
 //! counterpart, either by direct value comparison or by an observable
 //! identity through the public API.
 //!
@@ -6,11 +6,11 @@
 //! BN seed, ATE loop digits, curve coefficients, GLV lattice data, psi
 //! coefficients (TWIST_MUL_BY_Q_X/Y).
 //!
-//! Observational comparisons (Helius side private): Fp12 gamma tables via
+//! Observational comparisons (Narsil side private): Fp12 gamma tables via
 //! frobenius_map on random elements, twist b' via the G2 curve equation,
 //! GLV beta/lambda action via the endomorphism eigenvalue identity.
 //!
-//! Helius constants that are pub(crate) only (BETA_MONT, GLV basis,
+//! Narsil constants that are pub(crate) only (BETA_MONT, GLV basis,
 //! GAMMA1/GAMMA2, TWIST_B, FROB_TWIST_X/Y, PSI_X/Y) are const-asserted
 //! in-crate to equal closed-form functions of BN_X and P. Here the same
 //! closed forms are recomputed through public field types and compared to
@@ -38,7 +38,7 @@ fn rng() -> StdRng {
 }
 
 // Canonical-limb bridge: ark into_bigint() yields the canonical (non
-// Montgomery) little-endian limbs, exactly what Helius from_raw consumes.
+// Montgomery) little-endian limbs, exactly what Narsil from_raw consumes.
 
 fn fp_from_ark(v: ArkFq) -> Fp {
     Fp::from_raw(v.into_bigint().0)
@@ -259,7 +259,7 @@ fn tower_multiplication_matches_ark() {
     }
 }
 
-/// Observational pin of the private GAMMA1 / GAMMA2 frobenius tables: Helius
+/// Observational pin of the private GAMMA1 / GAMMA2 frobenius tables: Narsil
 /// frobenius_map (p, p^2, p^3) equals ark frobenius_map(1 / 2 / 3) on 200
 /// seeded elements. Fp6 exposes no standalone frobenius. Its coefficients
 /// are the same gamma entries and are covered through Fp12.
@@ -329,7 +329,7 @@ fn nonresidue_constants_match_ark() {
     }
 }
 
-/// G1: b = 3, a = 0, generator (1, 2). G2 twist b' = 3/xi: Helius keeps
+/// G1: b = 3, a = 0, generator (1, 2). G2 twist b' = 3/xi: Narsil keeps
 /// TWIST_B private, so recover it through the public curve equation
 /// b' = y^2 - x^3 at ark points and compare with ark g2 COEFF_B. The
 /// on-curve predicate must also agree on accepted and corrupted points.
@@ -378,7 +378,7 @@ fn curve_coefficients_match_ark() {
     }
 }
 
-/// GLV data. Helius keeps BETA_MONT, the lattice basis, and the scalar
+/// GLV data. Narsil keeps BETA_MONT, the lattice basis, and the scalar
 /// decomposition private, but const-asserts them in msm.rs to equal closed
 /// forms in BN_X. The same closed forms are recomputed here through public
 /// field types and compared with ark's GLVConfig:
@@ -387,7 +387,7 @@ fn curve_coefficients_match_ark() {
 ///   basis  = [[6x^2 + 2x, -(2x + 1)], [2x + 1, 6x^2 + 4x + 1]]
 ///            == SCALAR_DECOMP_COEFFS rows (sign flag true = negative).
 /// The eigenvalue identity (beta * x, y) = [lambda](x, y) is then executed
-/// on Helius types with the ark constants, tying the values to behavior.
+/// on Narsil types with the ark constants, tying the values to behavior.
 #[test]
 fn glv_constants_match_ark() {
     let x = Fp::from_u64(consts::BN_X);
@@ -431,7 +431,7 @@ fn glv_constants_match_ark() {
 }
 
 /// psi coefficients: ark TWIST_MUL_BY_Q_X / _Y are xi^((p-1)/3) and
-/// xi^((p-1)/2), the same values Helius pins privately as FROB_TWIST_X/Y in
+/// xi^((p-1)/2), the same values Narsil pins privately as FROB_TWIST_X/Y in
 /// the Miller loop and PSI_X/Y in the G2 subgroup check (both const-asserted
 /// in-crate against GAMMA1[1] and GAMMA1[2]). Recomputed here from public
 /// XI_A and P alone. PSI2_X = PSI_X * conj(PSI_X) has no ark constant. The

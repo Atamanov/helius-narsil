@@ -216,10 +216,9 @@ pub(crate) fn fp4_sqr(
 /// dual-lane T = 6 sums of products with the xi = 9 + u scalings of c3/c4
 /// computed in the kernel. `f` and the three coefficients must be canonical.
 /// The kernel reads all inputs before it writes the canonical result to `f`.
-// Dispatched by default on Intel targets, opt-in elsewhere (build.rs
-// NARSIL_FP12_034_ASM: Zen 4 store ports favor the composed path). The
-// sibling leaves take precedence when their toggles are also set (034K >
-// 034L > v1). Always covered by the leaf differential tests.
+// Dispatched by default on Intel targets and opt-in elsewhere through
+// NARSIL_FP12_034_ASM. Sibling leaves take precedence when enabled (034K >
+// 034L > v1). Covered by the leaf differential tests.
 #[cfg(any(
     test,
     all(

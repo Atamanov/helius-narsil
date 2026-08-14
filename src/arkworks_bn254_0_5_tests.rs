@@ -21,9 +21,9 @@
 //
 // 1. Preserve upstream module/test names and iteration metadata. Classify every
 //    semantic difference as `Adapted` with a specific waiver.
-// 2. Exercise a Helius operation on every adapted property. Ark-only assertions
+// 2. Exercise a Narsil operation on every adapted property. Ark-only assertions
 //    may guard pinned provenance/configuration, including an inert generated
-//    body, but never count as Helius coverage. Arkworks supplies inputs and
+//    body, but never count as Narsil coverage. Arkworks supplies inputs and
 //    expected values, not Ark-vs-Ark coverage.
 // 3. Use a fixed StdRng seed instead of ark_std::test_rng so failures are
 //    reproducible without adding another direct dependency.
@@ -207,7 +207,7 @@ macro_rules! ark_adapted_case {
     };
 }
 
-trait HeliusField:
+trait NarsilField:
     Copy
     + Debug
     + Eq
@@ -227,7 +227,7 @@ trait HeliusField:
 
 macro_rules! impl_narsil_field {
     ($field:ty) => {
-        impl HeliusField for $field {
+        impl NarsilField for $field {
             const ZERO: Self = <$field>::ZERO;
             const ONE: Self = <$field>::ONE;
 
@@ -257,9 +257,9 @@ impl_narsil_field!(Fp6);
 impl_narsil_field!(Fp12);
 
 trait ArkBridge: ArkField + UniformRand + Copy {
-    type Helius: HeliusField;
+    type Narsil: NarsilField;
 
-    fn to_helius(self) -> Self::Helius;
+    fn to_helius(self) -> Self::Narsil;
 }
 
 fn fq_to_fp(value: ArkFq) -> Fp {
@@ -289,9 +289,9 @@ fn fq12_to_fp12(value: ArkFq12) -> Fp12 {
 macro_rules! impl_ark_bridge {
     ($ark:ty, $helius:ty, $convert:ident) => {
         impl ArkBridge for $ark {
-            type Helius = $helius;
+            type Narsil = $helius;
 
-            fn to_helius(self) -> Self::Helius {
+            fn to_helius(self) -> Self::Narsil {
                 $convert(self)
             }
         }
@@ -306,11 +306,11 @@ impl_ark_bridge!(ArkFq12, Fp12, fq12_to_fp12);
 
 /// Test-side analogue of Ark's variable-width `Field::pow`.
 ///
-/// Helius deliberately gives each production field only the exponentiation
+/// Narsil deliberately gives each production field only the exponentiation
 /// surface its hot paths need. Keeping this generic adapter in the oracle
 /// module preserves the template's ten-limb exponent claims without growing
 /// the production API merely to improve a migration count.
-fn field_pow_limbs<F: HeliusField>(value: F, limbs: &[u64]) -> F {
+fn field_pow_limbs<F: NarsilField>(value: F, limbs: &[u64]) -> F {
     let mut acc = F::ONE;
     for &limb in limbs.iter().rev() {
         for bit in (0..64).rev() {
@@ -325,7 +325,7 @@ fn field_pow_limbs<F: HeliusField>(value: F, limbs: &[u64]) -> F {
 
 /// Prime fields are degree-one extensions, so their base-field embedding is
 /// the identity and `mul_by_base_prime_field` is ordinary multiplication.
-fn mul_by_prime_base_field<F: HeliusField>(value: F, base: F) -> F {
+fn mul_by_prime_base_field<F: NarsilField>(value: F, base: F) -> F {
     value * base
 }
 
@@ -344,7 +344,7 @@ fn run_prime_mul_by_base_field_elem<A: ArkBridge>(seed: u64) {
     }
 }
 
-/// Exercise the degree-one Frobenius law through the operation Helius does
+/// Exercise the degree-one Frobenius law through the operation Narsil does
 /// expose: exponentiation by the scalar-field characteristic.
 fn run_fr_frobenius() {
     let mut rng = StdRng::seed_from_u64(0x4652_4652_4f42_0001);
@@ -375,13 +375,13 @@ fn run_fr_frobenius() {
     }
 }
 
-trait HeliusSqrtField: HeliusField {
+trait NarsilSqrtField: NarsilField {
     fn sqrt(self) -> Option<Self>;
 }
 
 macro_rules! impl_narsil_sqrt_field {
     ($field:ty) => {
-        impl HeliusSqrtField for $field {
+        impl NarsilSqrtField for $field {
             fn sqrt(self) -> Option<Self> {
                 <$field>::sqrt(self)
             }
@@ -401,7 +401,7 @@ enum SquareClass {
 
 /// Euler/Legendre classification via the existing square-root surface. This
 /// is test-only: it does not add a low-value production API merely for parity.
-fn square_class<F: HeliusSqrtField>(value: F) -> SquareClass {
+fn square_class<F: NarsilSqrtField>(value: F) -> SquareClass {
     if value.is_zero() {
         SquareClass::Zero
     } else if value.sqrt().is_some() {
@@ -419,14 +419,14 @@ fn assert_upstream_sqrt_test_is_inert<A: ArkField>() {
 }
 
 // UPSTREAM: ark-algebra-test-templates 0.5.0/src/fields.rs::__test_field::test_mul_properties
-// ADAPTATION: retain 1,000 samples. Compare each Helius result to the converted Ark result.
+// ADAPTATION: retain 1,000 samples. Compare each Narsil result to the converted Ark result.
 fn run_mul_properties<A: ArkBridge>(seed: u64) {
     let mut rng = StdRng::seed_from_u64(seed);
     let zero = A::ZERO.to_helius();
     let one = A::ONE.to_helius();
-    assert_eq!(zero, A::Helius::ZERO);
+    assert_eq!(zero, A::Narsil::ZERO);
     assert!(zero.is_zero());
-    assert_eq!(one, A::Helius::ONE);
+    assert_eq!(one, A::Narsil::ONE);
     assert_eq!(one.invert(), Some(one));
 
     for sample in 0..FIELD_ITERATIONS {
@@ -511,7 +511,7 @@ fn next_pool_index(state: &mut u64) -> usize {
     *state as usize & (ADDITIVE_POOL_SIZE - 1)
 }
 
-fn additive_pool<A: ArkBridge>(seed: u64) -> Vec<(A, A::Helius)> {
+fn additive_pool<A: ArkBridge>(seed: u64) -> Vec<(A, A::Narsil)> {
     let mut rng = StdRng::seed_from_u64(seed);
     (0..ADDITIVE_POOL_SIZE)
         .map(|_| {
@@ -527,7 +527,7 @@ fn additive_pool<A: ArkBridge>(seed: u64) -> Vec<(A, A::Helius)> {
 // extension-field input conversions in debug CI.
 fn run_add_properties<A: ArkBridge>(seed: u64) {
     let pool = additive_pool::<A>(seed);
-    let zero = A::Helius::ZERO;
+    let zero = A::Narsil::ZERO;
     assert_eq!(-zero, zero);
     assert!(zero.is_zero());
     let mut state = seed ^ 0xa409_3822_299f_31d0;
@@ -568,7 +568,7 @@ fn run_add_properties<A: ArkBridge>(seed: u64) {
 // UPSTREAM: ark-algebra-test-templates 0.5.0/src/fields.rs::test_sub_properties.
 fn run_sub_properties<A: ArkBridge>(seed: u64) {
     let pool = additive_pool::<A>(seed);
-    let zero = A::Helius::ZERO;
+    let zero = A::Narsil::ZERO;
     let mut state = seed ^ 0x082e_fa98_ec4e_6c89;
 
     for sample in 0..(FIELD_ITERATIONS * FIELD_ITERATIONS) {
@@ -594,7 +594,7 @@ fn random_limbs<const N: usize>(rng: &mut impl RngCore) -> [u64; N] {
 fn run_prime_pow<A: ArkBridge>(
     seed: u64,
     modulus: [u64; 4],
-    narsil_pow: fn(A::Helius, &[u64; 4]) -> A::Helius,
+    narsil_pow: fn(A::Narsil, &[u64; 4]) -> A::Narsil,
 ) {
     let mut rng = StdRng::seed_from_u64(seed);
     for sample in 0..(FIELD_ITERATIONS / 10) {
@@ -603,7 +603,7 @@ fn run_prime_pow<A: ArkBridge>(
             let ha = a.to_helius();
             let limbs = [exponent, 0, 0, 0];
             let computed = narsil_pow(ha, &limbs);
-            let mut repeated = A::Helius::ONE;
+            let mut repeated = A::Narsil::ONE;
             for _ in 0..exponent {
                 repeated = repeated * ha;
             }
@@ -682,7 +682,7 @@ mod fields {
             let computed = fr_lincomb(&encoded_a, &encoded_b)
                 .expect("nonempty in-cap lincomb")
                 .to_fr()
-                .expect("Helius emits a canonical scalar");
+                .expect("Narsil emits a canonical scalar");
             let narsil_naive = a.iter().zip(b).fold(Fr::ZERO, |sum, (&left, &right)| {
                 sum + fr_to_fr(left) * fr_to_fr(right)
             });
@@ -701,7 +701,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_add_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS * FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng and recombine a deterministic 4,096-value Ark corpus instead of drawing three fresh values in each case; collapse Ark's duplicate zero()/ZERO predicates and reference-operand overloads to Helius ZERO/value operations. Preserve exactly 1,000^2 cases and all additive laws on Helius, with Ark conversion oracles."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng and recombine a deterministic 4,096-value Ark corpus instead of drawing three fresh values in each case; collapse Ark's duplicate zero()/ZERO predicates and reference-operand overloads to Narsil ZERO/value operations. Preserve exactly 1,000^2 cases and all additive laws on Narsil, with Ark conversion oracles."
             }
             fn test_add_properties() {
                 run_add_properties::<ArkFr>(0x4652_4144_4400_0002);
@@ -715,7 +715,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_sub_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS * FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng, map Ark's zero() constructor to Helius ZERO, and recombine a deterministic 4,096-value Ark corpus instead of drawing two fresh values in each case. Preserve exactly 1,000^2 cases and all subtraction laws on Helius, with an Ark conversion oracle."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng, map Ark's zero() constructor to Narsil ZERO, and recombine a deterministic 4,096-value Ark corpus instead of drawing two fresh values in each case. Preserve exactly 1,000^2 cases and all subtraction laws on Narsil, with an Ark conversion oracle."
             }
             fn test_sub_properties() {
                 run_sub_properties::<ArkFr>(0x4652_5355_4200_0002);
@@ -729,7 +729,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_mul_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng, map in-place/reference spellings to Helius values, replace duplicate one()/ONE/is_one predicates with equality/inversion checks on Helius ONE, and unwrap Option inverses for the same fixed nonzero samples. Preserve all 1,000 iterations and every multiplication, inverse, square, and distributivity law on Helius, adding Ark oracles."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng, map in-place/reference spellings to Narsil values, replace duplicate one()/ONE/is_one predicates with equality/inversion checks on Narsil ONE, and unwrap Option inverses for the same fixed nonzero samples. Preserve all 1,000 iterations and every multiplication, inverse, square, and distributivity law on Narsil, adding Ark oracles."
             }
             fn test_mul_properties() {
                 run_mul_properties::<ArkFr>(0x4652_4d55_4c00_0001);
@@ -743,7 +743,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_mul_by_base_field_elem",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-                waiver: "For prime Fr, BasePrimeField=Fr and extension_degree=1. Helius has no generic embedding/mul_by_base_prime_field facade, so map both to identity embedding and ordinary Fr multiplication; retain all 1,000 iterations, use the suite's fixed RNG, and add an Ark product oracle."
+                waiver: "For prime Fr, BasePrimeField=Fr and extension_degree=1. Narsil has no generic embedding/mul_by_base_prime_field facade, so map both to identity embedding and ordinary Fr multiplication; retain all 1,000 iterations, use the suite's fixed RNG, and add an Ark product oracle."
             }
             fn test_mul_by_base_field_elem() {
                 run_prime_mul_by_base_field_elem::<ArkFr>(0x4652_4241_5345_0001);
@@ -757,7 +757,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_pow",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS / 10),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng. Use Fr::pow_raw for the 20 small exponents and characteristic check, and a test-only Helius square-and-multiply adapter for the template's full ten-limb random exponents because production Fr intentionally accepts four limbs. Preserve 100 outer iterations and add Ark result oracles."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng. Use Fr::pow_raw for the 20 small exponents and characteristic check, and a test-only Narsil square-and-multiply adapter for the template's full ten-limb random exponents because production Fr intentionally accepts four limbs. Preserve 100 outer iterations and add Ark result oracles."
             }
             fn test_pow() {
                 run_prime_pow::<ArkFr>(0x4652_504f_5700_0002, crate::consts::R, Fr::pow_raw);
@@ -771,7 +771,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_sum_of_products_tests",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng and map generic const arrays to Helius' fallible ScalarBytes slice facade. Preserve all 1,000 outer iterations, lengths 1 through 10, and both random and maximal-value datasets; compare the Helius kernel with a Helius naive sum and Ark oracle."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng and map generic const arrays to Narsil' fallible ScalarBytes slice facade. Preserve all 1,000 outer iterations, lengths 1 through 10, and both random and maximal-value datasets; compare the Narsil kernel with a Narsil naive sum and Ark oracle."
             }
             fn test_sum_of_products_tests() {
                 let mut rng = StdRng::seed_from_u64(0x4652_534f_5000_0002);
@@ -803,7 +803,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_sum_of_products_edge_case",
                 execution: UpstreamExecution::Once,
-                waiver: "Specialize the template's generic modulus-bit derivation to the equivalent four-limb BN254 Fr boundary and map const arrays to Helius' fallible ScalarBytes slice facade. Preserve each length 1 through 10 and compare the Helius kernel with a Helius naive sum and Ark oracle."
+                waiver: "Specialize the template's generic modulus-bit derivation to the equivalent four-limb BN254 Fr boundary and map const arrays to Narsil' fallible ScalarBytes slice facade. Preserve each length 1 through 10 and compare the Narsil kernel with a Narsil naive sum and Ark oracle."
             }
             fn test_sum_of_products_edge_case() {
                 let a_max = ArkFr::from_bigint(ark_ff::BigInt::new([
@@ -831,7 +831,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_montgomery_config",
                 execution: UpstreamExecution::Once,
-                waiver: "Replace the template's num-bigint recomputation with Helius constructor-domain identities, the defining wrapping p*INV=-1 equation, and equality to pinned Ark Fr R/R2/INV constants. This proves the same three Montgomery constants without adding bigint code to Helius."
+                waiver: "Replace the template's num-bigint recomputation with Narsil constructor-domain identities, the defining wrapping p*INV=-1 equation, and equality to pinned Ark Fr R/R2/INV constants. This proves the same three Montgomery constants without adding bigint code to Narsil."
             }
             fn test_montgomery_config() {
                 use crate::consts::{FR_MONT_ONE, FR_MONT_R2, R, R_INV};
@@ -858,7 +858,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_add_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS * FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng and recombine a deterministic 4,096-value Ark corpus instead of drawing three fresh values in each case; collapse Ark's duplicate zero()/ZERO predicates and reference-operand overloads to Helius ZERO/value operations. Preserve exactly 1,000^2 cases and all additive laws on Helius, with Ark conversion oracles."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng and recombine a deterministic 4,096-value Ark corpus instead of drawing three fresh values in each case; collapse Ark's duplicate zero()/ZERO predicates and reference-operand overloads to Narsil ZERO/value operations. Preserve exactly 1,000^2 cases and all additive laws on Narsil, with Ark conversion oracles."
             }
             fn test_add_properties() {
                 run_add_properties::<ArkFq>(0x4651_4144_4400_0002);
@@ -872,7 +872,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_sub_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS * FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng, map Ark's zero() constructor to Helius ZERO, and recombine a deterministic 4,096-value Ark corpus instead of drawing two fresh values in each case. Preserve exactly 1,000^2 cases and all subtraction laws on Helius, with an Ark conversion oracle."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng, map Ark's zero() constructor to Narsil ZERO, and recombine a deterministic 4,096-value Ark corpus instead of drawing two fresh values in each case. Preserve exactly 1,000^2 cases and all subtraction laws on Narsil, with an Ark conversion oracle."
             }
             fn test_sub_properties() {
                 run_sub_properties::<ArkFq>(0x4651_5355_4200_0002);
@@ -886,7 +886,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_frobenius",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng and collapse Ark's power-indexed in-place/value Frobenius variants to Fp's value-only degree-one map; use the test-only Helius square-and-multiply adapter for the characteristic power. Preserve power zero, power one, and all 1,000 iterations with Ark oracles; turn the upstream body's otherwise-unasserted final recurrence update into a Helius wraparound assertion."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng and collapse Ark's power-indexed in-place/value Frobenius variants to Fp's value-only degree-one map; use the test-only Narsil square-and-multiply adapter for the characteristic power. Preserve power zero, power one, and all 1,000 iterations with Ark oracles; turn the upstream body's otherwise-unasserted final recurrence update into a Narsil wraparound assertion."
             }
             fn test_frobenius() {
                 let mut rng = StdRng::seed_from_u64(0x4651_4652_4f42_0001);
@@ -909,7 +909,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_mul_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng, map in-place/reference spellings to Helius values, replace duplicate one()/ONE/is_one predicates with equality/inversion checks on Helius ONE, and unwrap Option inverses for the same fixed nonzero samples. Preserve all 1,000 iterations and every multiplication, inverse, square, and distributivity law on Helius, adding Ark oracles."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng, map in-place/reference spellings to Narsil values, replace duplicate one()/ONE/is_one predicates with equality/inversion checks on Narsil ONE, and unwrap Option inverses for the same fixed nonzero samples. Preserve all 1,000 iterations and every multiplication, inverse, square, and distributivity law on Narsil, adding Ark oracles."
             }
             fn test_mul_properties() {
                 run_mul_properties::<ArkFq>(0x4651_4d55_4c00_0001);
@@ -923,7 +923,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_mul_by_base_field_elem",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-                waiver: "For prime Fq, BasePrimeField=Fq and extension_degree=1. Helius has no generic embedding/mul_by_base_prime_field facade, so map both to identity embedding and ordinary Fp multiplication; retain all 1,000 iterations, use the suite's fixed RNG, and add an Ark product oracle."
+                waiver: "For prime Fq, BasePrimeField=Fq and extension_degree=1. Narsil has no generic embedding/mul_by_base_prime_field facade, so map both to identity embedding and ordinary Fp multiplication; retain all 1,000 iterations, use the suite's fixed RNG, and add an Ark product oracle."
             }
             fn test_mul_by_base_field_elem() {
                 run_prime_mul_by_base_field_elem::<ArkFq>(0x4651_4241_5345_0001);
@@ -937,7 +937,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_pow",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS / 10),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng. Use Fp::pow_raw for the 20 small exponents and characteristic check, and a test-only Helius square-and-multiply adapter for the template's full ten-limb random exponents because production Fp intentionally accepts four limbs. Preserve 100 outer iterations and add Ark result oracles."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng. Use Fp::pow_raw for the 20 small exponents and characteristic check, and a test-only Narsil square-and-multiply adapter for the template's full ten-limb random exponents because production Fp intentionally accepts four limbs. Preserve 100 outer iterations and add Ark result oracles."
             }
             fn test_pow() {
                 run_prime_pow::<ArkFq>(0x4651_504f_5700_0002, crate::consts::P, Fp::pow_raw);
@@ -951,7 +951,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_sqrt",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-                waiver: "Pin the upstream SQRT_PRECOMP active branch, replace ark_std::test_rng with a fixed StdRng, map mutable square/sqrt operations to Helius values, and translate the final Legendre-residue assertion to successful Helius sqrt because Fp has no Legendre API. Preserve zero handling, two fresh random draws per iteration, and all 1,000 iterations; add Ark sqrt-existence/result oracles."
+                waiver: "Pin the upstream SQRT_PRECOMP active branch, replace ark_std::test_rng with a fixed StdRng, map mutable square/sqrt operations to Narsil values, and translate the final Legendre-residue assertion to successful Narsil sqrt because Fp has no Legendre API. Preserve zero handling, two fresh random draws per iteration, and all 1,000 iterations; add Ark sqrt-existence/result oracles."
             }
             fn test_sqrt() {
                 let mut rng = StdRng::seed_from_u64(0x4651_5351_5254_0001);
@@ -985,7 +985,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_montgomery_config",
                 execution: UpstreamExecution::Once,
-                waiver: "Replace the template's num-bigint recomputation with Helius constructor-domain identities, the defining wrapping p*INV=-1 equation, and equality to pinned Ark Fq R/R2/INV constants. This proves the same three Montgomery constants without adding bigint code to Helius."
+                waiver: "Replace the template's num-bigint recomputation with Narsil constructor-domain identities, the defining wrapping p*INV=-1 equation, and equality to pinned Ark Fq R/R2/INV constants. This proves the same three Montgomery constants without adding bigint code to Narsil."
             }
             fn test_montgomery_config() {
                 use crate::consts::{MONT_ONE, MONT_R2, P, P_INV};
@@ -1012,7 +1012,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_add_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS * FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng and recombine a deterministic 4,096-value Ark corpus instead of drawing three fresh values in each case; collapse Ark's duplicate zero()/ZERO predicates and reference-operand overloads to Helius ZERO/value operations. Preserve exactly 1,000^2 cases and all additive laws on Helius, with Ark conversion oracles."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng and recombine a deterministic 4,096-value Ark corpus instead of drawing three fresh values in each case; collapse Ark's duplicate zero()/ZERO predicates and reference-operand overloads to Narsil ZERO/value operations. Preserve exactly 1,000^2 cases and all additive laws on Narsil, with Ark conversion oracles."
             }
             fn test_add_properties() {
                 run_add_properties::<ArkFq2>(0x4651_3241_4444_0002);
@@ -1026,7 +1026,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_sub_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS * FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng, map Ark's zero() constructor to Helius ZERO, and recombine a deterministic 4,096-value Ark corpus instead of drawing two fresh values in each case. Preserve exactly 1,000^2 cases and all subtraction laws on Helius, with an Ark conversion oracle."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng, map Ark's zero() constructor to Narsil ZERO, and recombine a deterministic 4,096-value Ark corpus instead of drawing two fresh values in each case. Preserve exactly 1,000^2 cases and all subtraction laws on Narsil, with an Ark conversion oracle."
             }
             fn test_sub_properties() {
                 run_sub_properties::<ArkFq2>(0x4651_3253_5542_0002);
@@ -1040,7 +1040,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_frobenius",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng and collapse Ark's power-indexed in-place/value Frobenius variants to Fp2's composable value-only p-map; use the test-only Helius square-and-multiply adapter because Fp2 has no public pow. Preserve powers zero through two and all 1,000 iterations with Ark oracles; turn the upstream body's otherwise-unasserted final recurrence update into a Helius wraparound assertion."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng and collapse Ark's power-indexed in-place/value Frobenius variants to Fp2's composable value-only p-map; use the test-only Narsil square-and-multiply adapter because Fp2 has no public pow. Preserve powers zero through two and all 1,000 iterations with Ark oracles; turn the upstream body's otherwise-unasserted final recurrence update into a Narsil wraparound assertion."
             }
             fn test_frobenius() {
                 let mut rng = StdRng::seed_from_u64(0x4651_3246_524f_0001);
@@ -1074,7 +1074,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_mul_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng, map in-place/reference spellings to Helius values, replace duplicate one()/ONE/is_one predicates with equality/inversion checks on Helius ONE, and unwrap Option inverses for the same fixed nonzero samples. Preserve all 1,000 iterations and every multiplication, inverse, square, and distributivity law on Helius, adding Ark oracles."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng, map in-place/reference spellings to Narsil values, replace duplicate one()/ONE/is_one predicates with equality/inversion checks on Narsil ONE, and unwrap Option inverses for the same fixed nonzero samples. Preserve all 1,000 iterations and every multiplication, inverse, square, and distributivity law on Narsil, adding Ark oracles."
             }
             fn test_mul_properties() {
                 run_mul_properties::<ArkFq2>(0x4651_324d_554c_0001);
@@ -1091,7 +1091,7 @@ mod fields {
                     configured_iterations: FIELD_ITERATIONS,
                     condition: "<ark_bn254::Fq2 as ark_ff::Field>::SQRT_PRECOMP.is_some() == false",
                 },
-                waiver: "The generated upstream body executes zero assertions and zero of its configured 1,000 iterations because Fq2::SQRT_PRECOMP=None, even though Ark and Helius expose direct sqrt methods. Replace the silent false branch with a provenance guard; retain the preexisting Helius-vs-Ark sqrt properties as a separately named local test that does not count as upstream execution."
+                waiver: "The generated upstream body executes zero assertions and zero of its configured 1,000 iterations because Fq2::SQRT_PRECOMP=None, even though Ark and Narsil expose direct sqrt methods. Replace the silent false branch with a provenance guard; retain the preexisting Narsil-vs-Ark sqrt properties as a separately named local test that does not count as upstream execution."
             }
             fn test_sqrt() {
                 assert_upstream_sqrt_test_is_inert::<ArkFq2>();
@@ -1129,7 +1129,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_mul_by_base_field_elem",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng, spell upstream vec![rand; 2] as ArkFq2::new(c, c) so the single draw-and-clone behavior remains explicit, and map generic embedding/mul_by_base_prime_field to Fp2::from/Fp2::mul_by_fp value operations. Preserve two base-field draws and every assertion in all 1,000 iterations; add dense Helius and Ark product oracles."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng, spell upstream vec![rand; 2] as ArkFq2::new(c, c) so the single draw-and-clone behavior remains explicit, and map generic embedding/mul_by_base_prime_field to Fp2::from/Fp2::mul_by_fp value operations. Preserve two base-field draws and every assertion in all 1,000 iterations; add dense Narsil and Ark product oracles."
             }
             fn test_mul_by_base_field_elem() {
                 let mut rng = StdRng::seed_from_u64(0x4651_3242_4153_0001);
@@ -1161,7 +1161,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_add_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS * FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng and recombine a deterministic 4,096-value Ark corpus instead of drawing three fresh values in each case; collapse Ark's duplicate zero()/ZERO predicates and reference-operand overloads to Helius ZERO/value operations. Preserve exactly 1,000^2 cases and all additive laws on Helius, with Ark conversion oracles."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng and recombine a deterministic 4,096-value Ark corpus instead of drawing three fresh values in each case; collapse Ark's duplicate zero()/ZERO predicates and reference-operand overloads to Narsil ZERO/value operations. Preserve exactly 1,000^2 cases and all additive laws on Narsil, with Ark conversion oracles."
             }
             fn test_add_properties() {
                 run_add_properties::<ArkFq6>(0x4651_3641_4444_0002);
@@ -1175,7 +1175,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_sub_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS * FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng, map Ark's zero() constructor to Helius ZERO, and recombine a deterministic 4,096-value Ark corpus instead of drawing two fresh values in each case. Preserve exactly 1,000^2 cases and all subtraction laws on Helius, with an Ark conversion oracle."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng, map Ark's zero() constructor to Narsil ZERO, and recombine a deterministic 4,096-value Ark corpus instead of drawing two fresh values in each case. Preserve exactly 1,000^2 cases and all subtraction laws on Narsil, with an Ark conversion oracle."
             }
             fn test_sub_properties() {
                 run_sub_properties::<ArkFq6>(0x4651_3653_5542_0002);
@@ -1189,7 +1189,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_mul_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng, map in-place/reference spellings to Helius values, replace duplicate one()/ONE/is_one predicates with equality/inversion checks on Helius ONE, and unwrap Option inverses for the same fixed nonzero samples. Preserve all 1,000 iterations and every multiplication, inverse, square, and distributivity law on Helius, adding Ark oracles."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng, map in-place/reference spellings to Narsil values, replace duplicate one()/ONE/is_one predicates with equality/inversion checks on Narsil ONE, and unwrap Option inverses for the same fixed nonzero samples. Preserve all 1,000 iterations and every multiplication, inverse, square, and distributivity law on Narsil, adding Ark oracles."
             }
             fn test_mul_properties() {
                 run_mul_properties::<ArkFq6>(0x4651_364d_554c_0001);
@@ -1206,7 +1206,7 @@ mod fields {
                     configured_iterations: FIELD_ITERATIONS,
                     condition: "<ark_bn254::Fq6 as ark_ff::Field>::SQRT_PRECOMP.is_some() == false",
                 },
-                waiver: "The generated upstream body executes zero assertions and zero of its configured 1,000 iterations because Fq6::SQRT_PRECOMP=None. Helius intentionally has no Fp6 sqrt API; replace the silent false branch with a provenance guard that fails if Ark activates it."
+                waiver: "The generated upstream body executes zero assertions and zero of its configured 1,000 iterations because Fq6::SQRT_PRECOMP=None. Narsil intentionally has no Fp6 sqrt API; replace the silent false branch with a provenance guard that fails if Ark activates it."
             }
             fn test_sqrt() {
                 assert_upstream_sqrt_test_is_inert::<ArkFq6>();
@@ -1224,7 +1224,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_add_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS * FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng and recombine a deterministic 4,096-value Ark corpus instead of drawing three fresh values in each case; collapse Ark's duplicate zero()/ZERO predicates and reference-operand overloads to Helius ZERO/value operations. Preserve exactly 1,000^2 cases and all additive laws on Helius, with Ark conversion oracles."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng and recombine a deterministic 4,096-value Ark corpus instead of drawing three fresh values in each case; collapse Ark's duplicate zero()/ZERO predicates and reference-operand overloads to Narsil ZERO/value operations. Preserve exactly 1,000^2 cases and all additive laws on Narsil, with Ark conversion oracles."
             }
             fn test_add_properties() {
                 run_add_properties::<ArkFq12>(0x4631_3241_4444_0002);
@@ -1238,7 +1238,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_sub_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS * FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng, map Ark's zero() constructor to Helius ZERO, and recombine a deterministic 4,096-value Ark corpus instead of drawing two fresh values in each case. Preserve exactly 1,000^2 cases and all subtraction laws on Helius, with an Ark conversion oracle."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng, map Ark's zero() constructor to Narsil ZERO, and recombine a deterministic 4,096-value Ark corpus instead of drawing two fresh values in each case. Preserve exactly 1,000^2 cases and all subtraction laws on Narsil, with an Ark conversion oracle."
             }
             fn test_sub_properties() {
                 run_sub_properties::<ArkFq12>(0x4631_3253_5542_0002);
@@ -1252,7 +1252,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_frobenius",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng; collapse Ark's power-indexed in-place/value methods and characteristic exponentiation recurrence to composition of Helius' value-only p-map. Preserve powers zero through twelve and all 1,000 iterations with an Ark oracle at every power, pin the specialized p^2/p^3 maps, and turn the otherwise-unasserted final update into a Helius wraparound assertion."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng; collapse Ark's power-indexed in-place/value methods and characteristic exponentiation recurrence to composition of Narsil' value-only p-map. Preserve powers zero through twelve and all 1,000 iterations with an Ark oracle at every power, pin the specialized p^2/p^3 maps, and turn the otherwise-unasserted final update into a Narsil wraparound assertion."
             }
             fn test_frobenius() {
                 let mut rng = StdRng::seed_from_u64(0x4631_3246_524f_0001);
@@ -1292,7 +1292,7 @@ mod fields {
                 instantiated_at: Some(ARK_BN254_FIELD_TESTS),
                 upstream_test: "__test_field!::test_mul_properties",
                 execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng, map in-place/reference spellings to Helius values, replace duplicate one()/ONE/is_one predicates with equality/inversion checks on Helius ONE, and unwrap Option inverses for the same fixed nonzero samples. Preserve all 1,000 iterations and every multiplication, inverse, square, and distributivity law on Helius, adding Ark oracles."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng, map in-place/reference spellings to Narsil values, replace duplicate one()/ONE/is_one predicates with equality/inversion checks on Narsil ONE, and unwrap Option inverses for the same fixed nonzero samples. Preserve all 1,000 iterations and every multiplication, inverse, square, and distributivity law on Narsil, adding Ark oracles."
             }
             fn test_mul_properties() {
                 run_mul_properties::<ArkFq12>(0x4631_324d_554c_0001);
@@ -1309,7 +1309,7 @@ mod fields {
                     configured_iterations: FIELD_ITERATIONS,
                     condition: "<ark_bn254::Fq12 as ark_ff::Field>::SQRT_PRECOMP.is_some() == false",
                 },
-                waiver: "The generated upstream body executes zero assertions and zero of its configured 1,000 iterations because Fq12::SQRT_PRECOMP=None. Helius intentionally has no Fp12 sqrt API; replace the silent false branch with a provenance guard that fails if Ark activates it."
+                waiver: "The generated upstream body executes zero assertions and zero of its configured 1,000 iterations because Fq12::SQRT_PRECOMP=None. Narsil intentionally has no Fp12 sqrt API; replace the silent false branch with a provenance guard that fails if Ark activates it."
             }
             fn test_sqrt() {
                 assert_upstream_sqrt_test_is_inert::<ArkFq12>();
@@ -1386,7 +1386,7 @@ mod fields {
             instantiated_at: None,
             upstream_test: "test_fq2_basics",
             execution: UpstreamExecution::Once,
-            waiver: "Map Ark's zero()/one() constructors and coefficient field to Helius Fp2::ZERO/ONE/new. Preserve all five upstream assertions on Helius and add two Ark-to-Helius conversion guards."
+            waiver: "Map Ark's zero()/one() constructors and coefficient field to Narsil Fp2::ZERO/ONE/new. Preserve all five upstream assertions on Narsil and add two Ark-to-Narsil conversion guards."
         }
         fn test_fq2_basics() {
             assert_eq!(Fp2::new(Fp::ZERO, Fp::ZERO), Fp2::ZERO);
@@ -1406,7 +1406,7 @@ mod fields {
             instantiated_at: None,
             upstream_test: "test_fq_num_bits",
             execution: UpstreamExecution::Once,
-            waiver: "Helius exposes the modulus limbs rather than a PrimeField::MODULUS_BIT_SIZE associated constant. Compute the bit length from Helius' pinned modulus, preserve the upstream value 254, and add Ark's constant as a provenance-only equality guard; that Ark-only operand does not count as coverage."
+            waiver: "Narsil exposes the modulus limbs rather than a PrimeField::MODULUS_BIT_SIZE associated constant. Compute the bit length from Narsil' pinned modulus, preserve the upstream value 254, and add Ark's constant as a provenance-only equality guard; that Ark-only operand does not count as coverage."
         }
         fn test_fq_num_bits() {
             let modulus_bits = 64 * crate::consts::P.len()
@@ -1417,7 +1417,7 @@ mod fields {
                     .expect("BN254 modulus is nonzero")
                     .leading_zeros() as usize;
             assert_eq!(modulus_bits, 254);
-            // PROVENANCE GUARD: the Ark operand does not count as Helius coverage.
+            // PROVENANCE GUARD: the Ark operand does not count as Narsil coverage.
             assert_eq!(modulus_bits, ArkFq::MODULUS_BIT_SIZE as usize);
         }
     }
@@ -1429,7 +1429,7 @@ mod fields {
             instantiated_at: None,
             upstream_test: "test_fq_legendre",
             execution: UpstreamExecution::Once,
-            waiver: "Fp exposes sqrt rather than LegendreSymbol. Preserve the upstream values and four classifications, deriving the character from zero/sqrt so every assertion executes Helius code."
+            waiver: "Fp exposes sqrt rather than LegendreSymbol. Preserve the upstream values and four classifications, deriving the character from zero/sqrt so every assertion executes Narsil code."
         }
         fn test_fq_legendre() {
             use SquareClass::{QuadraticNonResidue, QuadraticResidue, Zero};
@@ -1469,7 +1469,7 @@ mod fields {
             instantiated_at: None,
             upstream_test: "test_fq6_mul_by_1",
             execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-            waiver: "Replace ark_std::test_rng with a fixed StdRng and Ark's in-place sparse/dense operations with Helius value-returning operations. Preserve all 1,000 samples and the exact (0,c1,0) placement; add Ark's sparse result as an oracle after the Helius sparse-versus-dense assertion."
+            waiver: "Replace ark_std::test_rng with a fixed StdRng and Ark's in-place sparse/dense operations with Narsil value-returning operations. Preserve all 1,000 samples and the exact (0,c1,0) placement; add Ark's sparse result as an oracle after the Narsil sparse-versus-dense assertion."
         }
         fn test_fq6_mul_by_1() {
             let mut rng = StdRng::seed_from_u64(0x4651_364d_554c_0001);
@@ -1496,7 +1496,7 @@ mod fields {
             instantiated_at: None,
             upstream_test: "test_fq6_mul_by_01",
             execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-            waiver: "Replace ark_std::test_rng with a fixed StdRng and Ark's in-place sparse/dense operations with Helius value-returning operations. Preserve all 1,000 samples and the exact (c0,c1,0) placement; add Ark's sparse result as an oracle after the Helius sparse-versus-dense assertion."
+            waiver: "Replace ark_std::test_rng with a fixed StdRng and Ark's in-place sparse/dense operations with Narsil value-returning operations. Preserve all 1,000 samples and the exact (c0,c1,0) placement; add Ark's sparse result as an oracle after the Narsil sparse-versus-dense assertion."
         }
         fn test_fq6_mul_by_01() {
             let mut rng = StdRng::seed_from_u64(0x4651_364d_3031_0001);
@@ -1525,7 +1525,7 @@ mod fields {
             instantiated_at: None,
             upstream_test: "test_fq12_mul_by_034",
             execution: UpstreamExecution::Iterations(FIELD_ITERATIONS),
-            waiver: "Replace ark_std::test_rng with a fixed StdRng and Ark's in-place sparse/dense operations with Helius value-returning operations. Preserve all 1,000 samples and D-twist coefficient placement ((c0,0,0),(c3,c4,0)); add Ark's sparse result as an oracle after the Helius sparse-versus-dense assertion."
+            waiver: "Replace ark_std::test_rng with a fixed StdRng and Ark's in-place sparse/dense operations with Narsil value-returning operations. Preserve all 1,000 samples and D-twist coefficient placement ((c0,0,0),(c3,c4,0)); add Ark's sparse result as an oracle after the Narsil sparse-versus-dense assertion."
         }
         fn test_fq12_mul_by_034() {
             let mut rng = StdRng::seed_from_u64(0x4631_324d_3033_3401);
@@ -1578,7 +1578,7 @@ fn g2_affine_to_helius(point: ArkG2Affine) -> G2Affine {
     }
 }
 
-trait HeliusCurveGroup: Copy {
+trait NarsilCurveGroup: Copy {
     fn identity() -> Self;
     fn double(self) -> Self;
     fn add(self, other: Self) -> Self;
@@ -1586,7 +1586,7 @@ trait HeliusCurveGroup: Copy {
 
 macro_rules! impl_narsil_curve_group {
     ($group:ty) => {
-        impl HeliusCurveGroup for $group {
+        impl NarsilCurveGroup for $group {
             fn identity() -> Self {
                 <$group>::identity()
             }
@@ -1607,7 +1607,7 @@ impl_narsil_curve_group!(G2Projective);
 
 /// Independent test-side double-and-add for template claims that Ark expresses
 /// through configurable wNAF or batch-preprocessing facades.
-fn mul_group_words<G: HeliusCurveGroup>(base: G, words: [u64; 4]) -> G {
+fn mul_group_words<G: NarsilCurveGroup>(base: G, words: [u64; 4]) -> G {
     let mut acc = G::identity();
     for word in words.iter().rev() {
         for bit in (0..64).rev() {
@@ -1639,7 +1639,7 @@ macro_rules! port_group_tests {
                     instantiated_at: Some(ARK_BN254_CURVE_TESTS),
                     upstream_test: "__test_group!::test_add_properties",
                     execution: UpstreamExecution::Iterations(GROUP_ITERATIONS),
-                    waiver: "Replace ark_std::test_rng with a fixed StdRng, Ark operator/reference overloads with Helius inherent value methods, and raw projective equality with affine equality because equivalent Jacobian points need not share coordinates. Preserve all 500 iterations and every associativity, commutativity, identity, negation, permutation, and doubling assertion on Helius; add Ark affine oracles."
+                    waiver: "Replace ark_std::test_rng with a fixed StdRng, Ark operator/reference overloads with Narsil inherent value methods, and raw projective equality with affine equality because equivalent Jacobian points need not share coordinates. Preserve all 500 iterations and every associativity, commutativity, identity, negation, permutation, and doubling assertion on Narsil; add Ark affine oracles."
                 }
                 fn test_add_properties() {
                     #[inline(never)]
@@ -1748,7 +1748,7 @@ macro_rules! port_group_tests {
                     instantiated_at: Some(ARK_BN254_CURVE_TESTS),
                     upstream_test: "__test_group!::test_sub_properties",
                     execution: UpstreamExecution::Iterations(GROUP_ITERATIONS),
-                    waiver: "Replace ark_std::test_rng with a fixed StdRng and subtraction with Helius addition of negation. Preserve all 500 anti-commutativity and two-sided identity assertions. Map Ark's affine-minus-projective overload to Helius' mixed-add kernel with the affine left operand added to the negated projective right operand; compare all results in affine form and add Ark oracles."
+                    waiver: "Replace ark_std::test_rng with a fixed StdRng and subtraction with Narsil addition of negation. Preserve all 500 anti-commutativity and two-sided identity assertions. Map Ark's affine-minus-projective overload to Narsil' mixed-add kernel with the affine left operand added to the negated projective right operand; compare all results in affine form and add Ark oracles."
                 }
                 fn test_sub_properties() {
                     let mut rng = StdRng::seed_from_u64($seed ^ 0x5355_4200_0000_0002);
@@ -1784,7 +1784,7 @@ macro_rules! port_group_tests {
                     instantiated_at: Some(ARK_BN254_CURVE_TESTS),
                     upstream_test: "__test_group!::test_mul_properties",
                     execution: UpstreamExecution::Iterations(GROUP_ITERATIONS),
-                    waiver: "Replace ark_std::test_rng with a fixed StdRng, map ScalarField::is_one to equality with Helius' canonical one constructor, and make the template's probabilistic nonzero-inverse premise explicit by resampling zero. Preserve all 500 associativity, identity, inverse, and distributivity laws on Helius. Exercise Helius' typed wNAF evaluator at widths 2 through 5 against a test-side double-and-add oracle. Helius has no runtime-mismatched-table state or BatchMulPreprocessing facade: const generics reject a width/table mismatch at compile time, and the 100-scalar batch claim maps to public Helius multiplication versus independent Helius double-and-add. Add Ark affine oracles."
+                    waiver: "Replace ark_std::test_rng with a fixed StdRng, map ScalarField::is_one to equality with Narsil' canonical one constructor, and make the template's probabilistic nonzero-inverse premise explicit by resampling zero. Preserve all 500 associativity, identity, inverse, and distributivity laws on Narsil. Exercise Narsil' typed wNAF evaluator at widths 2 through 5 against a test-side double-and-add oracle. Narsil has no runtime-mismatched-table state or BatchMulPreprocessing facade: const generics reject a width/table mismatch at compile time, and the 100-scalar batch claim maps to public Narsil multiplication versus independent Narsil double-and-add. Add Ark affine oracles."
                 }
                 fn test_mul_properties() {
                     let mut rng = StdRng::seed_from_u64($seed ^ 0x4d55_4c00_0000_0002);
@@ -1869,7 +1869,7 @@ macro_rules! port_group_tests {
                     instantiated_at: Some(ARK_BN254_CURVE_TESTS),
                     upstream_test: "__test_group!::test_affine_conversion",
                     execution: UpstreamExecution::Iterations(GROUP_ITERATIONS + 10 * GROUP_ITERATIONS),
-                    waiver: "Replace ark_std::test_rng and Uniform index sampling with fixed StdRng draws. Preserve the 500 projective-affine-projective cases plus ten 500-point doubled corpora, each with five identities and five normalized points. Helius exposes no public normalize_batch facade, so map that body to per-point Helius normalization and compare every output with Ark; this proves affine conversion, not a nonexistent batch API."
+                    waiver: "Replace ark_std::test_rng and Uniform index sampling with fixed StdRng draws. Preserve the 500 projective-affine-projective cases plus ten 500-point doubled corpora, each with five identities and five normalized points. Narsil exposes no public normalize_batch facade, so map that body to per-point Narsil normalization and compare every output with Ark; this proves affine conversion, not a nonexistent batch API."
                 }
                 fn test_affine_conversion() {
                     let mut rng = StdRng::seed_from_u64($seed ^ 0x4146_4649_4e45_0002);
@@ -1918,7 +1918,7 @@ macro_rules! port_group_tests {
                     instantiated_at: Some(ARK_BN254_CURVE_TESTS),
                     upstream_test: "__test_group!::test_mixed_addition",
                     execution: UpstreamExecution::Iterations(GROUP_ITERATIONS),
-                    waiver: "Replace ark_std::test_rng with a fixed StdRng and Ark's affine/projective operator overloads with Helius add_mixed and explicit affine-to-projective conversion. Preserve all 500 on-curve guards and both operand orders, comparing the mixed kernel with dense Helius addition and Ark affine results."
+                    waiver: "Replace ark_std::test_rng with a fixed StdRng and Ark's affine/projective operator overloads with Narsil add_mixed and explicit affine-to-projective conversion. Preserve all 500 on-curve guards and both operand orders, comparing the mixed kernel with dense Narsil addition and Ark affine results."
                 }
                 fn test_mixed_addition() {
                     let mut rng = StdRng::seed_from_u64($seed ^ 0x4d49_5845_4400_0002);
@@ -1964,11 +1964,11 @@ mod curves {
                     instantiated_at: Some(ARK_BN254_CURVE_TESTS),
                     upstream_test: "__test_group!::test_cofactor_ops",
                     execution: UpstreamExecution::Iterations(GROUP_ITERATIONS),
-                waiver: "BN254 G1 has COFACTOR=COFACTOR_INV=1, while Helius intentionally exposes neither generic cofactor method. Preserve all 500 samples and six upstream laws by substituting identity conversion/Fr::ONE multiplication, use the suite's fixed RNG, compare clear-cofactor with Ark, and check the resulting Helius point is on-curve. Two Ark-only assertions pin the cofactor-one premise and do not count as Helius coverage."
+                waiver: "BN254 G1 has COFACTOR=COFACTOR_INV=1, while Narsil intentionally exposes neither generic cofactor method. Preserve all 500 samples and six upstream laws by substituting identity conversion/Fr::ONE multiplication, use the suite's fixed RNG, compare clear-cofactor with Ark, and check the resulting Narsil point is on-curve. Two Ark-only assertions pin the cofactor-one premise and do not count as Narsil coverage."
                 }
                 fn test_cofactor_ops() {
                     // PROVENANCE GUARDS: Ark pins the cofactor-one adaptation
-                    // premise. Neither assertion counts as Helius coverage.
+                    // premise. Neither assertion counts as Narsil coverage.
                     assert_eq!(
                         <ark_bn254::g1::Config as ark_ec::CurveConfig>::COFACTOR,
                         &[1]
@@ -2050,7 +2050,7 @@ mod curves {
                 instantiated_at: Some(ARK_BN254_CURVE_TESTS),
                 upstream_test: "test_pairing!::test_bilinearity",
                 execution: UpstreamExecution::Iterations(PAIRING_ITERATIONS),
-                waiver: "Replace per-iteration ark_std::test_rng with one fixed StdRng and resample identity points/zero scalars so the upstream nonidentity assertions cannot fail probabilistically. Map PairingOutput's additive notation to Helius Fp12 multiplication/exponentiation and its zero to Fp12::ONE. Preserve all 100 bilinearity, nonidentity, and three group-order assertions on Helius; add an Ark pairing oracle."
+                waiver: "Replace per-iteration ark_std::test_rng with one fixed StdRng and resample identity points/zero scalars so the upstream nonidentity assertions cannot fail probabilistically. Map PairingOutput's additive notation to Narsil Fp12 multiplication/exponentiation and its zero to Fp12::ONE. Preserve all 100 bilinearity, nonidentity, and three group-order assertions on Narsil; add an Ark pairing oracle."
             }
             fn test_bilinearity() {
                 let mut rng = StdRng::seed_from_u64(0x5041_4952_4249_0002);
@@ -2107,7 +2107,7 @@ mod curves {
                 instantiated_at: Some(ARK_BN254_CURVE_TESTS),
                 upstream_test: "test_pairing!::test_multi_pairing",
                 execution: UpstreamExecution::Iterations(PAIRING_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng, PairingOutput addition with the equivalent Fp12 multiplication, and Ark's parallel point slices with Helius' pair slice. Preserve both random pairings and all 100 equality assertions on Helius; add Ark multi_pairing as an oracle."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng, PairingOutput addition with the equivalent Fp12 multiplication, and Ark's parallel point slices with Narsil' pair slice. Preserve both random pairings and all 100 equality assertions on Narsil; add Ark multi_pairing as an oracle."
             }
             fn test_multi_pairing() {
                 let mut rng = StdRng::seed_from_u64(0x5041_4952_4d55_0002);
@@ -2137,7 +2137,7 @@ mod curves {
                 instantiated_at: Some(ARK_BN254_CURVE_TESTS),
                 upstream_test: "test_pairing!::test_final_exp",
                 execution: UpstreamExecution::Iterations(PAIRING_ITERATIONS),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng and resample zero to make the upstream unwrap's implicit invertibility premise deterministic. Map cyclotomic_exp(r).is_one() to Helius Fp12::pow_bits(r)==ONE. Preserve all 100 final exponentiations and subgroup assertions on Helius; add Ark final_exponentiation as an oracle."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng and resample zero to make the upstream unwrap's implicit invertibility premise deterministic. Map cyclotomic_exp(r).is_one() to Narsil Fp12::pow_bits(r)==ONE. Preserve all 100 final exponentiations and subgroup assertions on Narsil; add Ark final_exponentiation as an oracle."
             }
             fn test_final_exp() {
                 let mut rng = StdRng::seed_from_u64(0x5041_4952_4645_0002);
@@ -2170,7 +2170,7 @@ mod curves {
                 instantiated_at: Some(ARK_BN254_CURVE_TESTS),
                 upstream_test: "test_scalar_decomposition",
                 execution: UpstreamExecution::Iterations(100),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng. Helius deliberately keeps signed GLV components private, so inspect them through an exact-cfg(test) audit helper that is absent from release codegen. Preserve all 100 direct <2^127 component bounds and signed k1+lambda*k2 congruences using Helius Fr arithmetic, then execute one-point GLV MSM against independent Helius wNAF and an Ark result oracle. This does not expose the component signs as production API."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng. Narsil deliberately keeps signed GLV components private, so inspect them through an exact-cfg(test) audit helper that is absent from release codegen. Preserve all 100 direct <2^127 component bounds and signed k1+lambda*k2 congruences using Narsil Fr arithmetic, then execute one-point GLV MSM against independent Narsil wNAF and an Ark result oracle. This does not expose the component signs as production API."
             }
             fn test_scalar_decomposition() {
                 let mut rng = StdRng::seed_from_u64(0x4731_474c_5653_0002);
@@ -2214,10 +2214,10 @@ mod curves {
                 instantiated_at: Some(ARK_BN254_CURVE_TESTS),
                 upstream_test: "test_endomorphism_eigenvalue",
                 execution: UpstreamExecution::Once,
-                waiver: "Helius keeps its beta*x endomorphism private. Feed the checksum-pinned Ark lambda into Helius' one-point GLV MSM, whose lambda decomposition selects the endomorphism component, and compare the Helius result with lambda times the Ark generator. The Ark lambda is a configuration input and does not count as coverage; the assertion itself executes Helius."
+                waiver: "Narsil keeps its beta*x endomorphism private. Feed the checksum-pinned Ark lambda into Narsil' one-point GLV MSM, whose lambda decomposition selects the endomorphism component, and compare the Narsil result with lambda times the Ark generator. The Ark lambda is a configuration input and does not count as coverage; the assertion itself executes Narsil."
             }
             fn test_endomorphism_eigenvalue() {
-                // PROVENANCE INPUT: this Ark constant does not count as Helius coverage.
+                // PROVENANCE INPUT: this Ark constant does not count as Narsil coverage.
                 let lambda = <ark_bn254::g1::Config as GLVConfig>::LAMBDA;
                 let limbs = lambda.into_bigint().0;
                 let computed = crate::msm::msm_variable_time(&[G1Affine::generator()], &[limbs]);
@@ -2233,7 +2233,7 @@ mod curves {
                 instantiated_at: Some(ARK_BN254_CURVE_TESTS),
                 upstream_test: "test_glv_mul",
                 execution: UpstreamExecution::Iterations(200),
-                waiver: "Replace ark_std::test_rng with a fixed StdRng and Ark's separate generic projective/affine GLV helpers with Helius' one-point GLV MSM projective and affine-result facades. Preserve 100 projective plus 100 affine checks (the same 100 scalars), compare both Helius paths with test-side double-and-add over Helius group operations, and add Ark scalar multiplication as an oracle."
+                waiver: "Replace ark_std::test_rng with a fixed StdRng and Ark's separate generic projective/affine GLV helpers with Narsil' one-point GLV MSM projective and affine-result facades. Preserve 100 projective plus 100 affine checks (the same 100 scalars), compare both Narsil paths with test-side double-and-add over Narsil group operations, and add Ark scalar multiplication as an oracle."
             }
             fn test_glv_mul() {
                 let mut rng = StdRng::seed_from_u64(0x4731_474c_564d_0002);
@@ -2275,7 +2275,7 @@ mod curves {
                 instantiated_at: None,
                 upstream_test: "test_is_in_subgroup_assuming_on_curve",
                 execution: UpstreamExecution::Iterations(100),
-                waiver: "Upstream sample_unchecked creates a fresh deterministic test_rng on every call and therefore repeats one sample 100 times; retain 100 iterations but intentionally use one fixed shared StdRng to cover 100 distinct reproducible samples. Map direct Fq coefficient draws to equivalent Ark Fq2 draws and naive Ark scalar multiplication to Helius multiplication by the scalar-modulus limbs. Compare Helius' optimized subgroup check with both Helius [r]P and Ark. Helius has no G2 clear-cofactor API: Ark supplies that checksum-pinned fixture only, then two Helius subgroup assertions validate it; this does not count as clear-cofactor coverage."
+                waiver: "Upstream sample_unchecked creates a fresh deterministic test_rng on every call and therefore repeats one sample 100 times; retain 100 iterations but intentionally use one fixed shared StdRng to cover 100 distinct reproducible samples. Map direct Fq coefficient draws to equivalent Ark Fq2 draws and naive Ark scalar multiplication to Narsil multiplication by the scalar-modulus limbs. Compare Narsil' optimized subgroup check with both Narsil [r]P and Ark. Narsil has no G2 clear-cofactor API: Ark supplies that checksum-pinned fixture only, then two Narsil subgroup assertions validate it; this does not count as clear-cofactor coverage."
             }
             fn test_is_in_subgroup_assuming_on_curve() {
                 let mut rng = StdRng::seed_from_u64(0x4732_5355_4247_0002);
@@ -2292,7 +2292,7 @@ mod curves {
                         ark_point.is_in_correct_subgroup_assuming_on_curve()
                     );
 
-                    // FIXTURE ONLY: Ark clears the point. Helius validates the result.
+                    // FIXTURE ONLY: Ark clears the point. Narsil validates the result.
                     let cleared = g2_affine_to_helius(ark_point.clear_cofactor());
                     assert!(cleared.is_in_correct_subgroup_assuming_on_curve());
                     assert!(
@@ -2357,7 +2357,7 @@ static UPSTREAM_CASES: [UpstreamCase; 103] = [
     case!(
         "fields.fr.test_serialization",
         FIELD_GENERATED,
-        Inapplicable("Ark compress/validate/flags IO is not Helius fixed-array BE/LE encoding")
+        Inapplicable("Ark compress/validate/flags IO is not Narsil fixed-array BE/LE encoding")
     ),
     case!(
         "fields.fr.test_add_properties",
@@ -2408,7 +2408,7 @@ static UPSTREAM_CASES: [UpstreamCase; 103] = [
         "fields.fr.test_constants",
         FIELD_GENERATED,
         PendingApi(
-            "upstream case targets FftField/sqrt configuration constants absent from Helius"
+            "upstream case targets FftField/sqrt configuration constants absent from Narsil"
         )
     ),
     case!(
@@ -2476,7 +2476,7 @@ static UPSTREAM_CASES: [UpstreamCase; 103] = [
         "fields.fq.test_constants",
         FIELD_GENERATED,
         PendingApi(
-            "upstream case targets FftField/sqrt configuration constants absent from Helius"
+            "upstream case targets FftField/sqrt configuration constants absent from Narsil"
         )
     ),
     case!(
@@ -2626,7 +2626,7 @@ static UPSTREAM_CASES: [UpstreamCase; 103] = [
     case!(
         "fields.direct.test_fq_repr_from",
         FIELD_DIRECT,
-        Inapplicable("tests Ark BigInteger256 construction, not Helius curve arithmetic")
+        Inapplicable("tests Ark BigInteger256 construction, not Narsil curve arithmetic")
     ),
     case!(
         "fields.direct.test_fq_repr_is_odd",
@@ -2691,7 +2691,7 @@ static UPSTREAM_CASES: [UpstreamCase; 103] = [
     case!(
         "fields.direct.test_fq12_mul_by_014",
         FIELD_DIRECT,
-        Inapplicable("M-twist sparse helper is absent; Helius uses D-twist mul_by_034")
+        Inapplicable("M-twist sparse helper is absent; Narsil uses D-twist mul_by_034")
     ),
     case!(
         "fields.direct.test_fq12_mul_by_034",
@@ -2782,7 +2782,7 @@ static UPSTREAM_CASES: [UpstreamCase; 103] = [
     case!(
         "curves.g2.test_var_base_msm",
         GROUP_GENERATED,
-        PendingApi("Helius exposes no G2 MSM")
+        PendingApi("Narsil exposes no G2 MSM")
     ),
     case!(
         "curves.g2.test_chunked_pippenger",
@@ -2867,12 +2867,12 @@ static UPSTREAM_CASES: [UpstreamCase; 103] = [
     case!(
         "curves.g2_glv.test_scalar_decomposition",
         GLV_GENERATED,
-        PendingApi("Helius has no G2 GLV implementation or configuration")
+        PendingApi("Narsil has no G2 GLV implementation or configuration")
     ),
     case!(
         "curves.g2_glv.test_endomorphism_eigenvalue",
         GLV_GENERATED,
-        PendingApi("Helius has no G2 GLV implementation or configuration")
+        PendingApi("Narsil has no G2 GLV implementation or configuration")
     ),
     case!(
         "curves.g2_glv.test_glv_mul",

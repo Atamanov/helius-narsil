@@ -20,8 +20,7 @@ use crate::fp2_fast::f2_sqr_lazy as f2_sqr_g2;
 // chains interleaved.
 #[cfg(all(narsil_f2sqr_asm, not(feature = "force-portable")))]
 use crate::fp2_fast::f2_sqr_fused as f2_sqr_g2;
-// All x86 tiers use the fused dual kernel. The Intel three-product route
-// lost 21% of line generation on Granite Rapids against one-call SoS.
+// All x86 tiers use the fused dual kernel for G2 multiplication.
 use crate::fp2_fast::f2_mul as f2_mul_g2;
 use crate::fp12::Fp12;
 use crate::g1::G1Affine;

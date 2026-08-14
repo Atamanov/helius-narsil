@@ -1,4 +1,4 @@
-//! Independent adversarial oracle for the single-pair Miller campaign.
+//! Independent adversarial oracle for the single-pair Miller loop.
 //!
 //! The reference G2 schedule below intentionally uses the public canonical
 //! `Fp2` operations instead of `fp2_fast`, `G2Hom`, or any generated kernel.

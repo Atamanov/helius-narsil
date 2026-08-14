@@ -13,8 +13,9 @@ fn override_or(value: Option<&str>, default: bool) -> Option<bool> {
     }
 }
 
-/// Miller line-path settings whose measurement carries on Intel: the fused
-/// Fp2 square leaf, the dual-lane SoS leaf, and the inlined Fp2 helpers.
+/// Enable Intel-default Miller line-path settings unless explicitly
+/// overridden: the fused Fp2 square leaf, dual-lane SoS leaf, and inlined
+/// Fp2 helpers.
 pub fn intel_line_path_enabled(value: Option<&str>, target_is_intel: bool) -> Option<bool> {
     override_or(value, target_is_intel)
 }
@@ -23,11 +24,9 @@ pub fn compact_fp12_square_enabled(value: Option<&str>, target_is_amd: bool) -> 
     override_or(value, target_is_amd)
 }
 
-/// Lazy double-width `y = g^2 - 3e^2` leaf of the G2 doubling step. It
-/// trades 2 of the step's 20 Montgomery reductions plus three Fp2 helper
-/// round trips for about 1.9 KiB of text in a line path whose budget is
-/// front-end capacity, so the sign is a per-vendor measurement. Measured on
-/// Intel; AMD keeps the composed route until someone measures it there.
+/// Enable the Intel-default lazy double-width `y = g^2 - 3e^2` leaf of the
+/// G2 doubling step unless explicitly overridden. Other targets default to
+/// the composed route.
 pub fn g2_ysqr_enabled(value: Option<&str>, target_is_intel: bool) -> Option<bool> {
     override_or(value, target_is_intel)
 }
