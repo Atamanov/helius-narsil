@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  msrv:
+    name: MSRV / ${{ matrix.features }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - features: default
+            cargo_args: ""
+          - features: std
+            cargo_args: --features std
+          - features: std,force-portable
+            cargo_args: --features std,force-portable
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@1.97.1
+        with:
+          components: clippy, rustfmt
+      - if: matrix.features == 'default'
+        run: cargo fmt --check
+      - if: matrix.features == 'default'
+        run: cargo clippy --features std --all-targets -- -D warnings
+      - run: cargo test ${{ matrix.cargo_args }}
+      - if: matrix.features == 'default'
+        run: cargo doc --no-deps --features std
+        env:
+          RUSTDOCFLAGS: -D warnings
+      - if: matrix.features == 'default'
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          arguments: --no-default-features --exclude-dev
+      - if: matrix.features == 'default'
+        name: Check crates.io contents
+        shell: bash
+        run: |
+          package_files=$(cargo package --list)
+          for required in \
+            Cargo.toml \
+            LICENSE-APACHE \
+            LICENSE-MIT \
+            README.md \
+            assets/logo.png \
+            build.rs \
+            examples/pairing.rs \
+            src/lib.rs
+          do
+            grep -Fxq "$required" <<<"$package_files"
+          done
+          if grep -Eq '^(\.github/|scripts/git-hooks/|scripts/install-git-hooks\.sh$)' <<<"$package_files"; then
+            exit 1
+          fi
+      - if: matrix.features == 'default'
+        run: cargo publish --dry-run
+
+  stable:
+    name: Stable / ${{ matrix.features }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - features: default
+            cargo_args: ""
+          - features: std
+            cargo_args: --features std
+          - features: std,force-portable
+            cargo_args: --features std,force-portable
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - if: matrix.features == 'default'
+        run: cargo fmt --check
+      - if: matrix.features == 'default'
+        run: cargo clippy --features std --all-targets -- -D warnings
+      - run: cargo test ${{ matrix.cargo_args }}
+      - if: matrix.features == 'default'
+        run: cargo doc --no-deps --features std
+        env:
+          RUSTDOCFLAGS: -D warnings
+      - if: matrix.features == 'default'
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          arguments: --no-default-features --exclude-dev
+      - if: matrix.features == 'default'
+        name: Check crates.io contents
+        shell: bash
+        run: |
+          package_files=$(cargo package --list)
+          for required in \
+            Cargo.toml \
+            LICENSE-APACHE \
+            LICENSE-MIT \
+            README.md \
+            assets/logo.png \
+            build.rs \
+            examples/pairing.rs \
+            src/lib.rs
+          do
+            grep -Fxq "$required" <<<"$package_files"
+          done
+          if grep -Eq '^(\.github/|scripts/git-hooks/|scripts/install-git-hooks\.sh$)' <<<"$package_files"; then
+            exit 1
+          fi
+      - if: matrix.features == 'default'
+        run: cargo publish --dry-run

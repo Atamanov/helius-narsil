@@ -122,12 +122,12 @@ fn residue(m: &'static [u64; 4]) -> impl Strategy<Value = [u64; 4]> {
     ]
 }
 
-fn fp() -> impl Strategy<Value = [u64; 4]> {
-    residue(&consts::P)
+fn fp() -> BoxedStrategy<[u64; 4]> {
+    residue(&consts::P).boxed()
 }
 
-fn fr() -> impl Strategy<Value = [u64; 4]> {
-    residue(&consts::R)
+fn fr() -> BoxedStrategy<[u64; 4]> {
+    residue(&consts::R).boxed()
 }
 
 fn ark_fq(limbs: [u64; 4]) -> ArkFq {
@@ -242,7 +242,10 @@ proptest! {
     #![proptest_config(config(256))]
 
     #[test]
-    fn fp2_arithmetic_matches_arkworks(a in [fp(), fp()], b in [fp(), fp()]) {
+    fn fp2_arithmetic_matches_arkworks(
+        a in prop::array::uniform2(fp()),
+        b in prop::array::uniform2(fp()),
+    ) {
         let ha = Fp2::new(Fp::from_raw(a[0]), Fp::from_raw(a[1]));
         let hb = Fp2::new(Fp::from_raw(b[0]), Fp::from_raw(b[1]));
         let aa = ark_fq2(&a);
@@ -267,8 +270,8 @@ proptest! {
 
     #[test]
     fn fp12_arithmetic_matches_arkworks(
-        a in [fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp()],
-        b in [fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp()],
+        a in prop::array::uniform12(fp()),
+        b in prop::array::uniform12(fp()),
     ) {
         let (aa, ab) = (ark_fq12(&a), ark_fq12(&b));
         let (ha, hb) = (fp12_from_ark(aa), fp12_from_ark(ab));
@@ -298,10 +301,10 @@ proptest! {
 
     #[test]
     fn fp12_sparse_034_product_matches_dense(
-        a in [fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp(), fp()],
-        c0 in [fp(), fp()],
-        c3 in [fp(), fp()],
-        c4 in [fp(), fp()],
+        a in prop::array::uniform12(fp()),
+        c0 in prop::array::uniform2(fp()),
+        c3 in prop::array::uniform2(fp()),
+        c4 in prop::array::uniform2(fp()),
     ) {
         let ha = fp12_from_ark(ark_fq12(&a));
         let s0 = Fp2::new(Fp::from_raw(c0[0]), Fp::from_raw(c0[1]));

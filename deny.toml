@@ -6,7 +6,7 @@ no-default-features = false
 yanked = "deny"
 
 [licenses]
-allow = ["MIT", "Apache-2.0", "Unicode-3.0", "BSD-3-Clause"]
+allow = ["MIT", "Apache-2.0", "Unicode-3.0"]
 confidence-threshold = 0.8
 
 [bans]

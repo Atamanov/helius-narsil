@@ -1,39 +1,52 @@
 //! Private views used by assembly and FFI adapters.
 
+#[cfg(narsil_mont4_x86_64_adx)]
 use crate::{Fp2, Fp6, Fp12};
 
+#[cfg(narsil_mont4_x86_64_adx)]
 const _: () = assert!(core::mem::size_of::<Fp2>() == core::mem::size_of::<[[u64; 4]; 2]>());
+#[cfg(narsil_mont4_x86_64_adx)]
 const _: () = assert!(core::mem::align_of::<Fp2>() == core::mem::align_of::<[[u64; 4]; 2]>());
+#[cfg(narsil_mont4_x86_64_adx)]
 const _: () = assert!(core::mem::size_of::<Fp6>() == core::mem::size_of::<[[u64; 4]; 6]>());
+#[cfg(narsil_mont4_x86_64_adx)]
 const _: () = assert!(core::mem::align_of::<Fp6>() == core::mem::align_of::<[[u64; 4]; 6]>());
+#[cfg(narsil_mont4_x86_64_adx)]
 const _: () = assert!(core::mem::size_of::<Fp12>() == core::mem::size_of::<[[u64; 4]; 12]>());
+#[cfg(narsil_mont4_x86_64_adx)]
 const _: () = assert!(core::mem::align_of::<Fp12>() == core::mem::align_of::<[[u64; 4]; 12]>());
+#[cfg(narsil_mont4_x86_64_adx)]
 const _: () = assert!(core::mem::size_of::<[Fp2; 3]>() == core::mem::size_of::<[[u64; 4]; 6]>());
 
+#[cfg(narsil_mont4_x86_64_adx)]
 #[inline]
 pub(crate) fn fp2_components(value: &Fp2) -> &[[u64; 4]; 2] {
     // SAFETY: Fp and Fp2 are repr(C); the size and alignment match above.
     unsafe { &*(core::ptr::from_ref(value).cast()) }
 }
 
+#[cfg(narsil_mont4_x86_64_adx)]
 #[inline]
 pub(crate) fn fp6_components(value: &Fp6) -> &[[u64; 4]; 6] {
     // SAFETY: the repr(C) Fp2/Fp6 nesting has the asserted size and alignment.
     unsafe { &*(core::ptr::from_ref(value).cast()) }
 }
 
+#[cfg(narsil_mont4_x86_64_adx)]
 #[inline]
 pub(crate) fn fp12_components(value: &Fp12) -> &[[u64; 4]; 12] {
     // SAFETY: the repr(C) tower has the asserted contiguous size and alignment.
     unsafe { &*(core::ptr::from_ref(value).cast()) }
 }
 
+#[cfg(narsil_mont4_x86_64_adx)]
 #[inline]
 pub(crate) fn fp2_triplet_components(value: &[Fp2; 3]) -> &[[u64; 4]; 6] {
     // SAFETY: arrays are contiguous and each repr(C) Fp2 contains two Fp values.
     unsafe { &*(core::ptr::from_ref(value).cast()) }
 }
 
+#[cfg(narsil_mont4_x86_64_adx)]
 #[inline]
 pub(crate) unsafe fn limbs_from_ptr<'a>(value: *const u64) -> &'a [u64; 4] {
     // SAFETY: the caller guarantees a live, aligned four-limb operand.
