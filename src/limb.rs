@@ -87,6 +87,7 @@ pub fn encode_be(limbs: [u64; 4]) -> [u8; 32] {
 
 /// X86 must load the modulus from memory. Immediate values can break the
 /// borrow chain.
+#[cfg(any(test, not(narsil_a64_addsub)))]
 #[inline(always)]
 fn opaque(m: &[u64; 4]) -> &[u64; 4] {
     #[cfg(target_arch = "x86_64")]
@@ -101,6 +102,31 @@ fn opaque(m: &[u64; 4]) -> &[u64; 4] {
 
 #[inline(always)]
 pub fn sub_mod(a: &[u64; 4], b: &[u64; 4], modulus: &[u64; 4]) -> [u64; 4] {
+    #[cfg(narsil_a64_addsub)]
+    {
+        crate::fp::aarch64::sub_mod(a, b, modulus)
+    }
+    #[cfg(not(narsil_a64_addsub))]
+    {
+        sub_mod_portable(a, b, modulus)
+    }
+}
+
+#[inline(always)]
+pub fn add_mod(a: &[u64; 4], b: &[u64; 4], modulus: &[u64; 4]) -> [u64; 4] {
+    #[cfg(narsil_a64_addsub)]
+    {
+        crate::fp::aarch64::add_mod(a, b, modulus)
+    }
+    #[cfg(not(narsil_a64_addsub))]
+    {
+        add_mod_portable(a, b, modulus)
+    }
+}
+
+#[cfg(any(test, not(narsil_a64_addsub)))]
+#[inline(always)]
+pub(crate) fn sub_mod_portable(a: &[u64; 4], b: &[u64; 4], modulus: &[u64; 4]) -> [u64; 4] {
     let modulus = opaque(modulus);
     let (d0, br) = a[0].borrowing_sub(b[0], false);
     let (d1, br) = a[1].borrowing_sub(b[1], br);
@@ -115,8 +141,9 @@ pub fn sub_mod(a: &[u64; 4], b: &[u64; 4], modulus: &[u64; 4]) -> [u64; 4] {
     [s0, s1, s2, s3]
 }
 
+#[cfg(any(test, not(narsil_a64_addsub)))]
 #[inline(always)]
-pub fn add_mod(a: &[u64; 4], b: &[u64; 4], modulus: &[u64; 4]) -> [u64; 4] {
+pub(crate) fn add_mod_portable(a: &[u64; 4], b: &[u64; 4], modulus: &[u64; 4]) -> [u64; 4] {
     let modulus = opaque(modulus);
     let (s0, c) = a[0].carrying_add(b[0], false);
     let (s1, c) = a[1].carrying_add(b[1], c);

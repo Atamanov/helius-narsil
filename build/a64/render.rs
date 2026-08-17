@@ -2,6 +2,7 @@
 //! map and one body per kernel. The build script writes this text to OUT_DIR
 //! and assembles it for aarch64-apple targets. No copy is checked in.
 
+use super::addsub::{ADD_MOD_REGISTER_MAP, SUB_MOD_REGISTER_MAP, add_mod, sub_mod};
 use super::emit::EmitterA64;
 use super::machine::Reg;
 use super::schedule::{MONT4_REGISTER_MAP, mont4};
@@ -12,6 +13,8 @@ pub const MONT4_SYMBOL: &str = "_narsil_mont4";
 pub const SOSD2_SYMBOL: &str = "_narsil_sosd2";
 pub const SOSD4_SYMBOL: &str = "_narsil_sosd4";
 pub const SOSD6_SYMBOL: &str = "_narsil_sosd6";
+pub const ADD_MOD_SYMBOL: &str = "_narsil_add_mod";
+pub const SUB_MOD_SYMBOL: &str = "_narsil_sub_mod";
 
 /// One emitted symbol: its schedule, its register roles, and the argument
 /// list the wrapper in `src/fp/aarch64.rs` must match.
@@ -65,6 +68,26 @@ pub const A64_KERNELS: &[Kernel] = &[
             "Arguments: (z: *mut u64x8, table: *const [*const u64x4; 12],",
             "            consts: *const { p: [u64; 4], neg_p_inv: u64 })",
             "Table order: x00 x01 y00 y01 x10 x11 y10 y11 x20 x21 y20 y21",
+        ],
+    },
+    Kernel {
+        symbol: ADD_MOD_SYMBOL,
+        schedule_name: "add-mod-conditional-subtract",
+        schedule: add_mod::<EmitterA64>,
+        register_map: ADD_MOD_REGISTER_MAP,
+        signature: &[
+            "Arguments: (z: *mut u64x4, a: *const u64x4, b: *const u64x4,",
+            "            p: *const u64x4)",
+        ],
+    },
+    Kernel {
+        symbol: SUB_MOD_SYMBOL,
+        schedule_name: "sub-mod-conditional-add",
+        schedule: sub_mod::<EmitterA64>,
+        register_map: SUB_MOD_REGISTER_MAP,
+        signature: &[
+            "Arguments: (z: *mut u64x4, a: *const u64x4, b: *const u64x4,",
+            "            p: *const u64x4)",
         ],
     },
 ];

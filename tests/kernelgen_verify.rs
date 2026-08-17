@@ -6,10 +6,10 @@ mod kernel_contract;
 mod kernelgen;
 
 use kernelgen::{
-    BN254_MU, BN254_P, BN254_P_INV, interpret_f2mul, interpret_f2sqr, interpret_g2_ysqr,
-    interpret_mont4_a64, interpret_mont4_mul, interpret_mont4_mulpre, interpret_mont4_redc,
-    interpret_mont4_sqr, interpret_sos, interpret_sosd2_a64, interpret_sosd2_small,
-    interpret_sosd4_a64, interpret_sosd6_a64,
+    BN254_MU, BN254_P, BN254_P_INV, interpret_add_mod_a64, interpret_f2mul, interpret_f2sqr,
+    interpret_g2_ysqr, interpret_mont4_a64, interpret_mont4_mul, interpret_mont4_mulpre,
+    interpret_mont4_redc, interpret_mont4_sqr, interpret_sos, interpret_sosd2_a64,
+    interpret_sosd2_small, interpret_sosd4_a64, interpret_sosd6_a64, interpret_sub_mod_a64,
 };
 
 /// Independent CIOS Montgomery multiplication oracle (word-by-word, u128).
@@ -361,6 +361,104 @@ fn schedules_match_reference_on_random_residues() {
             product,
             "a64 case {case}",
         );
+    }
+}
+
+/// Independent `a + b mod p` oracle (u128 words, five-word sum).
+fn reference_add_mod(a: [u64; 4], b: [u64; 4], p: [u64; 4]) -> [u64; 4] {
+    let mut sum = [0u64; 5];
+    let mut carry = 0u128;
+    for k in 0..4 {
+        let word = a[k] as u128 + b[k] as u128 + carry;
+        sum[k] = word as u64;
+        carry = word >> 64;
+    }
+    sum[4] = carry as u64;
+
+    let mut reduced = [0u64; 4];
+    let mut borrow = 0i128;
+    for k in 0..4 {
+        let word = sum[k] as i128 - p[k] as i128 + borrow;
+        reduced[k] = word as u64;
+        borrow = word >> 64;
+    }
+    if sum[4] as i128 + borrow < 0 {
+        [sum[0], sum[1], sum[2], sum[3]]
+    } else {
+        reduced
+    }
+}
+
+/// Independent `a - b mod p` oracle (u128 words, one conditional add-back).
+fn reference_sub_mod(a: [u64; 4], b: [u64; 4], p: [u64; 4]) -> [u64; 4] {
+    let mut difference = [0u64; 4];
+    let mut borrow = 0i128;
+    for k in 0..4 {
+        let word = a[k] as i128 - b[k] as i128 + borrow;
+        difference[k] = word as u64;
+        borrow = word >> 64;
+    }
+    if borrow == 0 {
+        return difference;
+    }
+    let mut folded = [0u64; 4];
+    let mut carry = 0u128;
+    for k in 0..4 {
+        let word = difference[k] as u128 + p[k] as u128 + carry;
+        folded[k] = word as u64;
+        carry = word >> 64;
+    }
+    folded
+}
+
+/// Both modular fold schedules against the independent oracle on every
+/// ordered pair of the edge corpus. The corpus carries the cases the carry
+/// discipline turns on: 0 + 0, a + a, (p-1) + (p-1) (the sum reaches word 4),
+/// and 0 - (p-1) (the difference goes negative).
+#[test]
+fn a64_addsub_matches_reference_on_edge_corpus() {
+    let corpus = edge_corpus();
+    for (i, a) in corpus.iter().enumerate() {
+        for (j, b) in corpus.iter().enumerate() {
+            let sum = interpret_add_mod_a64(*a, *b, BN254_P);
+            assert_eq!(
+                sum,
+                reference_add_mod(*a, *b, BN254_P),
+                "add pair ({i}, {j})"
+            );
+            assert!(!gte(&sum, &BN254_P), "unreduced sum ({i}, {j})");
+
+            let difference = interpret_sub_mod_a64(*a, *b, BN254_P);
+            assert_eq!(
+                difference,
+                reference_sub_mod(*a, *b, BN254_P),
+                "sub pair ({i}, {j})",
+            );
+            assert!(
+                !gte(&difference, &BN254_P),
+                "unreduced difference ({i}, {j})"
+            );
+        }
+    }
+}
+
+#[test]
+fn a64_addsub_matches_reference_on_random_residues() {
+    let mut state = 0x6a09_e667_f3bc_c908u64;
+    for case in 0..100_000 {
+        let a = next_residue(&mut state);
+        let b = next_residue(&mut state);
+        let sum = interpret_add_mod_a64(a, b, BN254_P);
+        assert_eq!(sum, reference_add_mod(a, b, BN254_P), "add case {case}");
+        assert!(!gte(&sum, &BN254_P), "unreduced sum, case {case}");
+
+        let difference = interpret_sub_mod_a64(a, b, BN254_P);
+        assert_eq!(
+            difference,
+            reference_sub_mod(a, b, BN254_P),
+            "sub case {case}",
+        );
+        assert!(!gte(&difference, &BN254_P), "unreduced difference {case}");
     }
 }
 
@@ -2004,6 +2102,38 @@ fn rendered_files_are_deterministic_and_sized() {
         );
         assert!(!body.contains("movk"), "{symbol} must not rematerialize p");
     }
+    // The two modular folds stop at x17, so no prologue may appear: any
+    // stack reference or callee-saved save would mean the allocation slipped.
+    for symbol in [
+        kernelgen::a64::render::ADD_MOD_SYMBOL,
+        kernelgen::a64::render::SUB_MOD_SYMBOL,
+    ] {
+        let body = a64_kernel_body(&rendered_a64, symbol);
+        assert_eq!(body.matches("[sp").count(), 0, "{symbol} touches the stack");
+        for saved in 19..=28 {
+            for form in ["stp", "ldp", "str", "ldr"] {
+                assert!(
+                    !body.contains(&format!("{form} x{saved},")),
+                    "{symbol} saves x{saved}",
+                );
+            }
+        }
+        assert!(!body.contains("movk"), "{symbol} must not rematerialize p");
+        assert!(!body.contains("mul "), "{symbol} must not multiply");
+    }
+    let [
+        ..,
+        (add_mod_instructions, add_mod_bytes),
+        (sub_mod_instructions, sub_mod_bytes),
+    ] = kernelgen::a64::render::kernel_sizes()[..]
+    else {
+        panic!("the two modular folds close the A64 kernel list")
+    };
+    assert!(
+        add_mod_bytes <= 128 && sub_mod_bytes <= 128,
+        "the folds must stay near the direct form ({add_mod_instructions} and {sub_mod_instructions} instructions)",
+    );
+
     // Leaf property, and the rounds are unrolled, so the kernel is straight
     // line. (Match with surrounding spaces: `.globl` would otherwise hit the
     // "bl" pattern.)

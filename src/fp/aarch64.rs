@@ -7,6 +7,8 @@ use crate::abi::narsil_sosd2;
 use crate::abi::narsil_sosd4;
 #[cfg(narsil_a64_sosd6)]
 use crate::abi::narsil_sosd6;
+#[cfg(narsil_a64_addsub)]
+use crate::abi::{narsil_add_mod, narsil_sub_mod};
 use crate::fp::Fp;
 #[cfg(any(narsil_a64_sosd4, narsil_a64_sosd6))]
 use crate::fp::sos::Fp2Product;
@@ -66,6 +68,50 @@ pub fn mont_mul(a: &[u64; 4], b: &[u64; 4]) -> Fp {
 #[inline(always)]
 pub fn mont_sqr(a: &[u64; 4]) -> Fp {
     mont_mul(a, a)
+}
+
+/// `a + b mod p` through the modular-add leaf.
+///
+/// Kernel contract: `a`, `b`, and `p` are readable, 8-byte-aligned four-limb
+/// arrays and may alias each other. The leaf is bit-exact with the portable
+/// form on all of `[0, 2^256)`; the caller's own bound decides canonicality,
+/// and `a, b < p` gives it. The wrapper supplies a distinct output, live for
+/// the call. The leaf initializes all four output limbs, saves no register
+/// (it stops at x17), moves no stack, and neither calls Rust nor unwinds.
+#[cfg(narsil_a64_addsub)]
+#[inline(always)]
+pub(crate) fn add_mod(a: &[u64; 4], b: &[u64; 4], p: &[u64; 4]) -> [u64; 4] {
+    let mut z = core::mem::MaybeUninit::<[u64; 4]>::uninit();
+    unsafe {
+        // SAFETY: three fixed-size references and the local output satisfy the
+        // complete kernel contract above. The assembly initializes 32 bytes
+        // before `assume_init` and cannot retain any pointer.
+        narsil_add_mod(
+            z.as_mut_ptr() as *mut u64,
+            a.as_ptr(),
+            b.as_ptr(),
+            p.as_ptr(),
+        );
+        z.assume_init()
+    }
+}
+
+/// `a - b mod p` through the modular-subtract leaf. Contract as for
+/// [`add_mod`].
+#[cfg(narsil_a64_addsub)]
+#[inline(always)]
+pub(crate) fn sub_mod(a: &[u64; 4], b: &[u64; 4], p: &[u64; 4]) -> [u64; 4] {
+    let mut z = core::mem::MaybeUninit::<[u64; 4]>::uninit();
+    unsafe {
+        // SAFETY: as for `add_mod`.
+        narsil_sub_mod(
+            z.as_mut_ptr() as *mut u64,
+            a.as_ptr(),
+            b.as_ptr(),
+            p.as_ptr(),
+        );
+        z.assume_init()
+    }
 }
 
 /// Both Fp halves of `(x0 + x1*u)*(y0 + y1*u)` through the dual-lane leaf.
@@ -387,6 +433,93 @@ mod tests {
         crate::fp::sos::sosd6_portable(products_of(operands))
     }
 
+    /// Both modular folds on silicon against the portable forms. The
+    /// interpreter proves the schedule algebra; this proves the assembler and
+    /// the register-only ABI. The corpus opens with zero and p-1, so the
+    /// sweep covers 0 + 0, a + a, (p-1) + (p-1) and 0 - (p-1).
+    #[cfg(narsil_a64_addsub)]
+    #[test]
+    fn addsub_assembly_matches_portable_on_edges_and_carries() {
+        let cases = residue_corpus(0x0f1e_2d3c_4b5a_6978, 256);
+        for (index, a) in cases.iter().enumerate() {
+            for (other, b) in cases.iter().enumerate() {
+                let sum = super::add_mod(a, b, &P);
+                assert_eq!(sum, limb::add_mod_portable(a, b, &P), "add {index}/{other}");
+                assert!(!limb::gte(&sum, &P), "unreduced sum {index}/{other}");
+
+                let difference = super::sub_mod(a, b, &P);
+                assert_eq!(
+                    difference,
+                    limb::sub_mod_portable(a, b, &P),
+                    "sub {index}/{other}",
+                );
+                assert!(
+                    !limb::gte(&difference, &P),
+                    "unreduced difference {index}/{other}",
+                );
+            }
+        }
+    }
+
+    #[cfg(narsil_a64_addsub)]
+    #[test]
+    fn addsub_assembly_matches_portable_on_random_residues() {
+        let mut state = 0x2545_f491_4f6c_dd1du64;
+        for case in 0..100_000 {
+            let a = next_residue(&mut state);
+            let b = next_residue(&mut state);
+            assert_eq!(
+                super::add_mod(&a, &b, &P),
+                limb::add_mod_portable(&a, &b, &P),
+                "add case {case}",
+            );
+            assert_eq!(
+                super::sub_mod(&a, &b, &P),
+                limb::sub_mod_portable(&a, &b, &P),
+                "sub case {case}",
+            );
+        }
+    }
+
+    /// The folds also serve Fr, whose modulus differs, and the conditional
+    /// subtraction the SoS routes use passes `a` up to `2p` with `b = p`.
+    #[cfg(narsil_a64_addsub)]
+    #[test]
+    fn addsub_assembly_matches_portable_off_the_canonical_bound() {
+        let mut state = 0xc2b2_ae3d_27d4_eb4fu64;
+        for case in 0..20_000 {
+            let a = next_raw(&mut state);
+            let b = next_raw(&mut state);
+            for modulus in [P, crate::consts::R] {
+                assert_eq!(
+                    super::sub_mod(&a, &modulus, &modulus),
+                    limb::sub_mod_portable(&a, &modulus, &modulus),
+                    "fold case {case}",
+                );
+                assert_eq!(
+                    super::sub_mod(&a, &b, &modulus),
+                    limb::sub_mod_portable(&a, &b, &modulus),
+                    "sub case {case}",
+                );
+                assert_eq!(
+                    super::add_mod(&a, &b, &modulus),
+                    limb::add_mod_portable(&a, &b, &modulus),
+                    "add case {case}",
+                );
+            }
+        }
+    }
+
+    #[cfg(narsil_a64_addsub)]
+    fn next_raw(state: &mut u64) -> [u64; 4] {
+        core::array::from_fn(|_| {
+            *state ^= *state << 13;
+            *state ^= *state >> 7;
+            *state ^= *state << 17;
+            *state
+        })
+    }
+
     #[test]
     #[ignore = "million-case release stress gate; run explicitly before changing field backends"]
     fn million_products_match_assembly_and_arkworks_raw_montgomery() {
@@ -416,7 +549,15 @@ mod tests {
 /// same clock and the same background load. The ratio survives noise that
 /// would swamp two separate absolute measurements. Run with
 /// `cargo test --release --features std --lib ab_sosd -- --ignored --nocapture`.
-#[cfg(all(test, any(narsil_a64_sosd2, narsil_a64_sosd4, narsil_a64_sosd6)))]
+#[cfg(all(
+    test,
+    any(
+        narsil_a64_sosd2,
+        narsil_a64_sosd4,
+        narsil_a64_sosd6,
+        narsil_a64_addsub
+    )
+))]
 mod ab {
     #[cfg(narsil_a64_sosd2)]
     use super::sosd2;
@@ -463,6 +604,99 @@ mod ab {
             "ratio leaf/portable  {:.3}   ({:+.1}%)",
             l / p,
             (l / p - 1.0) * 100.0
+        );
+    }
+
+    /// The two folds are single-digit-nanosecond calls, so each sample runs a
+    /// dependent chain: the result feeds the next left operand. That measures
+    /// the latency the tower actually waits on, not a throughput best case.
+    #[cfg(narsil_a64_addsub)]
+    #[test]
+    #[ignore]
+    fn ab_add_mod() {
+        ab_fold(
+            "add_mod",
+            super::add_mod,
+            crate::limb::add_mod_portable,
+            0x51ed_2701_a4ba_c39f,
+        );
+    }
+
+    #[cfg(narsil_a64_addsub)]
+    #[test]
+    #[ignore]
+    fn ab_sub_mod() {
+        ab_fold(
+            "sub_mod",
+            super::sub_mod,
+            crate::limb::sub_mod_portable,
+            0x1d8e_4e27_c47d_124f,
+        );
+    }
+
+    /// Generic over both routes so each one inlines: a fn pointer would add
+    /// the same indirect call to both sides and compress the ratio.
+    #[cfg(narsil_a64_addsub)]
+    fn ab_fold<L, Q>(name: &str, leaf: L, portable: Q, seed: u64)
+    where
+        L: Fn(&[u64; 4], &[u64; 4], &[u64; 4]) -> [u64; 4],
+        Q: Fn(&[u64; 4], &[u64; 4], &[u64; 4]) -> [u64; 4],
+    {
+        let modulus = crate::consts::P;
+        let operands = residues(seed, 256);
+        let iters = 200_000usize;
+        let samples = 41usize;
+        let mut chained = [Vec::with_capacity(samples), Vec::with_capacity(samples)];
+        let mut free = [Vec::with_capacity(samples), Vec::with_capacity(samples)];
+        for i in 0..8192 {
+            let k = i & 255;
+            black_box(leaf(&operands[k], &operands[k ^ 1], &modulus));
+            black_box(portable(&operands[k], &operands[k ^ 1], &modulus));
+        }
+        for s in 0..samples {
+            // Alternate which goes first so drift cancels.
+            let order = if s % 2 == 0 { [0, 1] } else { [1, 0] };
+            for which in order {
+                let mut acc = operands[0];
+                let t = Instant::now();
+                if which == 0 {
+                    for i in 0..iters {
+                        acc = leaf(&acc, black_box(&operands[i & 255]), black_box(&modulus));
+                    }
+                } else {
+                    for i in 0..iters {
+                        acc = portable(&acc, black_box(&operands[i & 255]), black_box(&modulus));
+                    }
+                }
+                chained[which].push(t.elapsed().as_nanos() as f64 / iters as f64);
+                black_box(acc);
+
+                let t = Instant::now();
+                if which == 0 {
+                    for i in 0..iters {
+                        let k = i & 255;
+                        black_box(leaf(&operands[k], &operands[k ^ 1], &modulus));
+                    }
+                } else {
+                    for i in 0..iters {
+                        let k = i & 255;
+                        black_box(portable(&operands[k], &operands[k ^ 1], &modulus));
+                    }
+                }
+                free[which].push(t.elapsed().as_nanos() as f64 / iters as f64);
+            }
+        }
+        let [mut leaf_chained, mut port_chained] = chained;
+        let [mut leaf_free, mut port_free] = free;
+        report(
+            &format!("{name} chained"),
+            &mut leaf_chained,
+            &mut port_chained,
+        );
+        report(
+            &format!("{name} independent"),
+            &mut leaf_free,
+            &mut port_free,
         );
     }
 

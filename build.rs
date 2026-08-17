@@ -146,6 +146,7 @@ fn main() {
     println!("cargo::rustc-check-cfg=cfg(narsil_a64_sosd2)");
     println!("cargo::rustc-check-cfg=cfg(narsil_a64_sosd4)");
     println!("cargo::rustc-check-cfg=cfg(narsil_a64_sosd6)");
+    println!("cargo::rustc-check-cfg=cfg(narsil_a64_addsub)");
     println!("cargo::rustc-check-cfg=cfg(narsil_x86_intel)");
     println!("cargo::rustc-check-cfg=cfg(narsil_avx512_ifma)");
     println!("cargo::rustc-check-cfg=cfg(narsil_x86_runtime_ifma)");
@@ -169,6 +170,7 @@ fn main() {
     println!("cargo:rerun-if-env-changed=NARSIL_A64_SOS");
     println!("cargo:rerun-if-env-changed=NARSIL_A64_SOSD4");
     println!("cargo:rerun-if-env-changed=NARSIL_A64_SOSD6");
+    println!("cargo:rerun-if-env-changed=NARSIL_A64_ADDSUB");
     println!("cargo:rerun-if-env-changed=NARSIL_AVX512_IFMA");
     println!("cargo:rerun-if-env-changed=NARSIL_SOSD2_ASM");
     println!("cargo:rerun-if-env-changed=NARSIL_SOSD2_SMALL");
@@ -355,6 +357,13 @@ fn main() {
         }
         if a64_leaf_enabled("NARSIL_A64_SOSD6") {
             println!("cargo:rustc-cfg=narsil_a64_sosd6");
+        }
+        // Off by default. Through a call boundary the operands round trip
+        // through memory, and in the tower every add and sub sits on a
+        // dependent chain, so the leaf loses there despite winning on
+        // independent throughput. It stays available for measurement.
+        if std::env::var("NARSIL_A64_ADDSUB").ok().as_deref() == Some("1") {
+            println!("cargo:rustc-cfg=narsil_a64_addsub");
         }
     }
 

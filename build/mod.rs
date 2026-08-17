@@ -74,6 +74,21 @@ pub fn interpret_mont4_a64(x: [u64; 4], y: [u64; 4], p: [u64; 4], p_inv: u64) ->
     machine.output()
 }
 
+/// Execute the AArch64 modular add schedule in the interpreter. The modulus
+/// heads the constants table, which is where the `p` argument points.
+pub fn interpret_add_mod_a64(a: [u64; 4], b: [u64; 4], p: [u64; 4]) -> [u64; 4] {
+    let mut machine = a64::interp::InterpA64::call_frame(a, b, p, BN254_P_INV);
+    a64::addsub::add_mod(&mut machine);
+    machine.output()
+}
+
+/// Execute the AArch64 modular subtract schedule in the interpreter.
+pub fn interpret_sub_mod_a64(a: [u64; 4], b: [u64; 4], p: [u64; 4]) -> [u64; 4] {
+    let mut machine = a64::interp::InterpA64::call_frame(a, b, p, BN254_P_INV);
+    a64::addsub::sub_mod(&mut machine);
+    machine.output()
+}
+
 /// Execute the dual-lane AArch64 sosd2 schedule in the interpreter: returns
 /// `((x0*y0 + x1*(p - y1))/R, (x0*y1 + x1*y0)/R) mod p` (operands at most p).
 pub fn interpret_sosd2_a64(
