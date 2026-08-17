@@ -57,22 +57,29 @@ const S: [Reg; 5] = [X19, X20, X21, X22, X23];
 /// Per-round scratch: the loaded `b_i`, then the Montgomery factor `m`.
 const V: Reg = X1;
 
-/// Column sums of `v * limbs` into S: `S0 = lo0`, `S1 = hi0 + lo1`, ...,
-/// `S4 = hi3 + chain carry`. Opens and closes its own carry chain. The CINC
+/// Column sums of `v * limbs` into `s`: `s0 = lo0`, `s1 = hi0 + lo1`, ...,
+/// `s4 = hi3 + chain carry`. Opens and closes its own carry chain. The CINC
 /// cannot wrap because UMULH high halves are at most `2^64 - 2`.
-fn column_products<M: MachineA64>(m: &mut M, v: Reg, limbs: [Reg; 4], limb: &str, factor: &str) {
-    m.mul(S[0], limbs[0], v, &format!("lo({limb}0*{factor})"));
-    m.umulh(S[1], limbs[0], v, &format!("hi({limb}0*{factor})"));
-    m.mul(S[2], limbs[1], v, &format!("lo({limb}1*{factor})"));
-    m.adds(S[1], S[1], S[2], "S1 += lo1 (opens the chain)");
-    m.umulh(S[2], limbs[1], v, &format!("hi({limb}1*{factor})"));
-    m.mul(S[3], limbs[2], v, &format!("lo({limb}2*{factor})"));
-    m.adcs(S[2], S[2], S[3], "S2 = hi1 + lo2");
-    m.umulh(S[3], limbs[2], v, &format!("hi({limb}2*{factor})"));
-    m.mul(S[4], limbs[3], v, &format!("lo({limb}3*{factor})"));
-    m.adcs(S[3], S[3], S[4], "S3 = hi2 + lo3");
-    m.umulh(S[4], limbs[3], v, &format!("hi({limb}3*{factor})"));
-    m.cinc_hs(S[4], S[4], "S4 = hi3 + chain carry (cannot wrap)");
+pub fn column_products<M: MachineA64>(
+    m: &mut M,
+    s: [Reg; 5],
+    v: Reg,
+    limbs: [Reg; 4],
+    limb: &str,
+    factor: &str,
+) {
+    m.mul(s[0], limbs[0], v, &format!("lo({limb}0*{factor})"));
+    m.umulh(s[1], limbs[0], v, &format!("hi({limb}0*{factor})"));
+    m.mul(s[2], limbs[1], v, &format!("lo({limb}1*{factor})"));
+    m.adds(s[1], s[1], s[2], "column 1 (opens the chain)");
+    m.umulh(s[2], limbs[1], v, &format!("hi({limb}1*{factor})"));
+    m.mul(s[3], limbs[2], v, &format!("lo({limb}2*{factor})"));
+    m.adcs(s[2], s[2], s[3], "column 2 = hi1 + lo2");
+    m.umulh(s[3], limbs[2], v, &format!("hi({limb}2*{factor})"));
+    m.mul(s[4], limbs[3], v, &format!("lo({limb}3*{factor})"));
+    m.adcs(s[3], s[3], s[4], "column 3 = hi2 + lo3");
+    m.umulh(s[4], limbs[3], v, &format!("hi({limb}3*{factor})"));
+    m.cinc_hs(s[4], s[4], "column 4 = hi3 + chain carry (cannot wrap)");
 }
 
 /// `narsil_mont4`: four-word CIOS Montgomery multiplication, counted loop.
@@ -97,7 +104,7 @@ pub fn mont4<M: MachineA64>(m: &mut M) {
     for _round in 0..4 {
         m.comment("product row: t += a * b_i, one column chain via S");
         m.ldr_post(V, X2, 8, "b_i (y walks one limb per round)");
-        column_products(m, V, A, "a", "b_i");
+        column_products(m, S, V, A, "a", "b_i");
         m.adds(T[0], T[0], S[0], "t0 += S0 (opens the accumulate chain)");
         m.adcs(T[1], T[1], S[1], "t1 += S1");
         m.adcs(T[2], T[2], S[2], "t2 += S2");
@@ -107,7 +114,7 @@ pub fn mont4<M: MachineA64>(m: &mut M) {
         m.comment("reduction row: m cancels t0; dropping that zero word");
         m.comment("and shifting down one word is the division by 2^64");
         m.mul(V, X17, T[0], "m = t0 * -p^-1 mod 2^64");
-        column_products(m, V, P, "p", "m");
+        column_products(m, S, V, P, "p", "m");
         m.cmn(T[0], S[0], "t0 + S0 = 0 mod 2^64; keep only its carry");
         m.adcs(T[0], T[1], S[1], "t0 = t1 + S1 (shift down)");
         m.adcs(T[1], T[2], S[2], "t1 = t2 + S2");

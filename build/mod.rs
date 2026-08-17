@@ -74,6 +74,21 @@ pub fn interpret_mont4_a64(x: [u64; 4], y: [u64; 4], p: [u64; 4], p_inv: u64) ->
     machine.output()
 }
 
+/// Execute the dual-lane AArch64 sosd2 schedule in the interpreter: returns
+/// `((x0*y0 + x1*(p - y1))/R, (x0*y1 + x1*y0)/R) mod p` (operands at most p).
+pub fn interpret_sosd2_a64(
+    x0: [u64; 4],
+    x1: [u64; 4],
+    y0: [u64; 4],
+    y1: [u64; 4],
+    p: [u64; 4],
+    p_inv: u64,
+) -> ([u64; 4], [u64; 4]) {
+    let mut machine = a64::interp::InterpA64::sosd2_frame(x0, x1, y0, y1, p, p_inv);
+    a64::sos::sosd2(&mut machine);
+    machine.output_lanes()
+}
+
 /// Execute the rolled x86-64 SoS schedule in the interpreter for one
 /// `(a_i, b_i)` pair list (`1..=10` pairs, operands at most p).
 pub fn interpret_sos(pairs: &[([u64; 4], [u64; 4])], p: [u64; 4], p_inv: u64) -> [u64; 4] {
