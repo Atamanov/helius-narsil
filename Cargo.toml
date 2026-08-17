@@ -67,6 +67,10 @@ name = "field"
 harness = false
 
 [[bench]]
+name = "tower"
+harness = false
+
+[[bench]]
 name = "a64_ports"
 harness = false
 

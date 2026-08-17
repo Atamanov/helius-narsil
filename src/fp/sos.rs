@@ -20,14 +20,17 @@
 use crate::consts::{P, P_INV};
 use crate::limb::{gt, sub_mod, sub_noborrow};
 
+#[cfg(any(test, target_arch = "x86_64"))]
 pub(crate) type Product<'a> = (&'a [u64; 4], &'a [u64; 4]);
 pub(crate) type Fp2Product<'a> = (&'a [u64; 4], &'a [u64; 4], &'a [u64; 4], &'a [u64; 4]);
 
+#[cfg(any(test, target_arch = "x86_64"))]
 macro_rules! sos4 {
     ($a0:expr, $b0:expr, $a1:expr, $b1:expr, $a2:expr, $b2:expr, $a3:expr, $b3:expr$(,)?) => {
         $crate::fp::sos::sos4_terms([($a0, $b0), ($a1, $b1), ($a2, $b2), ($a3, $b3)])
     };
 }
+#[cfg(any(test, target_arch = "x86_64"))]
 pub(crate) use sos4;
 
 macro_rules! sosd4 {
@@ -435,7 +438,10 @@ pub(crate) fn sosd8_portable(products: [Fp2Product<'_>; 4]) -> ([u64; 4], [u64; 
 /// `(a0*b0 + a1*b1)*R^{-1} mod p`, canonical output. Final value < 1.379p.
 #[cfg(any(
     test,
-    not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))
+    all(
+        target_arch = "x86_64",
+        not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))
+    )
 ))]
 #[inline(never)]
 pub(crate) fn sos2_portable(
@@ -459,7 +465,10 @@ pub(crate) fn sos2_portable(
 /// `(sum_{i<4} a_i*b_i)*R^{-1} mod p`, canonical. Final value < 1.757p.
 #[cfg(any(
     test,
-    not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))
+    all(
+        target_arch = "x86_64",
+        not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))
+    )
 ))]
 #[inline(never)]
 pub(crate) fn sos4_portable(products: [Product<'_>; 4]) -> [u64; 4] {
@@ -717,6 +726,7 @@ pub fn sosd2(x0: &[u64; 4], x1: &[u64; 4], y0: &[u64; 4], y1: &[u64; 4]) -> ([u6
     }
 }
 
+#[cfg(any(test, target_arch = "x86_64"))]
 #[inline(always)]
 pub fn sos2(a0: &[u64; 4], b0: &[u64; 4], a1: &[u64; 4], b1: &[u64; 4]) -> [u64; 4] {
     #[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
@@ -725,6 +735,7 @@ pub fn sos2(a0: &[u64; 4], b0: &[u64; 4], a1: &[u64; 4], b1: &[u64; 4]) -> [u64;
     sos2_portable(a0, b0, a1, b1)
 }
 
+#[cfg(any(test, target_arch = "x86_64"))]
 #[inline(always)]
 pub(crate) fn sos4_terms(products: [Product<'_>; 4]) -> [u64; 4] {
     #[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]

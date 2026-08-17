@@ -344,6 +344,7 @@ impl Fp12 {
         ))
     ))]
     #[inline(always)]
+    #[cfg(target_arch = "x86_64")]
     pub(crate) fn fp4_square_sos_composed(r0: Fp2, r1: Fp2) -> (Fp2, Fp2) {
         // Single-lane kernels bound the number of simultaneously live
         // accumulator sets on x86.
@@ -362,6 +363,23 @@ impl Fp12 {
         );
         let t1 = Fp2::new(Fp(sos2(d0, r10, d1, &nr11)), Fp(sos2(d0, r11, d1, r10)));
         (t0, t1)
+    }
+
+    /// The same two Fp2 results as the x86 form, drawn as one dual-lane sum
+    /// of two products and one dual-lane product, so both output chains are
+    /// in flight together instead of four single-lane chains in sequence.
+    #[cfg(not(target_arch = "x86_64"))]
+    pub(crate) fn fp4_square_sos_composed(r0: Fp2, r1: Fp2) -> (Fp2, Fp2) {
+        use crate::fp::sos::{sosd2, sosd4};
+        let x = r1.mul_by_nonresidue();
+        let d = r0.double();
+        let (r00, r01) = (&r0.c0.0, &r0.c1.0);
+        let (r10, r11) = (&r1.c0.0, &r1.c1.0);
+        let (x0, x1) = (&x.c0.0, &x.c1.0);
+        let (d0, d1) = (&d.c0.0, &d.c1.0);
+        let (t00, t01) = sosd4!(r00, r01, r00, r01, x0, x1, r10, r11);
+        let (t10, t11) = sosd2(d0, d1, r10, r11);
+        (Fp2::new(Fp(t00), Fp(t01)), Fp2::new(Fp(t10), Fp(t11)))
     }
 
     /// Granger-Scott cyclotomic square (valid after easy final exp).
