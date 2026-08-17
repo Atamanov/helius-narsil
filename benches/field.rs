@@ -19,6 +19,15 @@ fn bench_field(c: &mut Criterion) {
     c.bench_function("narsil/fp2_square", |bench| {
         bench.iter(|| black_box(a2).square());
     });
+    c.bench_function("narsil/fp_add", |bench| {
+        bench.iter(|| black_box(a) + black_box(b));
+    });
+    c.bench_function("narsil/fp_sub", |bench| {
+        bench.iter(|| black_box(a) - black_box(b));
+    });
+    c.bench_function("narsil/fp2_mul_by_nonresidue", |bench| {
+        bench.iter(|| black_box(a2).mul_by_nonresidue());
+    });
 }
 
 criterion_group!(benches, bench_field);
