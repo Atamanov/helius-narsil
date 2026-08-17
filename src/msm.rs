@@ -3,7 +3,7 @@
 //! BN254's efficiently-computable endomorphism splits every 254-bit scalar
 //! into two signed components of at most 127 bits. Tiny MSMs use a joint
 //! width-5 NAF over those components. Larger MSMs use a signed Pippenger
-//! schedule. The implementation is intentionally variable-time: the Agave
+//! schedule. The implementation is intentionally variable-time: the alt_bn128
 //! verification workload operates exclusively on public inputs.
 
 use alloc::{vec, vec::Vec};
@@ -102,6 +102,32 @@ struct GlvTerm {
     carry: u128,
 }
 
+/// A scalar below `2^128`, the width at which the endomorphism stops paying.
+///
+/// The lattice bounds the split by `|k1| <= (BASIS_00 + BASIS_01_ABS)/2` and
+/// `|k2| <= (BASIS_01_ABS + BASIS_11_ABS)/2`, both under `2^126`, for every
+/// input. The first bound does not fall with the input, so a short scalar
+/// still costs a 126-bit ladder after the split and pays for a second chain it
+/// no longer needs. One chain over the scalar itself is cheaper up to about
+/// 2^140.
+///
+/// The type carries the bound: `u128` cannot hold a wider value, and the short
+/// ladder recodes exactly 128 bits plus the terminal carry. A wider scalar
+/// reaching it would lose its high bits and return the wrong point.
+#[derive(Clone, Copy)]
+struct ShortScalar(u128);
+
+impl ShortScalar {
+    const ZERO: Self = Self(0);
+
+    /// `Some` exactly when the canonical limbs fit the bound.
+    #[inline(always)]
+    fn from_limbs(scalar: &[u64; 4]) -> Option<Self> {
+        ((scalar[2] | scalar[3]) == 0)
+            .then(|| Self(scalar[0] as u128 | ((scalar[1] as u128) << 64)))
+    }
+}
+
 const G1_PROJECTIVE_IDENTITY: G1Projective = G1Projective {
     x: Fp::ZERO,
     y: Fp::ONE,
@@ -114,21 +140,55 @@ const G1_AFFINE_IDENTITY: G1Affine = G1Affine {
     infinity: true,
 };
 
+/// Compute `[scalar] base` for canonical scalar limbs.
+///
+/// BN254 G1 has cofactor one, so the endomorphism acts as `lambda` on every
+/// curve point and the GLV split is valid for any on-curve base.
+pub(crate) fn mul_variable_time(base: G1Projective, scalar: [u64; 4]) -> G1Projective {
+    if base.is_identity() {
+        return G1Projective::identity();
+    }
+    msm_small::<1, JOINT_TABLE>(&[projective_to_affine_vartime(base)], &[scalar])
+}
+
 /// Compute `sum(points[i] * scalars[i])` for canonical scalar limbs.
 pub(crate) fn msm_variable_time(points: &[G1Affine], scalars: &[[u64; 4]]) -> G1Projective {
     debug_assert_eq!(points.len(), scalars.len());
     match points.len() {
         0 => G1Projective::identity(),
-        1..=2 => msm_joint_wnaf::<2, 16>(points, scalars),
-        3..=4 => msm_joint_wnaf::<4, 32>(points, scalars),
-        5..=8 => msm_joint_wnaf::<8, 64>(points, scalars),
-        9..=16 => msm_joint_wnaf::<16, 128>(points, scalars),
-        17..=32 => msm_joint_wnaf::<32, 256>(points, scalars),
-        33..=48 => msm_joint_wnaf::<48, 384>(points, scalars),
-        49..=64 => msm_joint_wnaf::<64, 512>(points, scalars),
-        65..=80 => msm_joint_wnaf::<80, 640>(points, scalars),
+        1..=2 => msm_small::<2, 16>(points, scalars),
+        3..=4 => msm_small::<4, 32>(points, scalars),
+        5..=8 => msm_small::<8, 64>(points, scalars),
+        9..=16 => msm_small::<16, 128>(points, scalars),
+        17..=32 => msm_small::<32, 256>(points, scalars),
+        33..=48 => msm_small::<48, 384>(points, scalars),
+        49..=64 => msm_small::<64, 512>(points, scalars),
+        65..=80 => msm_small::<80, 640>(points, scalars),
         _ => msm_signed_pippenger(points, scalars),
     }
+}
+
+/// Route a stack-sized MSM by scalar width. Every scalar must fit the short
+/// bound for the short ladder to run, since one wide scalar would restore the
+/// 254-bit doubling count the short ladder omits.
+fn msm_small<const CAP: usize, const CAP_TABLES: usize>(
+    points: &[G1Affine],
+    scalars: &[[u64; 4]],
+) -> G1Projective {
+    let n = points.len();
+    let mut short = [ShortScalar::ZERO; CAP];
+    if scalars.iter().zip(&mut short[..n]).all(|(scalar, slot)| {
+        match ShortScalar::from_limbs(scalar) {
+            Some(value) => {
+                *slot = value;
+                true
+            }
+            None => false,
+        }
+    }) {
+        return msm_short_wnaf::<CAP, CAP_TABLES>(points, &short[..n]);
+    }
+    msm_joint_wnaf::<CAP, CAP_TABLES>(points, scalars)
 }
 
 /// Co-Z addition (Goundar-Joye-Rivain ZADDU): for `a`, `b` sharing one Z,
@@ -213,29 +273,31 @@ pub fn msm_variable_time_affine(points: &[G1Affine], scalars: &[[u64; 4]]) -> G1
 
 const JOINT_WIDTH: usize = 5;
 const JOINT_TABLE: usize = 1 << (JOINT_WIDTH - 2);
-type JointDigits = crate::wnaf::WnafDigits<JOINT_WIDTH, 129>;
+/// One digit per bit of the widest recoded value plus the terminal carry. The
+/// GLV halves and a [`ShortScalar`] both stay under `2^128`, so both recodings
+/// share it.
+const RECODE_CAPACITY: usize = 129;
+type JointDigits = crate::wnaf::WnafDigits<JOINT_WIDTH, RECODE_CAPACITY>;
 
-/// Stack-only GLV joint wNAF. `CAP` bounds every fixed array.
-fn msm_joint_wnaf<const CAP: usize, const CAP_TABLES: usize>(
+/// Odd-multiple tables for every point, all rescaled to one global Z, which is
+/// returned.
+///
+/// Inversion-free normalization: rescale every entry to `Z_C = prod(chain_z)`
+/// using the recorded ZADDU ratios and cross-chain prefix/suffix products. The
+/// rescaled (X, Y) pairs are affine points on the isomorphic curve
+/// `y^2 = x^3 + b*Z_C^6`. The a = 0 add/double formulas never reference b, so a
+/// ladder over these tables runs unchanged and the true result is recovered by
+/// multiplying the accumulator's Z by `Z_C` once.
+fn build_odd_multiple_tables<const CAP: usize, const CAP_TABLES: usize>(
     points: &[G1Affine],
-    scalars: &[[u64; 4]],
-) -> G1Projective {
-    const {
-        assert!(
-            CAP_TABLES == CAP * JOINT_TABLE,
-            "joint wNAF table capacity disagrees with point capacity"
-        );
-    }
+    tables: &mut [G1Affine; CAP_TABLES],
+) -> Fp {
     let n = points.len();
-    debug_assert!(n != 0 && n <= CAP);
-
-    let mut decomposed = [(SignedScalar::ZERO, SignedScalar::ZERO); CAP];
     let mut tables_projective = [G1_PROJECTIVE_IDENTITY; CAP_TABLES];
     let mut chain_dx = [[Fp::ZERO; JOINT_TABLE - 1]; CAP];
     let mut chain_z = [Fp::ONE; CAP];
 
-    for (i, (point, scalar)) in points.iter().zip(scalars).enumerate() {
-        decomposed[i] = decompose_scalar(*scalar);
+    for (i, point) in points.iter().enumerate() {
         if point.infinity {
             continue;
         }
@@ -244,12 +306,6 @@ fn msm_joint_wnaf<const CAP: usize, const CAP_TABLES: usize>(
         chain_z[i] = chain[JOINT_TABLE - 1].z;
     }
 
-    // Inversion-free normalization: rescale every entry to the global
-    // Z_C = prod(chain_z) using the recorded ZADDU ratios and cross-chain
-    // prefix/suffix products. The rescaled (X, Y) pairs are affine points on
-    // the isomorphic curve y^2 = x^3 + b*Z_C^6. The a = 0 add/double formulas
-    // never reference b, so the main loop runs unchanged and the true result
-    // is recovered by multiplying the accumulator's Z by Z_C once.
     let mut outer = [Fp::ONE; CAP];
     let mut product = Fp::ONE;
     for i in 0..n {
@@ -263,8 +319,6 @@ fn msm_joint_wnaf<const CAP: usize, const CAP_TABLES: usize>(
         suffix *= chain_z[i];
     }
 
-    let mut tables = [G1_AFFINE_IDENTITY; CAP_TABLES];
-    let mut endomorphism_tables = [G1_AFFINE_IDENTITY; CAP_TABLES];
     for c in 0..n {
         if points[c].infinity {
             continue;
@@ -284,22 +338,89 @@ fn msm_joint_wnaf<const CAP: usize, const CAP_TABLES: usize>(
                 y,
                 infinity: false,
             };
-            endomorphism_tables[base + i] = G1Affine {
-                x: x * BETA_MONT,
-                y,
-                infinity: false,
-            };
             if i > 0 {
                 scale *= chain_dx[c][i - 1];
             }
         }
     }
+    z_global
+}
+
+/// Stack-only wNAF over scalars that fit [`ShortScalar`], one chain per point.
+///
+/// The endomorphism is left out on purpose. See [`ShortScalar`] for the
+/// lattice bound that makes the split worthless at this width.
+fn msm_short_wnaf<const CAP: usize, const CAP_TABLES: usize>(
+    points: &[G1Affine],
+    scalars: &[ShortScalar],
+) -> G1Projective {
+    const {
+        assert!(
+            CAP_TABLES == CAP * JOINT_TABLE,
+            "short wNAF table capacity disagrees with point capacity"
+        );
+    }
+    let n = points.len();
+    debug_assert!(n != 0 && n <= CAP);
+
+    let mut tables = [G1_AFFINE_IDENTITY; CAP_TABLES];
+    let z_global = build_odd_multiple_tables::<CAP, CAP_TABLES>(points, &mut tables);
+
+    let mut digits = [JointDigits::ZERO; CAP];
+    let mut max_len = 0usize;
+    for (slot, scalar) in digits[..n].iter_mut().zip(scalars) {
+        let (recoded, length) = recode_u128::<JOINT_WIDTH, RECODE_CAPACITY>(scalar.0);
+        max_len = max_len.max(length);
+        *slot = recoded;
+    }
+
+    let mut acc = G1Projective::identity();
+    for bit in (0..max_len).rev() {
+        acc = acc.double();
+        for (chain, digits) in tables[..n * JOINT_TABLE]
+            .chunks_exact(JOINT_TABLE)
+            .zip(&digits[..n])
+        {
+            acc = add_wnaf_digit(acc, chain, digits.digit(bit), false);
+        }
+    }
+    acc.z *= z_global;
+    acc
+}
+
+/// Stack-only GLV joint wNAF. `CAP` bounds every fixed array.
+fn msm_joint_wnaf<const CAP: usize, const CAP_TABLES: usize>(
+    points: &[G1Affine],
+    scalars: &[[u64; 4]],
+) -> G1Projective {
+    const {
+        assert!(
+            CAP_TABLES == CAP * JOINT_TABLE,
+            "joint wNAF table capacity disagrees with point capacity"
+        );
+    }
+    let n = points.len();
+    debug_assert!(n != 0 && n <= CAP);
+
+    let mut decomposed = [(SignedScalar::ZERO, SignedScalar::ZERO); CAP];
+    for (slot, scalar) in decomposed[..n].iter_mut().zip(scalars) {
+        *slot = decompose_scalar(*scalar);
+    }
+
+    let mut tables = [G1_AFFINE_IDENTITY; CAP_TABLES];
+    let z_global = build_odd_multiple_tables::<CAP, CAP_TABLES>(points, &mut tables);
+    // Jacobian x = X/Z^2 and every entry now shares one Z, so the endomorphism
+    // is one base-field multiply on X.
+    let mut endomorphism_tables = tables;
+    for entry in &mut endomorphism_tables[..n * JOINT_TABLE] {
+        entry.x *= BETA_MONT;
+    }
 
     let mut digits = [(JointDigits::ZERO, JointDigits::ZERO); CAP];
     let mut max_len = 0usize;
     for (slot, (k1, k2)) in digits[..n].iter_mut().zip(&decomposed) {
-        let (d1, n1) = recode_u128::<JOINT_WIDTH, 129>(k1.magnitude);
-        let (d2, n2) = recode_u128::<JOINT_WIDTH, 129>(k2.magnitude);
+        let (d1, n1) = recode_u128::<JOINT_WIDTH, RECODE_CAPACITY>(k1.magnitude);
+        let (d2, n2) = recode_u128::<JOINT_WIDTH, RECODE_CAPACITY>(k2.magnitude);
         max_len = max_len.max(n1).max(n2);
         *slot = (d1, d2);
     }
@@ -1314,7 +1435,7 @@ mod tests {
             0,
             0,
         ];
-        let result = point.mul_scalar(Fr::from_raw(limbs));
+        let result = point.mul_scalar_wnaf(Fr::from_raw(limbs));
         if scalar.negative {
             result.negate()
         } else {
@@ -1327,8 +1448,104 @@ mod tests {
             .iter()
             .zip(scalars)
             .fold(G1Projective::identity(), |acc, (point, scalar)| {
-                acc.add_projective(point.to_curve().mul_scalar(Fr::from_raw(*scalar)))
+                acc.add_projective(point.to_curve().mul_scalar_wnaf(Fr::from_raw(*scalar)))
             })
+    }
+
+    /// Every value the short route can be handed: the ends of the range, both
+    /// sides of every power of two, and both sides of every width-5 window
+    /// boundary within each of those runs.
+    fn short_scalar_corners() -> Vec<u128> {
+        let mut values = vec![0u128, 1, 2, 3, u128::MAX, u128::MAX - 1];
+        for bit in 0..128 {
+            let power = 1u128 << bit;
+            values.push(power);
+            values.push(power - 1);
+            values.push(power + 1);
+            // A run of ones ending at `bit` forces a borrow through every
+            // window below it, which is where a capacity error would show.
+            values.push(u128::MAX >> bit);
+            values.push((u128::MAX >> bit) ^ 1);
+            for window in (0..=bit).step_by(JOINT_WIDTH) {
+                values.push(power | (1u128 << window));
+                values.push(power | ((1u128 << window) - 1));
+                values.push(power.wrapping_sub(1u128 << window));
+            }
+        }
+        values.sort_unstable();
+        values.dedup();
+        values
+    }
+
+    fn limbs_of(value: u128) -> [u64; 4] {
+        [value as u64, (value >> 64) as u64, 0, 0]
+    }
+
+    /// The short route and the independent 257-bit wNAF ladder must agree on
+    /// every scalar the short route can see.
+    #[test]
+    fn short_scalar_route_matches_the_wnaf_ladder() {
+        let generator = G1Affine::generator().to_curve();
+        let unnormalized = generator.double().add_projective(generator);
+        assert_ne!(unnormalized.z, Fp::ONE);
+
+        for value in short_scalar_corners() {
+            let scalar = Fr::from_raw(limbs_of(value));
+            for base in [generator, unnormalized, G1Projective::identity()] {
+                assert_eq!(
+                    base.mul_scalar(scalar).to_affine(),
+                    base.mul_scalar_wnaf(scalar).to_affine(),
+                    "scalar {value}"
+                );
+            }
+        }
+    }
+
+    /// The short route may never see a scalar above its bound, and must see
+    /// every scalar below it.
+    #[test]
+    fn short_scalar_admits_exactly_the_values_below_the_bound() {
+        for value in short_scalar_corners() {
+            let short = ShortScalar::from_limbs(&limbs_of(value))
+                .expect("a value under 2^128 fits the short bound");
+            assert_eq!(short.0, value);
+        }
+        for limbs in [
+            [0, 0, 1, 0],
+            [0, 0, 0, 1],
+            [u64::MAX, u64::MAX, 1, 0],
+            [u64::MAX, u64::MAX, u64::MAX, u64::MAX],
+        ] {
+            assert!(ShortScalar::from_limbs(&limbs).is_none());
+        }
+    }
+
+    /// The short MSM route, and the fallback when one member is too wide.
+    #[test]
+    fn short_scalar_msm_matches_the_reference_and_falls_back_when_mixed() {
+        let points: Vec<G1Affine> = (1..=8u64)
+            .map(|i| {
+                G1Affine::generator()
+                    .to_curve()
+                    .mul_scalar_wnaf(Fr::from_u64(i))
+                    .to_affine()
+            })
+            .collect();
+        let wide = scalar_stream(1)[0];
+        let corners = short_scalar_corners();
+        for chunk in corners.chunks(8).take(64) {
+            let mut scalars: Vec<[u64; 4]> = chunk.iter().copied().map(limbs_of).collect();
+            let used = &points[..scalars.len()];
+            assert_eq!(
+                msm_variable_time(used, &scalars).to_affine(),
+                reference(used, &scalars).to_affine()
+            );
+            scalars[0] = wide;
+            assert_eq!(
+                msm_variable_time(used, &scalars).to_affine(),
+                reference(used, &scalars).to_affine()
+            );
+        }
     }
 
     fn scalar_stream(count: usize) -> Vec<[u64; 4]> {
@@ -1372,8 +1589,36 @@ mod tests {
         let generator = G1Affine::generator();
         assert_eq!(
             endomorphism_affine(generator).to_curve().to_affine(),
-            generator.to_curve().mul_scalar(lambda).to_affine()
+            generator.to_curve().mul_scalar_wnaf(lambda).to_affine()
         );
+    }
+
+    /// The GLV route serves `G1Projective::mul_scalar`, so it must agree with
+    /// the wNAF ladder on every scalar and on both base representations.
+    #[test]
+    fn glv_single_base_matches_the_wnaf_ladder() {
+        let generator = G1Affine::generator().to_curve();
+        let unnormalized = generator.double().add_projective(generator);
+        assert_ne!(unnormalized.z, Fp::ONE);
+
+        let mut scalars = vec![
+            Fr::ZERO,
+            Fr::ONE,
+            Fr::from_u64(2),
+            Fr::ZERO - Fr::ONE,
+            Fr::ZERO - Fr::from_u64(2),
+        ];
+        scalars.extend(scalar_stream(64).into_iter().map(Fr::from_raw));
+
+        for (index, value) in scalars.into_iter().enumerate() {
+            for base in [generator, unnormalized, G1Projective::identity()] {
+                assert_eq!(
+                    base.mul_scalar(value).to_affine(),
+                    base.mul_scalar_wnaf(value).to_affine(),
+                    "scalar {index}"
+                );
+            }
+        }
     }
 
     /// `RECIP = floor(c*2^256 / r)` exactly: `RECIP*r <= c*2^256` and the
@@ -1422,7 +1667,7 @@ mod tests {
         ]
         .concat();
         for scalar in cases {
-            let expected = generator.to_curve().mul_scalar(Fr::from_raw(scalar));
+            let expected = generator.to_curve().mul_scalar_wnaf(Fr::from_raw(scalar));
             let (k1, k2) = decompose_scalar(scalar);
             let actual = scalar_mul_signed(generator.to_curve(), k1).add_projective(
                 scalar_mul_signed(endomorphism_affine(generator).to_curve(), k2),
@@ -1442,7 +1687,7 @@ mod tests {
             .iter()
             .map(|scalar| {
                 G1Projective::generator()
-                    .mul_scalar(Fr::from_raw(*scalar))
+                    .mul_scalar_wnaf(Fr::from_raw(*scalar))
                     .to_affine()
             })
             .collect();
@@ -1636,8 +1881,8 @@ mod tests {
         let mut digits = [(JointDigits::ZERO, JointDigits::ZERO); CAP];
         let mut max_len = 0usize;
         for (slot, (k1, k2)) in digits[..n].iter_mut().zip(&decomposed) {
-            let (d1, n1) = recode_u128::<JOINT_WIDTH, 129>(k1.magnitude);
-            let (d2, n2) = recode_u128::<JOINT_WIDTH, 129>(k2.magnitude);
+            let (d1, n1) = recode_u128::<JOINT_WIDTH, RECODE_CAPACITY>(k1.magnitude);
+            let (d2, n2) = recode_u128::<JOINT_WIDTH, RECODE_CAPACITY>(k2.magnitude);
             max_len = max_len.max(n1).max(n2);
             *slot = (d1, d2);
         }
@@ -1695,8 +1940,8 @@ mod tests {
             entry.x *= BETA_MONT;
         }
 
-        let (d1, n1) = recode_u128::<JOINT_WIDTH, 129>(k1.magnitude);
-        let (d2, n2) = recode_u128::<JOINT_WIDTH, 129>(k2.magnitude);
+        let (d1, n1) = recode_u128::<JOINT_WIDTH, RECODE_CAPACITY>(k1.magnitude);
+        let (d2, n2) = recode_u128::<JOINT_WIDTH, RECODE_CAPACITY>(k2.magnitude);
         let max_len = n1.max(n2);
 
         let mut acc = G1Projective::identity();
@@ -1737,7 +1982,7 @@ mod tests {
         let pool: Vec<G1Affine> = (0..64)
             .map(|_| {
                 G1Projective::generator()
-                    .mul_scalar(Fr::from_raw(random_scalar(&mut rng)))
+                    .mul_scalar_wnaf(Fr::from_raw(random_scalar(&mut rng)))
                     .to_affine()
             })
             .collect();
@@ -1820,7 +2065,7 @@ mod tests {
         let base: Vec<G1Affine> = (0..8)
             .map(|_| {
                 G1Projective::generator()
-                    .mul_scalar(Fr::from_raw(random_scalar(&mut rng)))
+                    .mul_scalar_wnaf(Fr::from_raw(random_scalar(&mut rng)))
                     .to_affine()
             })
             .collect();

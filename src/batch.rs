@@ -1,4 +1,4 @@
-//! Agave-shaped, alt_bn128-compatible batch operations.
+//! alt_bn128 syscall compatible batch operations.
 //!
 //! This facade deliberately accepts canonical wire values. It measures and
 //! optimizes the work a validator actually performs: decode, validate,
@@ -272,7 +272,7 @@ pub const PAIR_BYTES: usize = G1_BYTES + G2_BYTES;
 /// Encoded scalar size: one canonical big-endian Fr element.
 pub const SCALAR_BYTES: usize = 32;
 
-/// Version marker matching Agave's batch-syscall crate.
+/// Version marker matching the alt_bn128 batch syscall ABI.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Version {
     /// Initial syscall ABI: the caps, encodings, and error precedence above.
@@ -309,14 +309,14 @@ pub struct PairBytes {
 #[repr(transparent)]
 pub struct PodPairingResult(pub [u8; 32]);
 
-// Exact Agave-facing spellings. `pub use` preserves tuple-struct constructors,
+// Exact syscall spellings. `pub use` preserves tuple-struct constructors,
 // unlike type aliases, while the shorter names remain convenient internally.
 pub use G1Bytes as PodG1Point;
 pub use G2Bytes as PodG2Point;
 pub use PairBytes as PodG1G2Pair;
 pub use ScalarBytes as PodScalar;
 
-/// Stable validation taxonomy shared with the Agave batch-syscall design.
+/// Stable validation taxonomy shared with the alt_bn128 batch syscall design.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, thiserror::Error)]
 pub enum InputError {
     /// Input length is not a whole number of encoded elements.
@@ -405,7 +405,7 @@ impl PodPairingResult {
     }
 }
 
-/// Agave-compatible spelling of [`g1_msm`].
+/// alt_bn128 syscall spelling of [`g1_msm`].
 #[inline]
 pub fn alt_bn128_g1_msm(
     _version: Version,
@@ -415,7 +415,7 @@ pub fn alt_bn128_g1_msm(
     g1_msm(points, scalars)
 }
 
-/// Agave-compatible spelling of [`pairing_product_is_one`].
+/// alt_bn128 syscall spelling of [`pairing_product_is_one`].
 #[inline]
 pub fn alt_bn128_pairing_check(
     _version: Version,
@@ -424,7 +424,7 @@ pub fn alt_bn128_pairing_check(
     pairing_product_is_one(pairs)
 }
 
-/// Agave-compatible spelling of [`fr_lincomb`].
+/// alt_bn128 syscall spelling of [`fr_lincomb`].
 #[inline]
 pub fn alt_bn128_fr_lincomb(
     _version: Version,
@@ -434,7 +434,7 @@ pub fn alt_bn128_fr_lincomb(
     fr_lincomb(a, b)
 }
 
-/// Agave-compatible spelling of [`fr_batch_invert`].
+/// alt_bn128 syscall spelling of [`fr_batch_invert`].
 #[inline]
 pub fn alt_bn128_fr_batch_invert(
     _version: Version,
@@ -443,7 +443,7 @@ pub fn alt_bn128_fr_batch_invert(
     fr_batch_invert(values)
 }
 
-/// Variable-time G1 multi-scalar multiplication with Agave validation order.
+/// Variable-time G1 multi-scalar multiplication with the syscall validation order.
 ///
 /// Returns the canonical encoding of `sum(scalars[i] * points[i])`.
 /// Precedence: [`InputError::LengthMismatch`], [`InputError::ZeroInput`]
@@ -606,14 +606,15 @@ pub fn pairing_product_is_one(pairs: &[PairBytes]) -> Result<bool, InputError> {
         return Ok(false);
     }
 
-    // Three or more distinct terms run as independent lane chains. The shared
-    // accumulator's dependent chain grows with the term count, the masked
-    // eight-lane engine's does not. Two terms keep the prepared route below.
+    // Distinct terms above the host crossover run as independent lane chains.
+    // The shared accumulator's dependent chain grows with the term count, the
+    // masked eight-lane engine's does not. Fewer terms keep the prepared route
+    // below, which replays cached line schedules.
     #[cfg(all(
         any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
         not(feature = "force-portable")
     ))]
-    if routed.len() >= crate::pairing::miller::VERTICAL_MIN_MILLER_TERMS
+    if routed.len() >= crate::x86_runtime::vertical_min_miller_terms()
         && crate::batch8::ifma_available()
     {
         return Ok(crate::batch8::multi_pairing8(routed) == Fp12::ONE);
@@ -1389,7 +1390,9 @@ mod tests {
         let first = pairing_product_is_one(&pairs).unwrap();
         let cold = validated_g2_cache::snapshot();
         #[cfg(any(narsil_avx512_ifma, narsil_x86_runtime_ifma))]
-        let expected = if crate::batch8::ifma_available() {
+        let expected = if crate::batch8::ifma_available()
+            && pairs.len() >= crate::x86_runtime::vertical_min_miller_terms()
+        {
             (validated_g2_cache::CAPACITY, 0)
         } else {
             (validated_g2_cache::CAPACITY, validated_g2_cache::CAPACITY)
@@ -1398,9 +1401,9 @@ mod tests {
         let expected = (validated_g2_cache::CAPACITY, validated_g2_cache::CAPACITY);
         assert_eq!(cold.keys.len(), expected.0);
         // Every tier retains the four keys that survive the bounded LRU, so a
-        // later small product can warm-replay a fixed verifier key. IFMA n=5
-        // consumes the validated points in the lane engine and must not build
-        // dead scalar line schedules. Scalar tiers prepare the surviving keys.
+        // later small product can warm-replay a fixed verifier key. A batch the
+        // lane engine consumes must not also build dead scalar line schedules.
+        // Every other route prepares the surviving keys.
         assert_eq!(cold.prepared_keys.len(), expected.1);
         let second = pairing_product_is_one(&pairs).unwrap();
         let warm = validated_g2_cache::snapshot();

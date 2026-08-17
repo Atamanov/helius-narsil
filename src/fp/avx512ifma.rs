@@ -575,6 +575,57 @@ fn mont_sos_mac_8<L: Radix52Limbs, Rv: Radix52Limbs, const N: usize, const R: us
     }
 }
 
+/// Right rows of one SoS stream, addressed by term and radix-52 limb. Every
+/// limb must be normalized below `2^52`, which the `vpmadd52` truncation
+/// requires, and every lane must respect the stream's tracked value bound.
+pub(crate) trait RowLimbs<const N: usize> {
+    /// # Safety
+    ///
+    /// The caller must already run with AVX-512F and AVX-512IFMA enabled.
+    unsafe fn row_limb(&self, term: usize, k: usize) -> __m512i;
+}
+
+impl<Rv: Radix52Limbs, const N: usize> RowLimbs<N> for [Rv; N] {
+    #[inline(always)]
+    unsafe fn row_limb(&self, term: usize, k: usize) -> __m512i {
+        self[term].limbs()[k]
+    }
+}
+
+/// Right rows built on demand by one lane permute over a per-row source pair.
+/// Round `k` reads only limb `k` of each row, so the whole row set never
+/// occupies the register file at once. Lanes `0..=7` of an index select the
+/// row's first source, `8..=15` its second.
+#[cfg(feature = "std")]
+#[derive(Clone, Copy)]
+pub(crate) struct PermutedRows<'a, const B: u64, const N: usize> {
+    pairs: [(&'a FpVec8L<B>, &'a FpVec8L<B>); N],
+    index: &'a [[u64; 8]; N],
+}
+
+#[cfg(feature = "std")]
+impl<'a, const B: u64, const N: usize> PermutedRows<'a, B, N> {
+    #[inline(always)]
+    pub(crate) fn new(
+        pairs: [(&'a FpVec8L<B>, &'a FpVec8L<B>); N],
+        index: &'a [[u64; 8]; N],
+    ) -> Self {
+        Self { pairs, index }
+    }
+}
+
+#[cfg(feature = "std")]
+impl<const B: u64, const N: usize> RowLimbs<N> for PermutedRows<'_, B, N> {
+    #[inline(always)]
+    unsafe fn row_limb(&self, term: usize, k: usize) -> __m512i {
+        let (low, high) = self.pairs[term];
+        unsafe {
+            let index = _mm512_loadu_si512(self.index[term].as_ptr().cast());
+            _mm512_permutex2var_epi64(low.l[k], index, high.l[k])
+        }
+    }
+}
+
 /// Two interleaved SoS streams of unequal arity and per-stream subtraction
 /// rounds. The five-round Montgomery recurrence and the value bound argument
 /// are those of [`mont_sos_mac_8`], applied to each stream with its own term
@@ -582,16 +633,17 @@ fn mont_sos_mac_8<L: Radix52Limbs, Rv: Radix52Limbs, const N: usize, const R: us
 #[inline(always)]
 fn mont_sos_mac_8_pair_split<
     L: Radix52Limbs,
-    Rv: Radix52Limbs,
+    B0: RowLimbs<N0>,
+    B1: RowLimbs<N1>,
     const N0: usize,
     const N1: usize,
     const R0: usize,
     const R1: usize,
 >(
     a0: &[L; N0],
-    b0: &[Rv; N0],
+    b0: &B0,
     a1: &[L; N1],
-    b1: &[Rv; N1],
+    b1: &B1,
 ) -> [[__m512i; 5]; 2] {
     const {
         assert!(N0 >= N1 && N1 >= 1 && N0 <= 12);
@@ -607,14 +659,20 @@ fn mont_sos_mac_8_pair_split<
         let mut t = [[zero; 6]; 2];
         for k in 0..5 {
             for term in 0..N0 {
+                // One row limb per round, so a permuted provider issues its
+                // permute once here and not once per accumulator position.
+                let bk0 = b0.row_limb(term, k);
+                let bk1 = if term < N1 {
+                    b1.row_limb(term, k)
+                } else {
+                    zero
+                };
                 for j in 0..5 {
-                    let bk = b0[term].limbs()[k];
-                    t[0][j] = _mm512_madd52lo_epu64(t[0][j], a0[term].limbs()[j], bk);
-                    t[0][j + 1] = _mm512_madd52hi_epu64(t[0][j + 1], a0[term].limbs()[j], bk);
+                    t[0][j] = _mm512_madd52lo_epu64(t[0][j], a0[term].limbs()[j], bk0);
+                    t[0][j + 1] = _mm512_madd52hi_epu64(t[0][j + 1], a0[term].limbs()[j], bk0);
                     if term < N1 {
-                        let bk = b1[term].limbs()[k];
-                        t[1][j] = _mm512_madd52lo_epu64(t[1][j], a1[term].limbs()[j], bk);
-                        t[1][j + 1] = _mm512_madd52hi_epu64(t[1][j + 1], a1[term].limbs()[j], bk);
+                        t[1][j] = _mm512_madd52lo_epu64(t[1][j], a1[term].limbs()[j], bk1);
+                        t[1][j + 1] = _mm512_madd52hi_epu64(t[1][j + 1], a1[term].limbs()[j], bk1);
                     }
                 }
             }
@@ -880,15 +938,17 @@ impl FpVec8 {
         const RB: u64,
         const R0: usize,
         const R1: usize,
+        B0: RowLimbs<6>,
+        B1: RowLimbs<3>,
     >(
         a0: &[FpVec8L<LA>; 6],
-        b0: &[FpVec8L<RB>; 6],
+        b0: &B0,
         a1: &[FpVec8L<LA>; 3],
-        b1: &[FpVec8L<RB>; 3],
+        b1: &B1,
     ) -> [Self; 2] {
         const { assert!(sos_sum_ok(6 * LA * RB, R0 as u64)) };
         const { assert!(sos_sum_ok(3 * LA * RB, R1 as u64)) };
-        mont_sos_mac_8_pair_split::<_, _, 6, 3, R0, R1>(a0, b0, a1, b1).map(|l| Self { l })
+        mont_sos_mac_8_pair_split::<_, _, _, 6, 3, R0, R1>(a0, b0, a1, b1).map(|l| Self { l })
     }
 
     /// Fused unequal-arity pair for one dense Fp12 product: twelve-term full
@@ -913,7 +973,7 @@ impl FpVec8 {
     ) -> [Self; 2] {
         const { assert!(sos_sum_ok(12 * LA * RB, R0 as u64)) };
         const { assert!(sos_sum_ok(6 * LA * RB, R1 as u64)) };
-        mont_sos_mac_8_pair_split::<_, _, 12, 6, R0, R1>(a0, b0, a1, b1).map(|l| Self { l })
+        mont_sos_mac_8_pair_split::<_, _, _, 12, 6, R0, R1>(a0, b0, a1, b1).map(|l| Self { l })
     }
 
     /// Two-term lazy sum of products. `2 * LA * RB * p <= 2^260` keeps the
@@ -1300,10 +1360,11 @@ impl<const B: u64> FpVec8L<B> {
         const { assert!(OUT >= 9 * B + min_bias(1, B) && OUT <= LAZY_CAP) };
         let bias = const { bias52(min_bias(1, B), 1) };
         unsafe {
-            let index = _mm512_loadu_si512([1u64, 0, 3, 2, 5, 4, 7, 6].as_ptr().cast());
             let bias = splat5(&bias);
             let mut t = core::array::from_fn(|j| {
-                let swapped = _mm512_permutexvar_epi64(index, self.l[j]);
+                // The pair swap stays inside each 128-bit lane, so a shuffle
+                // replaces the cross-lane permute and its index vector.
+                let swapped = _mm512_shuffle_epi32::<_MM_PERM_BADC>(self.l[j]);
                 let nine = _mm512_add_epi64(_mm512_slli_epi64::<3>(self.l[j]), self.l[j]);
                 let real = _mm512_sub_epi64(_mm512_add_epi64(nine, bias[j]), swapped);
                 let imag = _mm512_add_epi64(nine, swapped);
@@ -1451,6 +1512,8 @@ pub(crate) fn g1_madd_batch8(
 // so running the suite on an older CPU can never enter an unguarded helper.
 #[cfg(all(test, narsil_avx512_ifma))]
 mod tests {
+    use alloc::{vec, vec::Vec};
+
     use super::*;
 
     fn load(values: &[Fp; 8]) -> FpVec8 {
@@ -1736,7 +1799,7 @@ mod tests {
             let la1 = a1.map(|value| value.lazy());
             let lb1 = b1.map(|value| value.lazy());
             let [s0, s1] = unsafe {
-                FpVec8::sos_mac_6_3_pair_fused_lazy::<1, 1, 1, 1>(&la0, &lb0, &la1, &lb1)
+                FpVec8::sos_mac_6_3_pair_fused_lazy::<1, 1, 1, 1, _, _>(&la0, &lb0, &la1, &lb1)
             };
             assert_eq!(
                 s0.store(),
@@ -1963,7 +2026,9 @@ mod tests {
             // The sparse-034 bound pair: full rows at 13 with one round,
             // half rows at 13 with one round.
             let [got0, got1] = unsafe {
-                FpVec8::sos_mac_6_3_pair_fused_lazy::<1, 13, 1, 1>(&av, &bv, &short_av, &short_cv)
+                FpVec8::sos_mac_6_3_pair_fused_lazy::<1, 13, 1, 1, _, _>(
+                    &av, &bv, &short_av, &short_cv,
+                )
             };
             assert_eq!(got0.store(), expected0, "pair stream 0 round {round}");
             assert_eq!(got1.store(), expected1_short, "pair stream 1 round {round}");
@@ -1982,7 +2047,7 @@ mod tests {
                     .negate_lanes_lazy::<23>(0x55)
             });
             let [got0, got1] = unsafe {
-                FpVec8::sos_mac_6_3_pair_fused_lazy::<1, 23, 2, 1>(&av, &bw, &short_av, &cw)
+                FpVec8::sos_mac_6_3_pair_fused_lazy::<1, 23, 2, 1, _, _>(&av, &bw, &short_av, &cw)
             };
             assert_eq!(got0.store(), expected0, "wide stream 0 round {round}");
             assert_eq!(got1.store(), expected1_short, "wide stream 1 round {round}");

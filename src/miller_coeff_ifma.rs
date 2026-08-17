@@ -11,7 +11,7 @@ use alloc::vec::Vec;
 use core::mem::MaybeUninit;
 
 use crate::fp::Fp;
-use crate::fp::avx512ifma::{FpVec8, FpVec8L};
+use crate::fp::avx512ifma::{FpVec8, FpVec8L, PermutedRows};
 use crate::fp2::Fp2;
 use crate::fp6::Fp6;
 use crate::fp12::Fp12;
@@ -23,7 +23,12 @@ use crate::pairing::miller::{
 };
 
 const ZERO_STATE: u64 = 12;
+/// Lanes that hold the real component of an Fp2 pair, the only lanes a full
+/// odd row negates.
 const REAL_LANES: u8 = 0x55;
+/// Lanes that hold the imaginary component. Negating them in a right source
+/// carries every schoolbook minus sign.
+const IMAG_LANES: u8 = 0xaa;
 
 #[derive(Clone, Copy)]
 struct PairSlot(u8);
@@ -46,7 +51,6 @@ struct Plan {
 struct HalfPlan {
     left: [[u64; 8]; 3],
     right: [[u64; 8]; 3],
-    negate: [u8; 3],
 }
 
 struct PackedPlans {
@@ -70,6 +74,12 @@ const fn lower(equations: [Equation; 4]) -> Plan {
             left[odd][output] = (2 * x + 1) as u64;
             right[odd - 1][output] = (2 * y + component as u8) as u64;
             right[odd][output] = (2 * y + (component ^ 1) as u8) as u64;
+            // The only minus of the schoolbook Fp2 expansion is the odd row's
+            // real component, and there the row reads an odd (imaginary)
+            // source lane. Even rows carry no minus at all. Negating the odd
+            // lanes of the odd rows' source pair therefore reproduces the
+            // whole sign convention with no post-permute negation.
+            assert!(right[odd][output] % 2 == ((REAL_LANES >> output) & 1) as u64);
             product += 1;
         }
         output += 1;
@@ -77,13 +87,13 @@ const fn lower(equations: [Equation; 4]) -> Plan {
     Plan { left, right }
 }
 
-/// Lower two Fp2 equations to split half rows. The negate mask marks the
-/// minus-signed schoolbook terms (the odd Fp term of a real component), so
-/// the sign convention matches [`lower`] rows under the `REAL_LANES` mask.
+/// Lower two Fp2 equations to split half rows. A half row mixes signs inside
+/// one row, so the minus-signed schoolbook terms (the odd Fp term of a real
+/// component) address the second source of the permute, which the caller
+/// supplies as the odd-lane negation of the first.
 const fn lower_half(equations: [Equation; 2]) -> HalfPlan {
     let mut left = [[0u64; 8]; 3];
     let mut right = [[0u64; 8]; 3];
-    let mut negate = [0u8; 3];
     let mut lane = 0;
     while lane < 8 {
         let (e, c, h) = (lane / 4, (lane / 2) % 2, lane % 2);
@@ -94,19 +104,18 @@ const fn lower_half(equations: [Equation; 2]) -> HalfPlan {
             assert!(x < 8 && y < 8);
             let odd = (term % 2) as u8;
             left[row][lane] = (2 * x + odd) as u64;
-            right[row][lane] = (2 * y + (odd ^ c as u8)) as u64;
-            if odd == 1 && c == 0 {
-                negate[row] |= 1 << lane;
-            }
+            let slot = (2 * y + (odd ^ c as u8)) as u64;
+            // Half rows read one source only, so lanes 8..=15 are free to
+            // carry the sign, and a minus always lands on an odd lane.
+            assert!(slot < 8);
+            let minus = odd == 1 && c == 0;
+            assert!(!minus || slot % 2 == 1);
+            right[row][lane] = if minus { slot + 8 } else { slot };
             row += 1;
         }
         lane += 1;
     }
-    HalfPlan {
-        left,
-        right,
-        negate,
-    }
+    HalfPlan { left, right }
 }
 
 /// Express one Fp2 coefficient as three Fp2 products.
@@ -234,9 +243,7 @@ impl PackedFp12 {
     /// Square by `ab = a*b`, `s = a+b`, and `t = a+v*b`.
     #[inline]
     fn square_assign(&mut self) {
-        let a = self
-            .lo
-            .permute2(&self.hi, [0, 1, 2, 3, 4, 5, ZERO_STATE, ZERO_STATE]);
+        let a = self.lo.keep_lanes(0x3f);
         let b = self
             .lo
             .permute2(&self.hi, [6, 7, 8, 9, 10, 11, ZERO_STATE, ZERO_STATE]);
@@ -585,45 +592,14 @@ unsafe fn multi_miller_loop_mixed_ifma(pairs: &[(&G1Affine, G2Miller<'_>)]) -> F
     stream_mixed_line_coeffs(pairs, IfmaSink).unwrap_or(Fp12::ONE)
 }
 
-/// `NB` also bounds the even rows, so one row type feeds the recurrence.
-/// The negation assert inside `negate_lanes_lazy` pins `NB` against `RB`.
+/// Left rows. Every round reads all five limbs of every left row, so these
+/// stay materialized while the right rows are permuted per round.
 #[inline(always)]
-fn plan_operands<const LB: u64, const RB: u64, const NB: u64>(
+fn plan_left<const LB: u64, const N: usize>(
     left: Sources<'_, LB>,
-    right: Sources<'_, RB>,
-    plan: &Plan,
-) -> ([FpVec8L<LB>; 6], [FpVec8L<NB>; 6]) {
-    let a: [FpVec8L<LB>; 6] =
-        core::array::from_fn(|term| left.low.permute2::<LB, LB>(left.high, plan.left[term]));
-    let b: [FpVec8L<NB>; 6] = core::array::from_fn(|term| {
-        let selected = right.low.permute2::<RB, RB>(right.high, plan.right[term]);
-        if term & 1 == 0 {
-            selected.relax::<NB>()
-        } else {
-            selected.negate_lanes_lazy::<NB>(REAL_LANES)
-        }
-    });
-    (a, b)
-}
-
-/// Operand rows of the short stream. `NB` matches the full-row bound, so one
-/// bound tag feeds the shared recurrence. Every half row carries lazy signs,
-/// so every right row passes through the masked negation.
-#[inline(always)]
-fn plan_operands_half<const LB: u64, const RB: u64, const NB: u64>(
-    left: Sources<'_, LB>,
-    right: Sources<'_, RB>,
-    plan: &HalfPlan,
-) -> ([FpVec8L<LB>; 3], [FpVec8L<NB>; 3]) {
-    let a: [FpVec8L<LB>; 3] =
-        core::array::from_fn(|row| left.low.permute2::<LB, LB>(left.high, plan.left[row]));
-    let b: [FpVec8L<NB>; 3] = core::array::from_fn(|row| {
-        right
-            .low
-            .permute2::<RB, RB>(right.high, plan.right[row])
-            .negate_lanes_lazy::<NB>(plan.negate[row])
-    });
-    (a, b)
+    index: &[[u64; 8]; N],
+) -> [FpVec8L<LB>; N] {
+    core::array::from_fn(|row| left.low.permute2::<LB, LB>(left.high, index[row]))
 }
 
 /// Run the full-row and the half-row reductions of one Fp12 operation as two
@@ -649,10 +625,27 @@ unsafe fn execute_row_pair_63<
     half_right: Sources<'_, RB>,
     plans: &PackedPlans,
 ) -> [FpVec8; 2] {
-    let (a0, b0) = plan_operands::<LB, RB, NB>(full_left, full_right, &plans.full);
-    let (a1, b1) = plan_operands_half::<LB, RB, NB>(half_left, half_right, &plans.half);
+    // Both plans put every minus on an odd source lane, so one odd-lane
+    // negation per source replaces the per-row negation and leaves each right
+    // row a single permute with no cross-limb carry.
+    let plain_low = full_right.low.relax::<NB>();
+    let plain_high = full_right.high.relax::<NB>();
+    let neg_low = full_right.low.negate_lanes_lazy::<NB>(IMAG_LANES);
+    let neg_high = full_right.high.negate_lanes_lazy::<NB>(IMAG_LANES);
+    let half_plain = half_right.low.relax::<NB>();
+    let half_neg = half_right.low.negate_lanes_lazy::<NB>(IMAG_LANES);
+
+    let a0 = plan_left::<LB, 6>(full_left, &plans.full.left);
+    let a1 = plan_left::<LB, 3>(half_left, &plans.half.left);
+    let plain = (&plain_low, &plain_high);
+    let negated = (&neg_low, &neg_high);
+    let b0 = PermutedRows::new(
+        [plain, negated, plain, negated, plain, negated],
+        &plans.full.right,
+    );
+    let b1 = PermutedRows::new([(&half_plain, &half_neg); 3], &plans.half.right);
     // SAFETY: the enclosing target features satisfy the ISA precondition.
-    unsafe { FpVec8::sos_mac_6_3_pair_fused_lazy::<LB, NB, R0, R1>(&a0, &b0, &a1, &b1) }
+    unsafe { FpVec8::sos_mac_6_3_pair_fused_lazy::<LB, NB, R0, R1, _, _>(&a0, &b0, &a1, &b1) }
 }
 
 const fn sparse_plans() -> PackedPlans {
@@ -756,13 +749,11 @@ mod tests {
         assert_eq!(SPARSE.full.left, [[0,0,2,2,4,4,0,0],[1,1,3,3,5,5,1,1],[8,8,6,6,6,6,4,4],[9,9,7,7,7,7,5,5],[10,10,10,10,8,8,6,6],[11,11,11,11,9,9,7,7]]);
         assert_eq!(SPARSE.full.right, [[0,1,0,1,0,1,2,3],[1,0,1,0,1,0,3,2],[10,11,2,3,4,5,10,11],[11,10,3,2,5,4,11,10],[8,9,10,11,2,3,0,1],[9,8,11,10,3,2,1,0]]);
         assert_eq!(SPARSE.half.left, [[0,3,0,3,2,5,2,5],[1,8,1,8,3,10,3,10],[2,9,2,9,4,11,4,11]]);
-        assert_eq!(SPARSE.half.right, [[4,3,5,2,4,3,5,2],[5,0,4,1,5,0,4,1],[2,1,3,0,2,1,3,0]]);
-        assert_eq!(SPARSE.half.negate, [0x22,0x11,0x22]);
+        assert_eq!(SPARSE.half.right, [[4,11,5,2,4,11,5,2],[13,0,4,1,13,0,4,1],[2,9,3,0,2,9,3,0]]);
         assert_eq!(SQUARE.full.left, [[0,0,0,0,0,0,6,6],[1,1,1,1,1,1,7,7],[2,2,2,2,2,2,8,8],[3,3,3,3,3,3,9,9],[4,4,4,4,4,4,10,10],[5,5,5,5,5,5,11,11]]);
         assert_eq!(SQUARE.full.right, [[0,1,2,3,4,5,10,11],[1,0,3,2,5,4,11,10],[8,9,0,1,2,3,14,15],[9,8,1,0,3,2,15,14],[6,7,8,9,0,1,12,13],[7,6,9,8,1,0,13,12]]);
         assert_eq!(SQUARE.half.left, [[0,3,0,3,0,3,0,3],[1,4,1,4,1,4,1,4],[2,5,2,5,2,5,2,5]]);
-        assert_eq!(SQUARE.half.right, [[2,1,3,0,4,3,5,2],[3,6,2,7,5,0,4,1],[0,7,1,6,2,1,3,0]]);
-        assert_eq!(SQUARE.half.negate, [0x22,0x11,0x22]);
+        assert_eq!(SQUARE.half.right, [[2,9,3,0,4,11,5,2],[11,6,2,7,13,0,4,1],[0,15,1,6,2,9,3,0]]);
     }
 
     fn next(state: &mut u64) -> u64 {
@@ -860,6 +851,43 @@ mod tests {
             got.square_assign();
             assert_eq!(got.store(), want);
         }
+    }
+
+    /// Per-stage cost of the accumulator. Times one square stage and one
+    /// sparse stage back to back against the product floor of 560 issued
+    /// `vpmadd52`, so operand planning and canonicalization are what remains.
+    /// Run with `cargo test --release -- --ignored --nocapture stage_cost`.
+    #[test]
+    #[ignore]
+    fn stage_cost() {
+        use core::arch::x86_64::_rdtsc;
+
+        const REPS: u64 = 20_000;
+
+        let mut state = 0x0c0f_fee0_1234_5678;
+        let start = fp12(&mut state);
+        let (c0, c3, c4) = (fp2(&mut state), fp2(&mut state), fp2(&mut state));
+        let line = packed_line(c0, c3, c4);
+
+        let ticks = |body: &mut dyn FnMut()| -> f64 {
+            for _ in 0..REPS / 8 {
+                body();
+            }
+            // SAFETY: `rdtsc` needs no feature beyond the test target.
+            let t0 = unsafe { _rdtsc() };
+            for _ in 0..REPS {
+                body();
+            }
+            let t1 = unsafe { _rdtsc() };
+            (t1 - t0) as f64 / REPS as f64
+        };
+
+        let mut f = PackedFp12::load(&start);
+        let square = ticks(&mut || f.square_assign());
+        let mut g = PackedFp12::load(&start);
+        let sparse = ticks(&mut || g.mul_by_034_assign(&line));
+        println!("square {square:.0}  sparse {sparse:.0}");
+        core::hint::black_box((f.store(), g.store()));
     }
 
     #[test]

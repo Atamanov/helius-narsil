@@ -1,13 +1,13 @@
 //! Explicit prepared contexts for repeated small-batch verifiers.
 //!
-//! This API is intentionally separate from the Agave byte facade. It accepts
+//! This API is intentionally separate from the alt_bn128 syscall byte facade. It accepts
 //! typed points, validates them at construction or use, and precomputes only
 //! public verifier material. It never caches a verification verdict.
 
 use alloc::vec::Vec;
 
 use crate::pairing::{
-    final_exponentiation,
+    MillerTerm, final_exponentiation,
     miller::{
         G2Miller, G2Prepared, miller_residue_relation_mixed, multi_miller_loop_mixed, prepare,
     },
@@ -120,7 +120,7 @@ pub struct ValidatedOnlineTerms<'a> {
     pairs: Vec<(G1Affine, G2Affine)>,
 }
 
-impl ValidatedOnlineTerms<'_> {
+impl<'a> ValidatedOnlineTerms<'a> {
     /// Evaluate the online Miller product without final exponentiation.
     ///
     /// The result is not a target-group value. Apply final exponentiation
@@ -129,13 +129,26 @@ impl ValidatedOnlineTerms<'_> {
     pub fn miller_loop(&self) -> Fp12 {
         online_miller(&self.sources, &self.pairs)
     }
+
+    /// Lend the validated terms to a caller-owned multi-Miller accumulator.
+    ///
+    /// [`Self::miller_loop`] closes one accumulator per context. A caller
+    /// holding several contexts collects these terms and calls
+    /// [`crate::pairing::multi_miller_loop_mixed`] once, which pays one Fp12
+    /// square chain instead of one per context.
+    #[inline]
+    pub fn terms(&self) -> impl ExactSizeIterator<Item = MillerTerm<'a>> + '_ {
+        self.sources
+            .iter()
+            .map(|&(g1, g2)| MillerTerm::from_source(g1, g2))
+    }
 }
 
 /// Online Miller product for one verifier call.
 ///
-/// Authorized IFMA hosts route three or more terms through the masked
-/// eight-lane engine, whose dependent chain length does not grow with the
-/// term count. Fewer terms keep the shared accumulator, which replays
+/// Authorized IFMA hosts route a term count above the host crossover through
+/// the masked eight-lane engine, whose dependent chain length does not grow
+/// with the term count. Fewer terms keep the shared accumulator, which replays
 /// prepared line schedules. Every route fully reduces, so the product is
 /// identical bit for bit.
 fn online_miller(sources: &[(&G1Affine, G2Miller<'_>)], pairs: &[(G1Affine, G2Affine)]) -> Fp12 {
@@ -143,7 +156,7 @@ fn online_miller(sources: &[(&G1Affine, G2Miller<'_>)], pairs: &[(G1Affine, G2Af
         any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
         not(feature = "force-portable")
     ))]
-    if pairs.len() >= crate::pairing::miller::VERTICAL_MIN_MILLER_TERMS
+    if pairs.len() >= crate::x86_runtime::vertical_min_miller_terms()
         && let Some(product) = crate::batch8::multi_miller_product8(pairs)
     {
         return product;

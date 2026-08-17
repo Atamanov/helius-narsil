@@ -193,9 +193,16 @@ impl G1Projective {
         }
     }
 
-    /// wNAF-4 scalar multiplication (variable-time).
+    /// GLV scalar multiplication (variable-time).
     #[inline]
     pub fn mul_scalar(self, scalar: Fr) -> Self {
+        crate::msm::mul_variable_time(self, scalar.to_raw())
+    }
+
+    /// Engine-independent wNAF reference. The GLV route must agree with it on
+    /// every scalar, so the differential tests keep both compiled.
+    #[cfg(test)]
+    pub(crate) fn mul_scalar_wnaf(self, scalar: Fr) -> Self {
         crate::wnaf::mul_group::<Self, 4, 4, 257>(self, scalar)
     }
 }

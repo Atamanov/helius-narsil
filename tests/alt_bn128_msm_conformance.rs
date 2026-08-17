@@ -1,6 +1,6 @@
-mod agave_fixtures;
+mod alt_bn128_fixtures;
 
-use agave_fixtures::{
+use alt_bn128_fixtures::{
     fq_modulus, fr_minus_one, fr_modulus, g1_generator, g1_negative_generator, g1_off_curve, scalar,
 };
 use helius_narsil::{G1Bytes, InputError, MSM_MAX_POINTS, g1_msm};
@@ -35,7 +35,7 @@ fn msm_accepts_infinity_as_a_group_element() {
 }
 
 #[test]
-fn msm_shape_errors_have_agave_precedence() {
+fn msm_shape_errors_have_syscall_precedence() {
     assert_eq!(g1_msm(&[], &[]), Err(InputError::ZeroInput));
     assert_eq!(
         g1_msm(&[], &[fr_modulus()]),

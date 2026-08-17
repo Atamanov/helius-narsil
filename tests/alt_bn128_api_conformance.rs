@@ -1,4 +1,4 @@
-mod agave_fixtures;
+mod alt_bn128_fixtures;
 
 use core::mem::{align_of, offset_of, size_of};
 use helius_narsil::{
@@ -8,7 +8,7 @@ use helius_narsil::{
 };
 
 #[test]
-fn agave_limits_and_wire_layout_are_pinned() {
+fn limits_and_wire_layout_are_pinned() {
     fn assert_pod<T: bytemuck::Pod + bytemuck::Zeroable>() {}
 
     assert_eq!(MSM_MAX_POINTS, 2048);
@@ -42,9 +42,9 @@ fn agave_limits_and_wire_layout_are_pinned() {
 }
 
 #[test]
-fn agave_named_surface_is_a_zero_cost_compatibility_layer() {
-    let generator = agave_fixtures::g1_generator();
-    let one = agave_fixtures::scalar(1);
+fn alt_bn128_named_surface_is_a_zero_cost_compatibility_layer() {
+    let generator = alt_bn128_fixtures::g1_generator();
+    let one = alt_bn128_fixtures::scalar(1);
     let output: Result<PodG1Point, AltBn128BatchError> =
         alt_bn128_g1_msm(Version::V0, &[generator], &[one]);
     assert_eq!(output, Ok(generator));

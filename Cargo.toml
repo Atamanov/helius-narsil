@@ -6,13 +6,13 @@ rust-version = "1.97.1"
 license = "MIT OR Apache-2.0"
 authors = ["Helius Blockchain Technologies, Inc."]
 description = "Experimental variable-time pairing-friendly curves. BN254 now."
-repository = "https://github.com/helius-labs/helius-narsil"
-homepage = "https://github.com/helius-labs/helius-narsil"
+repository = "https://github.com/Atamanov/helius-narsil"
+homepage = "https://github.com/Atamanov/helius-narsil"
 documentation = "https://docs.rs/helius-narsil"
 readme = "README.md"
 keywords = ["bn254", "pairing", "zk", "elliptic-curve", "cryptography"]
 categories = ["cryptography", "no-std"]
-exclude = [".github/*", "scripts/git-hooks/*", "scripts/install-git-hooks.sh"]
+exclude = [".github/*", "scripts/git-hooks/*", "scripts/install-git-hooks.sh", "bench/*"]
 
 [features]
 default = []
@@ -50,6 +50,10 @@ codegen-units = 1
 opt-level = 3
 panic = "abort"
 
+[[example]]
+name = "groth16"
+required-features = ["std"]
+
 [[bench]]
 name = "pairing"
 harness = false
@@ -61,3 +65,13 @@ harness = false
 [[bench]]
 name = "field"
 harness = false
+
+[[bench]]
+name = "groth16_batch"
+harness = false
+required-features = ["std"]
+
+# The fixture builds a prepared verifier, which the crate exports only with std.
+[[test]]
+name = "groth16_batch_soundness"
+required-features = ["std"]

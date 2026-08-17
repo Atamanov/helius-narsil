@@ -1798,6 +1798,285 @@ pub fn g2_ysqr_x86<M: Machine>(m: &mut M) {
     m.ret();
 }
 
+/// Register roles for `narsil_f2mul_x86`. Same two walks as
+/// [`g2_ysqr_x86`], so the roles are the same: a six-word raw accumulator
+/// and three frame pointers in the product walk, an eight-word double-width
+/// value plus the two Montgomery scratch halves in the reduction walk.
+pub const F2MUL_REGISTER_MAP: &[(Reg, &str)] = &[
+    (
+        Rdi,
+        "z on entry (spilled); product destination; output pointer of a reduction row",
+    ),
+    (Rsi, "x on entry; product multiplicand row; mask scratch"),
+    (
+        Rdx,
+        "y on entry (moved out at once: rdx is the implicit mulx multiplicand)",
+    ),
+    (
+        Rcx,
+        "consts on entry; product multiplier row; subtrahend row",
+    ),
+    (R8, "accumulator word 0 / double-width word 0"),
+    (R9, "accumulator word 1 / double-width word 1"),
+    (R10, "accumulator word 2 / double-width word 2"),
+    (R11, "accumulator word 3 / double-width word 3"),
+    (
+        R12,
+        "accumulator word 4 / double-width word 4, result word 0",
+    ),
+    (
+        R13,
+        "accumulator word 5 / double-width word 5, result word 1",
+    ),
+    (R14, "double-width word 6, result word 2; staging scratch"),
+    (R15, "double-width word 7, result word 3; staging scratch"),
+    (Rbp, "y pointer after entry; then the walk row cursor"),
+    (
+        Rax,
+        "low half of the current product; zero for chain closes; borrow mask",
+    ),
+    (Rbx, "high half of the current product; prologue scratch"),
+];
+
+// f2mul reuses the g2_ysqr frame header verbatim: `cancel_low_word_at`,
+// `fsq_masked_p`, `fsq_csub_store` and `g2y_walk_setup` all address these
+// offsets, so the two kernels must agree on them.
+const F2M_P: i32 = G2Y_P;
+const F2M_PINV: i32 = G2Y_PINV;
+const F2M_Z: i32 = G2Y_Z;
+const F2M_TBL: i32 = G2Y_TBL;
+/// `x.re`, `x.im` and their uncorrected sum, then the same for `y`.
+const F2M_A0: i32 = 64;
+const F2M_A1: i32 = 96;
+const F2M_S: i32 = 128;
+const F2M_B0: i32 = 160;
+const F2M_B1: i32 = 192;
+const F2M_T: i32 = 224;
+/// Four 64-byte double-width slots: `a0*b0`, `a1*b1`, `s*t`, `a0*b0 + a1*b1`.
+const F2M_D: i32 = 256;
+const F2M_FRAME: i32 = 512;
+
+/// Byte offsets of the two table regions inside the f2mul rodata blob.
+const F2M_TB_PROD: i32 = 0; // 3 rows x 3
+const F2M_TB_MOD: i32 = 72; // 2 rows x 3
+const F2M_TB_END: i32 = 120;
+
+const F2M_TAB_LABEL: &str = ".Lf2m_tab";
+
+/// The f2mul walk tables, same row shapes as [`g2_ysqr_tables`].
+fn f2mul_tables() -> Vec<u64> {
+    let mut t: Vec<u64> = Vec::new();
+    let row3 = |t: &mut Vec<u64>, a: i32, b: i32, c: i32| {
+        t.extend([a as u64, b as u64, c as u64]);
+    };
+    let d = |k: i32| F2M_D + 64 * k;
+    for (x, y, dst) in [
+        (F2M_A0, F2M_B0, d(0)),
+        (F2M_A1, F2M_B1, d(1)),
+        (F2M_S, F2M_T, d(2)),
+    ] {
+        row3(&mut t, x, y, dst);
+    }
+    assert_eq!(t.len() * 8, F2M_TB_MOD as usize);
+    row3(&mut t, d(0), d(1), 0);
+    row3(&mut t, d(2), d(3), 32);
+    assert_eq!(t.len() * 8, F2M_TB_END as usize);
+    t
+}
+
+/// Stage one Fp2 argument: both halves into the frame plus their
+/// uncorrected sum. Canonical halves sum below `2p < 2^255`, so four limbs
+/// hold the sum with no reduction (mcl's `!isFullBit` `addPre`) and the
+/// Karatsuba middle product takes it as an operand unchanged.
+fn f2m_stage<M: Machine>(m: &mut M, src: Reg, lo: i32, hi: i32, sum: i32, what: &str) {
+    let re = [R8, R9, R10, R11];
+    let im = [R12, R13, R14, R15];
+    for (k, reg) in re.into_iter().enumerate() {
+        m.load(reg, Mem::new(src, 8 * k as i32), &format!("{what}.re[{k}]"));
+    }
+    for (k, reg) in im.into_iter().enumerate() {
+        m.load(
+            reg,
+            Mem::new(src, 32 + 8 * k as i32),
+            &format!("{what}.im[{k}]"),
+        );
+    }
+    for (k, reg) in re.into_iter().enumerate() {
+        m.store(
+            Mem::new(Reg::Rsp, lo + 8 * k as i32),
+            reg,
+            &format!("{what}.re[{k}]"),
+        );
+    }
+    for (k, reg) in im.into_iter().enumerate() {
+        m.store(
+            Mem::new(Reg::Rsp, hi + 8 * k as i32),
+            reg,
+            &format!("{what}.im[{k}]"),
+        );
+    }
+    for (k, (a, b)) in re.into_iter().zip(im).enumerate() {
+        let text = format!("{what}.re + {what}.im, limb {k}");
+        if k == 0 {
+            m.add(a, b, &text);
+        } else {
+            m.adc(a, b, &text);
+        }
+    }
+    m.claim_flags_clear("canonical + canonical < 2p < 2^255: no carry, top limb below 2^63");
+    for (k, reg) in re.into_iter().enumerate() {
+        m.store(
+            Mem::new(Reg::Rsp, sum + 8 * k as i32),
+            reg,
+            &format!("{what}.re + {what}.im [{k}]"),
+        );
+    }
+}
+
+/// `[rsp + dst .. +64] = [rsp + a] + [rsp + b]`, eight limbs, uncorrected.
+/// Both addends are raw products of canonical residues, so each is below
+/// `p^2 < 2^508`: the sum keeps eight limbs and its top limb stays below
+/// `2^62`, so neither CF nor OF survives the chain.
+fn f2m_add_pre8<M: Machine>(m: &mut M, dst: i32, a: i32, b: i32) {
+    let v = [R8, R9, R10, R11, R12, R13, R14, R15];
+    for (k, reg) in v.into_iter().enumerate() {
+        m.load(
+            reg,
+            Mem::new(Reg::Rsp, a + 8 * k as i32),
+            &format!("a0*b0 word {k}"),
+        );
+    }
+    for (k, reg) in v.into_iter().enumerate() {
+        let addend = Mem::new(Reg::Rsp, b + 8 * k as i32);
+        let text = format!("+= a1*b1 word {k}");
+        if k == 0 {
+            m.add_mem(reg, addend, &text);
+        } else {
+            m.adc_mem(reg, addend, &text);
+        }
+    }
+    m.claim_flags_clear("a0*b0 + a1*b1 < 2p^2 < 2^509: no carry out of eight words");
+    for (k, reg) in v.into_iter().enumerate() {
+        m.store(
+            Mem::new(Reg::Rsp, dst + 8 * k as i32),
+            reg,
+            &format!("a0*b0 + a1*b1 word {k}"),
+        );
+    }
+}
+
+/// `narsil_f2mul_x86`: the Fp2 product `(a0 + a1*u)(b0 + b1*u)` over
+/// `Fp2 = Fp[u]/(u^2 + 1)` in mcl's lazy double-width Karatsuba shape --
+/// three raw 4x4 products and two Montgomery reductions, where the fused
+/// sums-of-products route ([`sosd2_x86`]) pays four products and two
+/// reductions.
+///
+/// # Semantics
+///
+/// With `R = 2^256` and canonical operands, writing `s = a0 + a1`,
+/// `t = b0 + b1`:
+///
+/// * `z.re = (a0*b0 - a1*b1)/R`, one guarded 512-bit difference of two raw
+///   products.
+/// * `z.im = (s*t - a0*b0 - a1*b1)/R = (a0*b1 + a1*b0)/R`, one 512-bit
+///   difference against the raw sum `a0*b0 + a1*b1`.
+///
+/// Neither raw product is ever reduced, so the Karatsuba identity buys a
+/// whole 4x4 product for the price of two four-limb pre-adds and one
+/// eight-limb add.
+///
+/// # Bounds
+///
+/// Everything below rests on [`G2_YSQR_MODULUS_BOUND`] -- `4p < 2^256`,
+/// mcl's `isFullBit == false` for BN254.
+///
+/// * `s` and `t` are `addPre` sums of canonical residues, so both stay
+///   below `2p < 2^255` and keep four limbs.
+/// * `a0*b0` and `a1*b1` are below `p^2`, `s*t` below `4p^2`, and
+///   `a0*b0 + a1*b1` below `2p^2`. All four fit eight limbs since
+///   `4p^2 < p*R`.
+/// * The real row's difference is guarded: on borrow it adds `p*R`, which is
+///   `0 mod p`, landing in `[p*R - p^2, p*R)`. Without a borrow it is below
+///   `p^2`. Either way it is below `p*R`.
+/// * The imaginary row cannot borrow -- `s*t = a0*b0 + a0*b1 + a1*b0 +
+///   a1*b1` dominates the subtrahend -- and its difference `a0*b1 + a1*b0`
+///   is below `2p^2 < p*R`.
+/// * `T < p*R` gives `(T + m*p)/R < 2p`: one conditional subtraction per
+///   lane returns the canonical residue.
+///
+/// Arguments: `(z: *mut u64x8, x: *const u64x8, y: *const u64x8,
+/// consts: *const { p[4], -p^-1 })` in rdi, rsi, rdx, rcx. Operands are
+/// `repr(C)` Fp2 (re then im) and must be canonical. `z` may alias neither
+/// `x` nor `y`.
+pub fn f2mul_x86<M: Machine>(m: &mut M) {
+    let rsp = Reg::Rsp;
+    m.rodata(F2M_TAB_LABEL, &f2mul_tables());
+    for reg in CALLEE_SAVED {
+        m.push(reg);
+    }
+    m.alloc_stack(F2M_FRAME);
+    m.comment(
+        "frame: p +0, -p^-1 +32, z +40, table base +48, walk bound +56, product operands +64, raw products +256",
+    );
+    m.store(Mem::new(rsp, F2M_Z), Rdi, "spill z");
+    for k in 0..4 {
+        m.load(Rax, Mem::new(Rcx, 8 * k), &format!("p{k}"));
+        m.store(
+            Mem::new(rsp, F2M_P + 8 * k),
+            Rax,
+            "cancel and mask rows address the frame as a consts table",
+        );
+    }
+    m.load(Rax, Mem::new(Rcx, 32), "-p^-1");
+    m.store(Mem::new(rsp, F2M_PINV), Rax, "-p^-1");
+    m.lea_rodata(Rax, F2M_TAB_LABEL, "walk tables");
+    m.store(Mem::new(rsp, F2M_TBL), Rax, "table base");
+    m.mov(
+        Rbp,
+        MULTIPLIER,
+        "y pointer: rdx is the implicit mulx multiplicand",
+    );
+
+    m.comment("");
+    m.comment("product operands. The two sums are uncorrected (mcl addPre):");
+    m.comment("p below the top bit is exactly what makes four limbs enough");
+    f2m_stage(m, Rsi, F2M_A0, F2M_A1, F2M_S, "x");
+    f2m_stage(m, Rbp, F2M_B0, F2M_B1, F2M_T, "y");
+
+    m.comment("");
+    m.comment("three raw 4x4 products, none reduced");
+    g2y_walk_setup(m, F2M_TB_PROD, 3 * 24);
+    m.stride_loop(
+        Rbp,
+        24,
+        LoopEnd::Mem(Mem::new(rsp, G2Y_END)),
+        ".Lf2m_prod",
+        &mut |m| g2y_mulpre_row(m),
+    );
+
+    m.comment("");
+    m.comment("the imaginary row's subtrahend, still double width");
+    f2m_add_pre8(m, F2M_D + 3 * 64, F2M_D, F2M_D + 64);
+
+    m.comment("");
+    m.comment("two combining rows: one guarded 512-bit difference and one");
+    m.comment("Montgomery reduction per output Fp");
+    g2y_walk_setup(m, F2M_TB_MOD, 2 * 24);
+    m.stride_loop(
+        Rbp,
+        24,
+        LoopEnd::Mem(Mem::new(rsp, G2Y_END)),
+        ".Lf2m_mod",
+        &mut |m| g2y_sub_mod_row(m),
+    );
+
+    m.free_stack(F2M_FRAME);
+    for reg in CALLEE_SAVED.iter().rev() {
+        m.pop(*reg);
+    }
+    m.ret();
+}
+
 /// Register roles for `narsil_fp6_mul_x86`.
 pub const FP6_REGISTER_MAP: &[(Reg, &str)] = &[
     (

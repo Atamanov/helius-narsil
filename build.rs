@@ -91,6 +91,12 @@ fn target_cpu_is_intel() -> bool {
     INTEL.iter().any(|p| cpu.starts_with(p))
 }
 
+/// True when the target cpu names a vendor whose line-path kernels are
+/// measured. An unnamed or generic target cpu takes the composed route.
+fn target_cpu_vendor_is_measured() -> bool {
+    target_cpu_is_intel() || target_cpu_is_amd()
+}
+
 fn target_cpu_is_amd() -> bool {
     let flags = std::env::var("CARGO_ENCODED_RUSTFLAGS").unwrap_or_default();
     let cpu = flags
@@ -122,6 +128,7 @@ fn main() {
     println!("cargo::rustc-check-cfg=cfg(narsil_sosd2_small)");
     println!("cargo::rustc-check-cfg=cfg(narsil_f2sqr_asm)");
     println!("cargo::rustc-check-cfg=cfg(narsil_g2_ysqr_asm)");
+    println!("cargo::rustc-check-cfg=cfg(narsil_f2mul_asm)");
     println!("cargo::rustc-check-cfg=cfg(narsil_f2sqr_small)");
     println!("cargo::rustc-check-cfg=cfg(narsil_miller_inline)");
     println!("cargo::rustc-check-cfg=cfg(narsil_sosd2_asm)");
@@ -140,6 +147,7 @@ fn main() {
     println!("cargo:rerun-if-env-changed=NARSIL_SOSD2_SMALL");
     println!("cargo:rerun-if-env-changed=NARSIL_F2SQR_ASM");
     println!("cargo:rerun-if-env-changed=NARSIL_G2_YSQR_ASM");
+    println!("cargo:rerun-if-env-changed=NARSIL_F2MUL_ASM");
     println!("cargo:rerun-if-env-changed=NARSIL_F2SQR_SMALL");
     println!("cargo:rerun-if-env-changed=NARSIL_MILLER_INLINE");
     println!("cargo:rerun-if-env-changed=NARSIL_SOSD6_ASM");
@@ -162,7 +170,10 @@ fn main() {
         ("NARSIL_MILLER_INLINE", "narsil_miller_inline"),
     ] {
         let value = std::env::var(variable).ok();
-        match kernelgen::policy::intel_line_path_enabled(value.as_deref(), target_cpu_is_intel()) {
+        match kernelgen::policy::line_path_enabled(
+            value.as_deref(),
+            target_cpu_vendor_is_measured(),
+        ) {
             Some(true) => println!("cargo:rustc-cfg={cfg}"),
             Some(false) => {}
             None => panic!(
@@ -318,7 +329,10 @@ fn main() {
             println!("cargo:rustc-cfg=narsil_x86_intel");
         }
         let ysqr_env = std::env::var("NARSIL_G2_YSQR_ASM").ok();
-        match kernelgen::policy::g2_ysqr_enabled(ysqr_env.as_deref(), target_cpu_is_intel()) {
+        match kernelgen::policy::g2_ysqr_enabled(
+            ysqr_env.as_deref(),
+            target_cpu_vendor_is_measured(),
+        ) {
             Some(true) => println!("cargo:rustc-cfg=narsil_g2_ysqr_asm"),
             Some(false) => {}
             None => panic!(
@@ -326,10 +340,22 @@ fn main() {
                 ysqr_env.as_deref().unwrap_or_default()
             ),
         }
+        let f2mul_env = std::env::var("NARSIL_F2MUL_ASM").ok();
+        match kernelgen::policy::f2mul_enabled(
+            f2mul_env.as_deref(),
+            target_cpu_vendor_is_measured(),
+        ) {
+            Some(true) => println!("cargo:rustc-cfg=narsil_f2mul_asm"),
+            Some(false) => {}
+            None => panic!(
+                "NARSIL_F2MUL_ASM={:?} is not recognized; use 0 (fused SoS) or 1 (lazy Karatsuba leaf); unset follows the target CPU",
+                f2mul_env.as_deref().unwrap_or_default()
+            ),
+        }
         let f2sqr_env = std::env::var("NARSIL_F2SQR_ASM").ok();
-        match kernelgen::policy::intel_line_path_enabled(
+        match kernelgen::policy::line_path_enabled(
             f2sqr_env.as_deref(),
-            target_cpu_is_intel(),
+            target_cpu_vendor_is_measured(),
         ) {
             Some(true) => println!("cargo:rustc-cfg=narsil_f2sqr_asm"),
             Some(false) => {}
@@ -342,22 +368,26 @@ fn main() {
 
     let ifma_env = std::env::var("NARSIL_AVX512_IFMA").ok();
     let ifma_baseline = arch == "x86_64" && has("avx512f") && has("avx512ifma");
-    match ifma_env.as_deref() {
-        Some("1") if arch != "x86_64" => panic!(
+    if ifma_env.as_deref() == Some("1") && arch != "x86_64" {
+        panic!(
             "NARSIL_AVX512_IFMA=1 requests the runtime IFMA implementation, \
              but the target architecture is {arch:?}, not x86_64"
+        );
+    }
+    // The gate is `avx512f` in the base target, not `avx512ifma`. It is what
+    // gives the caller a ZMM register class. The IFMA kernels then reach any
+    // host whose CPUID reports IFMA, which is the `x86-64-v4` case.
+    let base_hosts_zmm = arch == "x86_64" && has("avx512f");
+    match kernelgen::policy::runtime_ifma_enabled(ifma_env.as_deref(), base_hosts_zmm) {
+        Some(true) => println!("cargo:rustc-cfg=narsil_x86_runtime_ifma"),
+        Some(false) => {}
+        None => panic!(
+            "NARSIL_AVX512_IFMA={:?} is not recognized; use 1 (force) or 0 (deny); \
+             unset follows the base target features",
+            ifma_env.as_deref().unwrap_or_default()
         ),
-        Some("0") => {}
-        Some(other) if other != "1" => {
-            panic!("NARSIL_AVX512_IFMA={other:?} is not recognized; use 1 (force) or 0 (deny)")
-        }
-        _ => {
-            if arch == "x86_64" {
-                println!("cargo:rustc-cfg=narsil_x86_runtime_ifma");
-            }
-            if ifma_baseline {
-                println!("cargo:rustc-cfg=narsil_avx512_ifma");
-            }
-        }
+    }
+    if ifma_baseline && ifma_env.as_deref() != Some("0") {
+        println!("cargo:rustc-cfg=narsil_avx512_ifma");
     }
 }

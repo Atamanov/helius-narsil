@@ -295,6 +295,20 @@ pub fn interpret_g2_ysqr(
     machine.output_lanes()
 }
 
+/// Execute the lazy double-width Karatsuba Fp2 multiply in the interpreter.
+/// Every operand must be canonical. The result is the two canonical Fp
+/// halves of `x*y`.
+pub fn interpret_f2mul(
+    x: &[[u64; 4]; 2],
+    y: &[[u64; 4]; 2],
+    p: [u64; 4],
+    p_inv: u64,
+) -> ([u64; 4], [u64; 4]) {
+    let mut machine = interp::Interp::f2mul_frame(x, y, p, p_inv);
+    schedule::f2mul_x86(&mut machine);
+    machine.output_lanes()
+}
+
 /// Execute the rolled dual-lane sosd2 schedule in the interpreter (same
 /// contract as [`interpret_sosd2`]).
 pub fn interpret_sosd2_small(

@@ -9,11 +9,11 @@
 //! Anything else uses the portable tier -- never a silent runtime fallback.
 
 use crate::abi::{
-    narsil_cyc_sqr_x86, narsil_f2sqr_small_x86, narsil_f2sqr_x86, narsil_fp4_sqr_x86,
-    narsil_fp6_mul_x86, narsil_fp12_034_x86, narsil_fp12_034k_x86, narsil_fp12_034l_x86,
-    narsil_fp12_mul_x86, narsil_fp12_sqr_mcl_x86, narsil_fp12_sqr_x86, narsil_g2_ysqr_x86,
-    narsil_mont4_mul_x86, narsil_mont4_sqr_x86, narsil_sos_x86, narsil_sosd2_small_x86,
-    narsil_sosd2_x86, narsil_sosd6_x86,
+    narsil_cyc_sqr_x86, narsil_f2mul_x86, narsil_f2sqr_small_x86, narsil_f2sqr_x86,
+    narsil_fp4_sqr_x86, narsil_fp6_mul_x86, narsil_fp12_034_x86, narsil_fp12_034k_x86,
+    narsil_fp12_034l_x86, narsil_fp12_mul_x86, narsil_fp12_sqr_mcl_x86, narsil_fp12_sqr_x86,
+    narsil_g2_ysqr_x86, narsil_mont4_mul_x86, narsil_mont4_sqr_x86, narsil_sos_x86,
+    narsil_sosd2_small_x86, narsil_sosd2_x86, narsil_sosd6_x86,
 };
 use crate::fp::Fp;
 
@@ -517,6 +517,39 @@ pub(crate) fn g2_ysqr(
     }
 }
 
+/// Fp2 product through the lazy double-width Karatsuba leaf: the two Fp
+/// components of `(x0 + x1*u)(y0 + y1*u)` over `Fp2 = Fp[u]/(u^2 + 1)`.
+///
+/// Kernel contract: `x` and `y` are readable, 8-byte-aligned `repr(C)` Fp2
+/// values (two 32-byte residues below p) and may alias each other. The leaf
+/// forms the two uncorrected operand sums itself; `2p < 2^256` is what keeps
+/// them in four limbs, and `4p^2 < p*2^256` is what admits every raw product
+/// as a Montgomery reduction input. It initializes all eight output limbs
+/// with canonical residues, saves every callee-saved register it uses, keeps
+/// rsp 8-mod-16 aligned as on entry, and neither calls Rust nor unwinds.
+#[cfg(any(test, narsil_f2mul_asm))]
+pub(crate) fn f2mul(x: &[[u64; 4]; 2], y: &[[u64; 4]; 2]) -> ([u64; 4], [u64; 4]) {
+    #[cfg(debug_assertions)]
+    for operand in [x, y] {
+        debug_assert!(!crate::limb::gte(&operand[0], &crate::consts::P));
+        debug_assert!(!crate::limb::gte(&operand[1], &crate::consts::P));
+    }
+    let mut z = core::mem::MaybeUninit::<[u64; 8]>::uninit();
+    unsafe {
+        // SAFETY: fixed-size references and the local output satisfy the
+        // complete kernel contract above. The assembly initializes 64 bytes
+        // before `assume_init` and cannot retain any pointer.
+        narsil_f2mul_x86(
+            z.as_mut_ptr() as *mut u64,
+            x.as_ptr() as *const u64,
+            y.as_ptr() as *const u64,
+            &MONT4_CONSTANTS,
+        );
+        let z = z.assume_init();
+        ([z[0], z[1], z[2], z[3]], [z[4], z[5], z[6], z[7]])
+    }
+}
+
 /// Complex Fp2 square through the fused dual-lane leaf:
 /// `((x0+x1)*(x0-x1)/R, x0*(2*x1)/R)`, the two Fp components of
 /// `(x0 + x1*u)^2` over `Fp2 = Fp[u]/(u^2 + 1)`.
@@ -775,6 +808,8 @@ pub(crate) fn sosd8(products: [crate::fp::sos::Fp2Product<'_>; 4]) -> ([u64; 4],
 
 #[cfg(test)]
 mod tests {
+    use alloc::{vec, vec::Vec};
+
     use super::*;
     use crate::consts::{MONT_ONE, MONT_R2, P};
     use crate::fp::Fp;

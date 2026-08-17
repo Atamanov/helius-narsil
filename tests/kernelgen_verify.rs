@@ -6,9 +6,9 @@ mod kernel_contract;
 mod kernelgen;
 
 use kernelgen::{
-    BN254_MU, BN254_P, BN254_P_INV, interpret_f2sqr, interpret_g2_ysqr, interpret_mont4_a64,
-    interpret_mont4_mul, interpret_mont4_mulpre, interpret_mont4_redc, interpret_mont4_sqr,
-    interpret_sos,
+    BN254_MU, BN254_P, BN254_P_INV, interpret_f2mul, interpret_f2sqr, interpret_g2_ysqr,
+    interpret_mont4_a64, interpret_mont4_mul, interpret_mont4_mulpre, interpret_mont4_redc,
+    interpret_mont4_sqr, interpret_sos, interpret_sosd2_small,
 };
 
 /// Independent CIOS Montgomery multiplication oracle (word-by-word, u128).
@@ -943,6 +943,247 @@ fn g2_ysqr_matches_the_composed_square_route() {
     }
 }
 
+/// Every stage of the lazy Karatsuba Fp2 product, with the bound the
+/// schedule claims for it asserted on the values the kernel sees.
+struct F2MulStages {
+    sums: [[u64; 4]; 2],
+    products: [lazy::U512; 3],
+    subtrahend: lazy::U512,
+    rows: [lazy::U512; 2],
+}
+
+/// Independent double-width model of `(a0 + a1*u)(b0 + b1*u)`: two
+/// uncorrected four-limb sums, three exact 512-bit products, one raw
+/// eight-limb sum, one guarded difference per output half.
+fn f2mul_stages(x: &[[u64; 4]; 2], y: &[[u64; 4]; 2], p: [u64; 4]) -> F2MulStages {
+    // mcl's `!isFullBit` for BN254: p leaves two spare bits in four limbs.
+    assert!(p[3] < 1 << 62, "4p < 2^256 is what admits uncorrected sums");
+    let add_pre = |a: [u64; 4], b: [u64; 4]| {
+        let mut sum = [0u64; 4];
+        let mut carry = false;
+        for j in 0..4 {
+            let (word, c1) = a[j].overflowing_add(b[j]);
+            let (word, c2) = word.overflowing_add(carry as u64);
+            sum[j] = word;
+            carry = c1 | c2;
+        }
+        assert!(!carry, "canonical + canonical < 2p < 2^256: no carry out");
+        sum
+    };
+    let add_pre8 = |a: lazy::U512, b: lazy::U512| {
+        let mut sum = [0u64; 8];
+        let mut carry = false;
+        for j in 0..8 {
+            let (word, c1) = a[j].overflowing_add(b[j]);
+            let (word, c2) = word.overflowing_add(carry as u64);
+            sum[j] = word;
+            carry = c1 | c2;
+        }
+        assert!(!carry, "a0*b0 + a1*b1 < 2p^2 < 2^512: no carry out");
+        sum
+    };
+
+    let sums = [add_pre(x[0], x[1]), add_pre(y[0], y[1])];
+    let operands = [(x[0], y[0]), (x[1], y[1]), (sums[0], sums[1])];
+    let products = operands.map(|(a, b)| {
+        let product = lazy::mul_pre(a, b);
+        // The middle product is the largest: (2p-2)^2 < 4p^2 < p*2^256.
+        assert!(lazy::below_pk(product, p), "raw product below p*2^256");
+        product
+    });
+    let subtrahend = add_pre8(products[0], products[1]);
+    assert!(
+        !lazy::lt(products[2], subtrahend),
+        "s*t dominates a0*b0 + a1*b1, so the imaginary row never borrows",
+    );
+    F2MulStages {
+        sums,
+        rows: [
+            lazy::guarded_sub(products[0], products[1], p),
+            lazy::guarded_sub(products[2], subtrahend, p),
+        ],
+        products,
+        subtrahend,
+    }
+}
+
+/// The two Montgomery reductions that close the model.
+fn reference_f2mul(
+    x: &[[u64; 4]; 2],
+    y: &[[u64; 4]; 2],
+    p: [u64; 4],
+    p_inv: u64,
+) -> ([u64; 4], [u64; 4]) {
+    let rows = f2mul_stages(x, y, p).rows;
+    (
+        lazy::mont_red(rows[0], p, p_inv),
+        lazy::mont_red(rows[1], p, p_inv),
+    )
+}
+
+/// One `(x, y)` operand pair of the f2mul corpus with the stage it drives.
+type F2MulCase = (&'static str, [[u64; 4]; 2], [[u64; 4]; 2]);
+
+/// Operand pairs solved for, not sampled. The real row's borrow branch ends
+/// one unit below `p*2^256` only when the two raw products are adjacent
+/// integers, which random residues never produce.
+fn crafted_f2mul_cases() -> Vec<F2MulCase> {
+    let p = BN254_P;
+    let p_minus_one = {
+        let mut value = p;
+        value[0] -= 1;
+        value
+    };
+    let small = |v: u64| [v, 0, 0, 0];
+    vec![
+        (
+            "maximal sums, products and imaginary row",
+            [p_minus_one, p_minus_one],
+            [p_minus_one, p_minus_one],
+        ),
+        (
+            "real row one unit below p*2^256",
+            [small(0), small(1)],
+            [small(0), small(1)],
+        ),
+        (
+            "real row two units below p*2^256",
+            [small(0), small(2)],
+            [small(0), small(1)],
+        ),
+        (
+            "real row at its no-borrow ceiling",
+            [p_minus_one, small(0)],
+            [p_minus_one, small(0)],
+        ),
+    ]
+}
+
+/// Edge cross product plus the crafted cases.
+fn f2mul_cases() -> Vec<F2MulCase> {
+    let corpus = edge_corpus();
+    let mut cases: Vec<F2MulCase> = Vec::new();
+    for a in &corpus {
+        for b in &corpus {
+            cases.push(("edge cross product", [*a, *b], [*b, *a]));
+        }
+    }
+    cases.extend(crafted_f2mul_cases());
+    cases
+}
+
+/// The crafted cases must keep reaching the stage edges they were solved
+/// for. A drifted constant would leave a case that still passes but stresses
+/// nothing.
+#[test]
+fn crafted_f2mul_cases_stay_on_their_edges() {
+    let p = BN254_P;
+    let cases = crafted_f2mul_cases();
+    let stages = |index: usize| {
+        let (_, x, y) = cases[index];
+        f2mul_stages(&x, &y, p)
+    };
+    let wide = |value: [u64; 4]| {
+        let mut out = [0u64; 8];
+        out[..4].copy_from_slice(&value);
+        out
+    };
+    let small = |value: u64| wide([value, 0, 0, 0]);
+    // 2p - 2, the ceiling of an uncorrected sum of two canonical values.
+    let double_p_minus_two = {
+        let mut out = [0u64; 4];
+        let mut carry = 0u128;
+        for j in 0..4 {
+            let word = 2 * p[j] as u128 + carry;
+            out[j] = word as u64;
+            carry = word >> 64;
+        }
+        assert_eq!(carry, 0, "2p fits four limbs");
+        out[0] -= 2;
+        out
+    };
+
+    let maximal = stages(0);
+    assert_eq!(maximal.sums, [double_p_minus_two; 2], "both sums at 2p-2");
+    assert_eq!(
+        maximal.products[2],
+        lazy::mul_pre(double_p_minus_two, double_p_minus_two),
+        "the middle product at its (2p-2)^2 ceiling",
+    );
+    // (2p-2)^2 is the largest raw product the operand bounds admit and it is
+    // still a valid reduction input. That is the whole isFullBit argument.
+    assert!(
+        lazy::below_pk(maximal.products[2], p),
+        "4p^2 < p*2^256 admits the middle product unreduced",
+    );
+    assert_eq!(
+        maximal.rows[1], maximal.subtrahend,
+        "x = y makes the imaginary row equal 2*a0*b0, its ceiling",
+    );
+
+    assert_eq!(
+        lazy::gap_to_pk(stages(1).rows[0], p),
+        small(1),
+        "real row one unit below p*2^256",
+    );
+    assert_eq!(
+        lazy::gap_to_pk(stages(2).rows[0], p),
+        small(2),
+        "real row two units below p*2^256",
+    );
+    let ceiling = stages(3);
+    assert_eq!(
+        ceiling.rows[0], ceiling.products[0],
+        "no borrow: the real row is the bare product",
+    );
+}
+
+/// The lazy Karatsuba leaf must equal the independent double-width model on
+/// the edge corpus, on the crafted cases and on random residues.
+#[test]
+fn f2mul_matches_the_double_width_model() {
+    let mut cases = f2mul_cases();
+    let mut state = 0x6632_6d75_6c5f_6d6du64;
+    for _ in 0..1_000 {
+        cases.push((
+            "random",
+            [next_residue(&mut state), next_residue(&mut state)],
+            [next_residue(&mut state), next_residue(&mut state)],
+        ));
+    }
+    for (case, (what, x, y)) in cases.into_iter().enumerate() {
+        assert_eq!(
+            interpret_f2mul(&x, &y, BN254_P, BN254_P_INV),
+            reference_f2mul(&x, &y, BN254_P, BN254_P_INV),
+            "case {case} ({what})",
+        );
+    }
+}
+
+/// The pin that keeps every Fp2 product bit-exact: the leaf must equal the
+/// fused sums-of-products route it replaces, limb for limb.
+#[test]
+fn f2mul_matches_the_sos_route() {
+    use helius_narsil::consts::{P, P_INV};
+
+    let mut cases = f2mul_cases();
+    let mut state = 0x6b61_7261_7473_7562u64;
+    for _ in 0..500 {
+        cases.push((
+            "random",
+            [next_residue(&mut state), next_residue(&mut state)],
+            [next_residue(&mut state), next_residue(&mut state)],
+        ));
+    }
+    for (case, (what, x, y)) in cases.into_iter().enumerate() {
+        assert_eq!(
+            interpret_f2mul(&x, &y, P, P_INV),
+            interpret_sosd2_small(x[0], x[1], y[0], y[1], P, P_INV),
+            "case {case} ({what})",
+        );
+    }
+}
+
 #[test]
 fn kernelgen_constants_match_production_constants() {
     assert_eq!(BN254_P, helius_narsil::consts::P);
@@ -1090,6 +1331,7 @@ fn rendered_files_are_deterministic_and_sized() {
         (f2sqr_instructions, f2sqr_bytes),
         (f2sqr_small_instructions, f2sqr_small_bytes),
     ] = kernelgen::render::f2sqr_sizes();
+    let (f2mul_instructions, f2mul_bytes) = kernelgen::render::f2mul_size();
     for (symbol, instructions, bytes) in [
         (kernelgen::render::MUL_SYMBOL, mul_instructions, mul_bytes),
         (kernelgen::render::SQR_SYMBOL, sqr_instructions, sqr_bytes),
@@ -1174,6 +1416,11 @@ fn rendered_files_are_deterministic_and_sized() {
             kernelgen::render::F2SQR_SMALL_SYMBOL,
             f2sqr_small_instructions,
             f2sqr_small_bytes,
+        ),
+        (
+            kernelgen::render::F2MUL_SYMBOL,
+            f2mul_instructions,
+            f2mul_bytes,
         ),
     ] {
         assert!(rendered.contains(symbol), "{symbol} missing");
@@ -1422,4 +1669,18 @@ fn rendered_files_are_deterministic_and_sized() {
     assert!(!rendered_a64.contains(" bl "), "kernel must remain a leaf");
     assert!(!rendered_a64.contains(" blr "), "kernel must remain a leaf");
     assert_eq!(rendered_a64.matches("b.ne").count(), 1);
+}
+
+#[test]
+fn runtime_ifma_follows_the_base_target_and_the_override() {
+    use kernelgen::policy::runtime_ifma_enabled;
+
+    // A host CPUID check cannot see the base target, so the build must gate
+    // the dispatch itself. Below `avx512f` the caller has no ZMM register
+    // class and the IFMA route loses to the scalar one.
+    assert_eq!(runtime_ifma_enabled(None, false), Some(false));
+    assert_eq!(runtime_ifma_enabled(None, true), Some(true));
+    assert_eq!(runtime_ifma_enabled(Some("1"), false), Some(true));
+    assert_eq!(runtime_ifma_enabled(Some("0"), true), Some(false));
+    assert_eq!(runtime_ifma_enabled(Some("yes"), true), None);
 }

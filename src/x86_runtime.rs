@@ -35,6 +35,7 @@ pub(crate) enum BatchBackend {
 ///
 /// The field is private so code outside this module cannot manufacture the
 /// proof without first passing the shared CPUID and XCR0 checks.
+#[cfg(any(all(narsil_x86_runtime_ifma, not(feature = "force-portable")), test))]
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Avx512Ifma(());
 
@@ -188,6 +189,72 @@ pub(crate) fn batch_backend() -> BatchBackend {
     )
 }
 
+/// Smallest live-term group the eight-lane Miller engine may take.
+///
+/// The engine pays one whole eight-lane pass even when its lanes are masked
+/// off, so a shorter group belongs on the shared accumulator, whose dependent
+/// chain instead grows per term. A full-width 512-bit IFMA pipe reaches that
+/// balance earlier than a double-pumped one.
+#[cfg(any(
+    all(
+        any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
+        not(feature = "force-portable")
+    ),
+    test
+))]
+pub(crate) fn vertical_min_miller_terms() -> usize {
+    /// Reserved by the cache, never a crossover.
+    const UNCACHED: u8 = 0;
+    const INTEL: u8 = 4;
+    const OTHER: u8 = 6;
+    static CACHED: AtomicU8 = AtomicU8::new(UNCACHED);
+
+    let cached = CACHED.load(Ordering::Relaxed);
+    if cached != UNCACHED {
+        return cached as usize;
+    }
+    let detected = if vendor_is_intel() { INTEL } else { OTHER };
+    CACHED.store(detected, Ordering::Relaxed);
+    detected as usize
+}
+
+#[cfg(all(
+    any(target_arch = "x86", target_arch = "x86_64"),
+    any(
+        all(
+            any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
+            not(feature = "force-portable")
+        ),
+        test
+    )
+))]
+fn vendor_is_intel() -> bool {
+    #[cfg(target_arch = "x86")]
+    use core::arch::x86::__cpuid;
+    #[cfg(target_arch = "x86_64")]
+    use core::arch::x86_64::__cpuid;
+
+    /// CPUID leaf 0 vendor words of `GenuineIntel`, in (ebx, edx, ecx) order.
+    const VENDOR_INTEL: (u32, u32, u32) = (0x756e_6547, 0x4965_6e69, 0x6c65_746e);
+
+    let leaf0 = __cpuid(0);
+    (leaf0.ebx, leaf0.edx, leaf0.ecx) == VENDOR_INTEL
+}
+
+#[cfg(all(
+    not(any(target_arch = "x86", target_arch = "x86_64")),
+    any(
+        all(
+            any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
+            not(feature = "force-portable")
+        ),
+        test
+    )
+))]
+fn vendor_is_intel() -> bool {
+    false
+}
+
 /// Authorize an AVX-512F+IFMA entry when both the implementation and the
 /// required CPU/OS register state are present.
 #[cfg(any(all(narsil_x86_runtime_ifma, not(feature = "force-portable")), test))]
@@ -216,42 +283,32 @@ pub(crate) fn backend_report() -> &'static str {
     ))]
     return "non-x86 -> portable-rust";
 
+    // The leading name is the implementation that executes. The host
+    // capability follows it, because a capable host does not imply a build
+    // that compiled the matching kernel.
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
-    match (capability_tier(), batch_backend()) {
-        (CapabilityTier::Avx512Ifma, BatchBackend::Avx512Ifma) => "avx512-ifma",
-        (CapabilityTier::Avx512Ifma, BatchBackend::ScalarX86Adx) => {
-            "avx512-ifma -> scalar-x86-adx (IFMA batch not compiled)"
+    match (batch_backend(), capability_tier()) {
+        (BatchBackend::Avx512Ifma, _) => "avx512-ifma",
+        (BatchBackend::ScalarX86Adx, CapabilityTier::Avx512Ifma) => {
+            "scalar-x86-adx (host avx512-ifma, IFMA not compiled)"
         }
-        (CapabilityTier::Avx512Ifma, BatchBackend::PortableRust) => {
-            "avx512-ifma -> portable-rust (IFMA batch denied)"
+        (BatchBackend::ScalarX86Adx, CapabilityTier::Avx512) => {
+            "scalar-x86-adx (host avx512f-no-ifma)"
         }
-        (CapabilityTier::Avx512, BatchBackend::ScalarX86Adx) => {
-            "avx512f-no-ifma -> scalar-x86-adx (no authored AVX512F batch kernel)"
+        (BatchBackend::ScalarX86Adx, CapabilityTier::Avx2) => "scalar-x86-adx (host avx2)",
+        (BatchBackend::ScalarX86Adx, CapabilityTier::Avx) => "scalar-x86-adx (host avx)",
+        (BatchBackend::ScalarX86Adx, CapabilityTier::Simd128) => "scalar-x86-adx (host simd128)",
+        (BatchBackend::ScalarX86Adx, CapabilityTier::Portable) => "scalar-x86-adx",
+        (BatchBackend::PortableRust, CapabilityTier::Avx512Ifma) => {
+            "portable-rust (host avx512-ifma, IFMA not compiled)"
         }
-        (CapabilityTier::Avx512, BatchBackend::PortableRust) => {
-            "avx512f-no-ifma -> portable-rust (no authored AVX512F batch kernel)"
+        (BatchBackend::PortableRust, CapabilityTier::Avx512) => {
+            "portable-rust (host avx512f-no-ifma)"
         }
-        (CapabilityTier::Avx2, BatchBackend::ScalarX86Adx) => {
-            "avx2 -> scalar-x86-adx (no authored AVX2 batch kernel)"
-        }
-        (CapabilityTier::Avx2, BatchBackend::PortableRust) => {
-            "avx2 -> portable-rust (no authored AVX2 batch kernel)"
-        }
-        (CapabilityTier::Avx, BatchBackend::ScalarX86Adx) => {
-            "avx -> scalar-x86-adx (no authored AVX batch kernel)"
-        }
-        (CapabilityTier::Avx, BatchBackend::PortableRust) => {
-            "avx -> portable-rust (no authored AVX batch kernel)"
-        }
-        (CapabilityTier::Simd128, BatchBackend::ScalarX86Adx) => {
-            "simd128 -> scalar-x86-adx (no authored SIMD128 batch kernel)"
-        }
-        (CapabilityTier::Simd128, BatchBackend::PortableRust) => {
-            "simd128 -> portable-rust (no authored SIMD128 batch kernel)"
-        }
-        (CapabilityTier::Portable, BatchBackend::ScalarX86Adx) => "scalar-x86-adx",
-        (CapabilityTier::Portable, BatchBackend::PortableRust) => "portable-rust",
-        (_, BatchBackend::Avx512Ifma) => unreachable!("IFMA backend requires IFMA capability"),
+        (BatchBackend::PortableRust, CapabilityTier::Avx2) => "portable-rust (host avx2)",
+        (BatchBackend::PortableRust, CapabilityTier::Avx) => "portable-rust (host avx)",
+        (BatchBackend::PortableRust, CapabilityTier::Simd128) => "portable-rust (host simd128)",
+        (BatchBackend::PortableRust, CapabilityTier::Portable) => "portable-rust",
     }
 }
 
@@ -386,6 +443,15 @@ mod tests {
         );
     }
 
+    /// Both crossovers are measured values, and the cache must not shift the
+    /// one a first caller already routed on.
+    #[test]
+    fn the_lane_crossover_is_vendor_derived_and_stable() {
+        let terms = vertical_min_miller_terms();
+        assert_eq!(terms, if vendor_is_intel() { 4 } else { 6 });
+        assert_eq!(terms, vertical_min_miller_terms());
+    }
+
     #[cfg(all(
         feature = "backend-report",
         feature = "std",
@@ -394,10 +460,12 @@ mod tests {
     #[test]
     fn harness_report_names_the_real_selected_backend() {
         let report = backend_report();
+        // The report leads with the executing backend, so a build without the
+        // IFMA route can never open with the IFMA name.
         match batch_backend() {
             BatchBackend::Avx512Ifma => assert_eq!(report, "avx512-ifma"),
-            BatchBackend::ScalarX86Adx => assert!(report.contains("scalar-x86-adx")),
-            BatchBackend::PortableRust => assert!(report.contains("portable-rust")),
+            BatchBackend::ScalarX86Adx => assert!(report.starts_with("scalar-x86-adx")),
+            BatchBackend::PortableRust => assert!(report.starts_with("portable-rust")),
         }
     }
 

@@ -1,6 +1,6 @@
-mod agave_fixtures;
+mod alt_bn128_fixtures;
 
-use agave_fixtures::{bytes, fr_modulus, scalar};
+use alt_bn128_fixtures::{bytes, fr_modulus, scalar};
 use helius_narsil::{FR_MAX_ELEMS, InputError, ScalarBytes, fr_batch_invert, fr_lincomb};
 
 #[test]

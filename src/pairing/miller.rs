@@ -6,22 +6,9 @@ use alloc::vec::Vec;
 use crate::consts::ATE_LOOP_COUNT;
 use crate::fp::Fp;
 use crate::fp2::Fp2;
-use crate::fp2_fast::{F2, f2_add, f2_dbl, f2_from, f2_mul_fp, f2_neg, f2_one, f2_sub, f2_to};
-// The ADX square uses two products. Other targets use the fused SoS kernel.
-#[cfg(not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable"))))]
-use crate::fp2_fast::f2_sqr as f2_sqr_g2;
-#[cfg(all(
-    narsil_mont4_x86_64_adx,
-    not(narsil_f2sqr_asm),
-    not(feature = "force-portable")
-))]
-use crate::fp2_fast::f2_sqr_lazy as f2_sqr_g2;
-// The generated leaf computes the same two products with both Montgomery
-// chains interleaved.
-#[cfg(all(narsil_f2sqr_asm, not(feature = "force-portable")))]
-use crate::fp2_fast::f2_sqr_fused as f2_sqr_g2;
-// All x86 tiers use the fused dual kernel for G2 multiplication.
 use crate::fp2_fast::f2_mul as f2_mul_g2;
+use crate::fp2_fast::f2_square as f2_sqr_g2;
+use crate::fp2_fast::{F2, f2_add, f2_dbl, f2_from, f2_mul_fp, f2_neg, f2_one, f2_sub, f2_to};
 use crate::fp12::Fp12;
 use crate::g1::G1Affine;
 use crate::g2::G2Affine;
@@ -461,24 +448,31 @@ pub(crate) fn miller_loop_scalar_for_test(p: &G1Affine, q: &G2Affine) -> Fp12 {
     }
 }
 
-/// Live-term count where the masked eight-lane engine overtakes one shared
-/// Fp12 accumulator: the shared dependent chain grows by 87 sparse products
-/// per term while the lane engine's chain length stays fixed. Measured on
-/// Granite Rapids the lane engine loses at three terms and wins from four,
-/// so the crossover sits at four.
+/// Terms the eight-lane engine takes from a group of `terms` live pairs.
+///
+/// The engine always runs a whole eight-lane pass, masked or not, so a tail
+/// shorter than the host crossover is cheaper on the shared accumulator.
 #[cfg(all(
+    feature = "std",
     any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
     not(feature = "force-portable")
 ))]
-pub(crate) const VERTICAL_MIN_MILLER_TERMS: usize = 4;
+pub(crate) fn vertical_prefix(terms: usize) -> usize {
+    let tail = terms % 8;
+    if tail >= crate::x86_runtime::vertical_min_miller_terms() {
+        terms
+    } else {
+        terms - tail
+    }
+}
 
 /// Fused Miller loop over several pairs.
 /// Callers filter identity pairs and apply the final exponentiation.
 ///
-/// Authorized IFMA hosts route three or more live terms through the masked
-/// eight-lane engine (independent per-lane chains, then one lane product) and
-/// fewer terms through the coefficient-parallel accumulator. Every route fully
-/// reduces, so the result is the shared-accumulator product bit for bit.
+/// Authorized IFMA hosts split the live terms between the masked eight-lane
+/// engine (independent per-lane chains, then one lane product) and the
+/// coefficient-parallel accumulator. Every route fully reduces, so the result
+/// is the shared-accumulator product bit for bit.
 pub fn multi_miller_loop(pairs: &[(&G1Affine, &G2Affine)]) -> Fp12 {
     #[cfg(all(
         any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
@@ -490,16 +484,24 @@ pub fn multi_miller_loop(pairs: &[(&G1Affine, &G2Affine)]) -> Fp12 {
             .filter(|(p, q)| !p.is_identity() && !q.is_identity())
             .map(|&(p, q)| (*p, *q))
             .collect();
-        if live.len() >= VERTICAL_MIN_MILLER_TERMS
+        #[cfg(feature = "std")]
+        {
+            let (lanes, tail) = live.split_at(vertical_prefix(live.len()));
+            let mut product = crate::batch8::multi_miller_product8(lanes).unwrap_or(Fp12::ONE);
+            if !tail.is_empty() {
+                let sources: Vec<(&G1Affine, G2Miller<'_>)> =
+                    tail.iter().map(|(p, q)| (p, G2Miller::Live(q))).collect();
+                product *= multi_miller_loop_mixed(&sources);
+            }
+            return product;
+        }
+        // Without std there is no prepared-schedule tail route, so a group
+        // below the crossover goes to the shared accumulator whole.
+        #[cfg(not(feature = "std"))]
+        if live.len() >= crate::x86_runtime::vertical_min_miller_terms()
             && let Some(product) = crate::batch8::multi_miller_product8(&live)
         {
             return product;
-        }
-        #[cfg(feature = "std")]
-        {
-            let sources: Vec<(&G1Affine, G2Miller<'_>)> =
-                live.iter().map(|(p, q)| (p, G2Miller::Live(q))).collect();
-            return multi_miller_loop_mixed(&sources);
         }
     }
 
@@ -1689,6 +1691,50 @@ mod tests {
         assert_eq!(miller_loop(&G1Affine::identity(), &q1), Fp12::ONE);
         assert_eq!(miller_loop(&p1, &G2Affine::identity()), Fp12::ONE);
         assert_eq!(typed_prepared_cache::snapshot(), distinct);
+    }
+
+    /// Benchmark-shape control. A harness that rotates a pool larger than
+    /// [`typed_prepared_cache::CAPACITY`] must never serve a timed call from
+    /// the cache: every call pays live G2 line generation.
+    #[cfg(all(feature = "std", not(feature = "force-portable")))]
+    #[test]
+    fn rotating_more_keys_than_the_cache_holds_never_warms_it() {
+        use crate::g1::G1Projective;
+
+        const POOL: u64 = 16;
+        assert!(
+            POOL as usize > typed_prepared_cache::CAPACITY,
+            "the control needs a pool the cache cannot hold"
+        );
+        typed_prepared_cache::reset();
+        let g1 = G1Projective::generator();
+        let g2 = G2Projective::from(G2Affine::generator());
+        let points: Vec<_> = (1..=POOL)
+            .map(|scalar| g2.mul_scalar(Fr::from_u64(scalar)).to_affine())
+            .collect();
+        let p = g1.mul_scalar(Fr::from_u64(7)).to_affine();
+
+        // Four passes over the pool, exactly a four-round benchmark.
+        for _ in 0..4 {
+            for q in &points {
+                assert_eq!(miller_loop(&p, q), miller_loop_live_nonidentity(&p, q));
+            }
+        }
+
+        let state = typed_prepared_cache::snapshot();
+        assert_eq!(state.hits, 0, "a rotated pool must not hit the cache");
+        if typed_miller_bypasses_cache() {
+            assert_eq!((state.misses, state.evictions), (0, 0));
+            assert!(state.keys.is_empty());
+        } else {
+            // Every access misses; the first CAPACITY inserts fill the cache
+            // and each later miss evicts exactly one entry.
+            assert_eq!(state.misses as u64, 4 * POOL);
+            assert_eq!(
+                state.evictions as u64,
+                4 * POOL - typed_prepared_cache::CAPACITY as u64
+            );
+        }
     }
 
     #[cfg(all(feature = "std", not(feature = "force-portable")))]

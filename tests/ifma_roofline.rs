@@ -33,10 +33,11 @@ const FE_FULL_TERMS: usize = 12;
 const FE_HALF_TERMS: usize = 6;
 const LANES: usize = 8;
 
-/// Pinned from src/pairing/miller.rs (`VERTICAL_MIN_MILLER_TERMS`), measured
-/// on Granite Rapids. The lane engine loses at three live terms and wins
-/// from four.
-const VERTICAL_MIN_MILLER_TERMS: usize = 4;
+/// Pinned from src/x86_runtime.rs (`vertical_min_miller_terms`). A full-width
+/// 512-bit IFMA pipe reaches the lane engine at four live terms, a
+/// double-pumped one at six.
+const VERTICAL_MIN_MILLER_TERMS_INTEL: usize = 4;
+const VERTICAL_MIN_MILLER_TERMS_OTHER: usize = 6;
 
 /// `k * p` in normalized radix-52 limbs plus the carry past limb 4.
 const fn mul_p52(k: u64) -> ([u64; 5], u64) {
@@ -225,8 +226,11 @@ fn split_arity_occupancy_and_schedule_counts_hold() {
         + 2;
     assert_eq!(doublings + additions, 87);
 
-    // The crossover must sit strictly inside the masked-lane width.
-    const { assert!(VERTICAL_MIN_MILLER_TERMS > 1 && VERTICAL_MIN_MILLER_TERMS <= LANES) };
+    // Every crossover must sit strictly inside the masked-lane width.
+    const {
+        assert!(VERTICAL_MIN_MILLER_TERMS_INTEL > 1 && VERTICAL_MIN_MILLER_TERMS_INTEL <= LANES);
+        assert!(VERTICAL_MIN_MILLER_TERMS_OTHER > 1 && VERTICAL_MIN_MILLER_TERMS_OTHER <= LANES);
+    };
 
     // The kernel truncates the radix-64 inverse to 52 bits.
     // p * (-p^-1) = -1 mod 2^52 proves the truncation is the inverse.
@@ -236,12 +240,13 @@ fn split_arity_occupancy_and_schedule_counts_hold() {
     );
 }
 
-/// One value through every Miller route. The lane engine (four or more live
-/// terms), the coefficient-lane engine (single pairs, live and prepared),
-/// and the mixed stream must agree bit for bit, which is the routing
-/// invariant ARCHITECTURE.md states. The routes only exist on an IFMA
-/// build, and on a non-IFMA host they all fall back to one scalar path, so
-/// the equality stays meaningful but stops being a cross-engine check.
+/// One value through every Miller route. The lane engine (live terms at or
+/// above the host crossover), the coefficient-lane engine (single pairs,
+/// live and prepared), and the mixed stream must agree bit for bit, which
+/// is the routing invariant ARCHITECTURE.md states. The routes only exist
+/// on an IFMA build, and on a non-IFMA host they all fall back to one
+/// scalar path, so the equality stays meaningful but stops being a
+/// cross-engine check.
 #[cfg(all(
     target_arch = "x86_64",
     any(narsil_avx512_ifma, narsil_x86_runtime_ifma),
@@ -269,7 +274,7 @@ mod ifma_routes {
             .collect();
         let refs: Vec<(&G1Affine, _)> = pairs.iter().map(|(p, q)| (p, q)).collect();
 
-        // Five live terms take the masked eight-lane route.
+        // Five live terms take whichever route the host crossover selects.
         let fused = multi_miller_loop(&refs);
 
         // Single pairs take the coefficient-lane engine. The Miller value of

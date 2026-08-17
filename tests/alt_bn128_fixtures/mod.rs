@@ -68,7 +68,7 @@ pub fn g2_generator() -> G2Bytes {
 
 pub fn g2_off_curve() -> G2Bytes {
     let mut out = g2_generator();
-    // Agave's negative test increments y.c0 by one. This fixture has no carry.
+    // The reference negative test increments y.c0 by one. This fixture has no carry.
     out.0[127] += 1;
     out
 }

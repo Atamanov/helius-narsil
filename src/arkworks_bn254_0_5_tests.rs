@@ -2199,7 +2199,7 @@ mod curves {
                     assert_eq!(k1 + lambda * k2, fr_to_fr(scalar), "sample {sample}");
 
                     let glv = crate::msm::msm_variable_time(&[generator], &[limbs]);
-                    let wnaf = generator.to_curve().mul_scalar(fr_to_fr(scalar));
+                    let wnaf = generator.to_curve().mul_scalar_wnaf(fr_to_fr(scalar));
                     let oracle = g1_affine_to_helius((ark_generator * scalar).into_affine());
                     assert_eq!(glv.to_affine(), wnaf.to_affine(), "sample {sample}");
                     assert_eq!(glv.to_affine(), oracle, "sample {sample}");
@@ -2425,7 +2425,7 @@ static UPSTREAM_CASES: [UpstreamCase; 103] = [
     case!(
         "fields.fq.test_serialization",
         FIELD_GENERATED,
-        Inapplicable("Ark canonical serialization modes differ from Agave fixed BE encoding")
+        Inapplicable("Ark canonical serialization modes differ from the fixed syscall BE encoding")
     ),
     case!(
         "fields.fq.test_add_properties",
@@ -2777,7 +2777,7 @@ static UPSTREAM_CASES: [UpstreamCase; 103] = [
     case!(
         "curves.g2.test_serialization",
         GROUP_GENERATED,
-        Inapplicable("Ark curve flags format differs from fixed Agave encoding")
+        Inapplicable("Ark curve flags format differs from the fixed syscall encoding")
     ),
     case!(
         "curves.g2.test_var_base_msm",

@@ -101,9 +101,20 @@ pub fn f2_neg(a: F2) -> F2 {
 
 /// Schoolbook sums-of-products (4M, 2 interleaved reductions):
 /// `c0 = a0*b0 - a1*b1`, `c1 = a0*b1 + a1*b0`. Both lanes in one dual kernel.
+#[cfg(not(all(narsil_f2mul_asm, not(feature = "force-portable"))))]
 #[inline(always)]
 pub fn f2_mul(a: F2, b: F2) -> F2 {
     crate::fp::sos::sosd2(&a.0, &a.1, &b.0, &b.1)
+}
+
+/// Lazy double-width Karatsuba (3M, 2 reductions) through the generated
+/// leaf, the same value as the sums-of-products route. The three raw
+/// products stay unreduced, so the Karatsuba identity buys a whole 4x4
+/// product; `4p < 2^256` is what admits the uncorrected operand sums.
+#[cfg(all(narsil_f2mul_asm, not(feature = "force-portable")))]
+#[inline(always)]
+pub fn f2_mul(a: F2, b: F2) -> F2 {
+    crate::fp::x86_64::f2mul(&[a.0, a.1], &[b.0, b.1])
 }
 
 /// SoS square: `c0 = a0^2 - a1^2`, `c1 = a0*a1 + a1*a0` (4M, 2 reductions,
@@ -113,9 +124,24 @@ pub fn f2_sqr(a: F2) -> F2 {
     crate::fp::sos::sosd2(&a.0, &a.1, &a.0, &a.1)
 }
 
+/// The tier's Fp2 square. The ADX tiers take the complex identity, which
+/// pays two Montgomery products where the fused SoS kernel pays four.
+#[cfg(not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable"))))]
+pub use f2_sqr as f2_square;
+#[cfg(all(narsil_f2sqr_asm, not(feature = "force-portable")))]
+pub use f2_sqr_fused as f2_square;
+#[cfg(all(
+    narsil_mont4_x86_64_adx,
+    not(narsil_f2sqr_asm),
+    not(feature = "force-portable")
+))]
+pub use f2_sqr_lazy as f2_square;
+
 /// Karatsuba: 3 Montgomery products + 3 reductions vs `f2_mul`'s fused
-/// 4 + 2, for five extra modular add/subs. Canonical in/out. Retained as a
-/// differential-test reference; production uses the fused dual kernel.
+/// 4 + 2, for five extra modular add/subs. Canonical in/out. The
+/// differential-test reference. No production tier routes here now, the
+/// three-call form loses to the one-call fused dual kernel on every
+/// measured x86 host.
 #[cfg(test)]
 #[cfg_attr(target_arch = "x86_64", inline(never))]
 #[cfg_attr(not(target_arch = "x86_64"), inline(always))]
@@ -128,8 +154,8 @@ pub fn f2_mul_karatsuba(a: F2, b: F2) -> F2 {
 
 /// (a+bu)^2 = (a+b)(a-b) + 2ab u: 2 Montgomery products + 2 reductions vs
 /// `f2_sqr`'s fused 4 + 2, for three extra modular add/subs. Canonical
-/// in/out. The ADX tier routes Miller G2-step squares here; other tiers use
-/// the fused dual kernel.
+/// in/out. The ADX tier routes the Miller G2-step squares here (mont_mul
+/// dominates there). Other tiers keep the fused dual kernel.
 #[cfg(any(test, all(narsil_mont4_x86_64_adx, not(feature = "force-portable"))))]
 #[cfg_attr(target_arch = "x86_64", inline(never))]
 #[cfg_attr(not(target_arch = "x86_64"), inline(always))]

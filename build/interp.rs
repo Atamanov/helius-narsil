@@ -364,6 +364,23 @@ impl Interp {
         frame
     }
 
+    /// System V call frame for the f2mul kernel: `rdi = z` (8 limbs),
+    /// `rsi = x`, `rdx = y` (8 limbs each, `repr(C)` Fp2 order),
+    /// `rcx = consts`.
+    pub fn f2mul_frame(x: &[[u64; 4]; 2], y: &[[u64; 4]; 2], p: [u64; 4], p_inv: u64) -> Self {
+        let mut frame = Self::call_frame([0; 4], [0; 4], p, p_inv);
+        for (base, operand) in [(X_ADDR, x), (Y_ADDR, y)] {
+            for (i, component) in operand.iter().enumerate() {
+                for (limb, value) in component.iter().enumerate() {
+                    frame
+                        .mem
+                        .insert(base + 32 * i as u64 + 8 * limb as u64, *value);
+                }
+            }
+        }
+        frame
+    }
+
     pub fn output(&self) -> [u64; 4] {
         assert!(self.returned, "kernel did not return");
         core::array::from_fn(|limb| self.read_mem(OUT_ADDR + 8 * limb as u64))

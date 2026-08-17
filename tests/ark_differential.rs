@@ -1,6 +1,6 @@
-mod agave_fixtures;
+mod alt_bn128_fixtures;
 
-use agave_fixtures::{
+use alt_bn128_fixtures::{
     fq_modulus, fr_modulus, g1_generator, g1_off_curve, g2_non_subgroup, g2_off_curve, pair, scalar,
 };
 use ark_bn254::{
@@ -142,7 +142,7 @@ fn g1_msm_matches_arkworks_across_window_boundaries() {
     let edge_scalars = [ArkFr::zero(), ArkFr::one(), -ArkFr::one(), half_modulus];
 
     // Exercise both sides of every tiny/GLV-Pippenger dispatch and window
-    // boundary, including the full Agave cap. Repeating r-1 and half-modulus
+    // boundary, including the full syscall cap. Repeating r-1 and half-modulus
     // values stresses signed decomposition and terminal carries.
     for n in [
         1usize, 8, 9, 47, 48, 95, 96, 191, 192, 383, 384, 1535, 1536, 2048,

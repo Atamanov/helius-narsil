@@ -124,6 +124,13 @@ unsafe extern "C" {
         constants: *const crate::fp::x86_64::Mont4Constants,
     );
     #[cfg(narsil_mont4_x86_64_adx)]
+    pub(crate) fn narsil_f2mul_x86(
+        z: *mut u64,
+        x: *const u64,
+        y: *const u64,
+        constants: *const crate::fp::x86_64::Mont4Constants,
+    );
+    #[cfg(narsil_mont4_x86_64_adx)]
     pub(crate) fn narsil_sosd6_x86(
         z: *mut u64,
         stage: *mut u64,

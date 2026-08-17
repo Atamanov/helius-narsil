@@ -1032,6 +1032,8 @@ pub(crate) fn ifma_available() -> bool {
 // path through the public byte facade instead.
 #[cfg(all(test, narsil_avx512_ifma))]
 mod tests {
+    use alloc::{vec, vec::Vec};
+
     use super::*;
 
     use crate::fp::Fp;

@@ -2,12 +2,16 @@
 
 pub(crate) mod final_exp;
 pub(crate) mod miller;
+#[cfg(feature = "std")]
+mod mixed;
 #[cfg(all(test, feature = "std"))]
 mod redteam_tests;
 pub use final_exp::final_exponentiation;
 #[cfg(feature = "std")]
 pub use miller::{G2Prepared, miller_loop_prepared, prepare_g2, prepare_g2_unchecked};
 pub use miller::{miller_loop, multi_miller_loop};
+#[cfg(feature = "std")]
+pub use mixed::{MillerTerm, multi_miller_loop_mixed};
 
 use crate::fp12::Fp12;
 use crate::g1::{G1Affine, G1Projective};
@@ -110,7 +114,9 @@ mod tests {
         let generator_p = G1Projective::generator();
         let generator_q = G2Projective::from(G2Affine::generator());
 
-        for count in [3usize, 4, 8, 16] {
+        // Every count around a lane-group boundary, so a split between the
+        // eight-lane engine and the shared accumulator cannot change the value.
+        for count in [3usize, 4, 5, 6, 7, 8, 9, 11, 14, 16, 17] {
             let mut g1: Vec<_> = (0..count)
                 .map(|index| {
                     generator_p

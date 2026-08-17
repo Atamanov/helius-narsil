@@ -5,14 +5,15 @@
 use super::emit::Emitter;
 use super::machine::Reg;
 use super::schedule::{
-    CYC_SQR_REGISTER_MAP, F2SQR_REGISTER_MAP, FP2_XI_COMPACT_REGISTER_MAP, FP4_SQR_REGISTER_MAP,
-    FP6_REGISTER_MAP, FP12_034_REGISTER_MAP, FP12_034K_REGISTER_MAP, FP12_034L_REGISTER_MAP,
-    FP12_MUL_REGISTER_MAP, FP12_SQR_MCL_REGISTER_MAP, FP12_SQR_REGISTER_MAP, G2_YSQR_REGISTER_MAP,
-    MUL_REGISTER_MAP, MULPRE_REGISTER_MAP, REDC_REGISTER_MAP, SOS_REGISTER_MAP, SOSD2_REGISTER_MAP,
-    SOSD2_SMALL_REGISTER_MAP, SOSD6_REGISTER_MAP, SQR_REGISTER_MAP, cyc_sqr_x86, f2sqr_small_x86,
-    f2sqr_x86, fp2_xi_compact_x86, fp4_sqr_x86, fp6_mul_x86, fp12_034_x86, fp12_034k_x86,
-    fp12_034l_x86, fp12_mul_x86, fp12_sqr_mcl_x86, fp12_sqr_x86, g2_ysqr_x86, mont4_mul,
-    mont4_mulpre_x86, mont4_redc_x86, mont4_sqr, sos_rolled, sosd2_small_x86, sosd2_x86, sosd6_x86,
+    CYC_SQR_REGISTER_MAP, F2MUL_REGISTER_MAP, F2SQR_REGISTER_MAP, FP2_XI_COMPACT_REGISTER_MAP,
+    FP4_SQR_REGISTER_MAP, FP6_REGISTER_MAP, FP12_034_REGISTER_MAP, FP12_034K_REGISTER_MAP,
+    FP12_034L_REGISTER_MAP, FP12_MUL_REGISTER_MAP, FP12_SQR_MCL_REGISTER_MAP,
+    FP12_SQR_REGISTER_MAP, G2_YSQR_REGISTER_MAP, MUL_REGISTER_MAP, MULPRE_REGISTER_MAP,
+    REDC_REGISTER_MAP, SOS_REGISTER_MAP, SOSD2_REGISTER_MAP, SOSD2_SMALL_REGISTER_MAP,
+    SOSD6_REGISTER_MAP, SQR_REGISTER_MAP, cyc_sqr_x86, f2mul_x86, f2sqr_small_x86, f2sqr_x86,
+    fp2_xi_compact_x86, fp4_sqr_x86, fp6_mul_x86, fp12_034_x86, fp12_034k_x86, fp12_034l_x86,
+    fp12_mul_x86, fp12_sqr_mcl_x86, fp12_sqr_x86, g2_ysqr_x86, mont4_mul, mont4_mulpre_x86,
+    mont4_redc_x86, mont4_sqr, sos_rolled, sosd2_small_x86, sosd2_x86, sosd6_x86,
 };
 
 pub const MUL_SYMBOL: &str = "narsil_mont4_mul_x86";
@@ -36,6 +37,7 @@ pub const FP12_SQR_MCL_SYMBOL: &str = "narsil_fp12_sqr_mcl_x86";
 pub const F2SQR_SYMBOL: &str = "narsil_f2sqr_x86";
 pub const F2SQR_SMALL_SYMBOL: &str = "narsil_f2sqr_small_x86";
 pub const G2_YSQR_SYMBOL: &str = "narsil_g2_ysqr_x86";
+pub const F2MUL_SYMBOL: &str = "narsil_f2mul_x86";
 
 struct Kernel {
     symbol: &'static str,
@@ -72,7 +74,7 @@ fn emit_kernel(
     }
 }
 
-fn kernels() -> [Kernel; 21] {
+fn kernels() -> [Kernel; 22] {
     [
         emit_kernel(
             FP2_XI_COMPACT_SYMBOL,
@@ -199,6 +201,12 @@ fn kernels() -> [Kernel; 21] {
             "bn254-g2-ysqr-lazy-dblwidth",
             G2_YSQR_REGISTER_MAP,
             g2_ysqr_x86::<Emitter>,
+        ),
+        emit_kernel(
+            F2MUL_SYMBOL,
+            "bn254-f2mul-lazy-dblwidth-karatsuba",
+            F2MUL_REGISTER_MAP,
+            f2mul_x86::<Emitter>,
         ),
     ]
 }
@@ -328,6 +336,13 @@ pub fn render_mont4_x86_64() -> String {
     line("   4x4 products and 2 Montgomery reductions where the composed");
     line("   route pays 4 products and 4 reductions. Needs 4p < 2^256");
     line("   (BN254: yes), outputs canonical.");
+    line("   f2mul arguments: (z: *mut u64x8, x, y: *const u64x8 in repr(C)");
+    line("                     Fp2 order, all Fp < p; consts as mont4),");
+    line("                     z distinct from x and y;");
+    line("   z = x*y in Fp2 = Fp[u]/(u^2 + 1) via mcl's lazy double-width");
+    line("   Karatsuba: 3 raw 4x4 products and 2 Montgomery reductions where");
+    line("   the fused sums-of-products leaf pays 4 products and 2");
+    line("   reductions. Needs 4p < 2^256 (BN254: yes), outputs canonical.");
     line("   The quotient schedule and xi=9+u constants are BN254-specific;");
     line("   carry-bound proofs live in build/schedule.rs. */");
     line("");
@@ -396,4 +411,10 @@ pub fn f2sqr_sizes() -> [(usize, usize); 2] {
 pub fn g2_ysqr_size() -> (usize, usize) {
     let kernels = kernels();
     (kernels[20].instructions, kernels[20].bytes)
+}
+
+/// `(instructions, bytes)` for the lazy double-width Fp2 multiply leaf.
+pub fn f2mul_size() -> (usize, usize) {
+    let kernels = kernels();
+    (kernels[21].instructions, kernels[21].bytes)
 }

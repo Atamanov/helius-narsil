@@ -1,6 +1,6 @@
-mod agave_fixtures;
+mod alt_bn128_fixtures;
 
-use agave_fixtures::{
+use alt_bn128_fixtures::{
     fq_modulus, g1_generator, g1_negative_generator, g1_off_curve, g2_generator,
     g2_negative_non_subgroup, g2_non_subgroup, g2_off_curve, pair,
 };
@@ -68,7 +68,7 @@ fn pairing_rejects_on_curve_non_subgroup_g2_at_any_position() {
 #[test]
 fn pairing_does_not_allow_non_subgroup_terms_to_cancel() {
     // These two linearly opposite twist points would cancel in a deferred
-    // product check. Agave requires every G2 input to pass membership first.
+    // product check. The syscall requires every G2 input to pass membership first.
     let pairs = [
         pair(g1_generator(), g2_non_subgroup()),
         pair(g1_generator(), g2_negative_non_subgroup()),

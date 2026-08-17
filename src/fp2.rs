@@ -71,9 +71,7 @@ impl Fp2 {
     /// `self^2`.
     #[inline(always)]
     pub fn square(self) -> Self {
-        // SoS (Longa 2022/367): c0 = a^2 - b^2, c1 = a*b + b*a. Both lanes in
-        // one dual kernel so the two carry chains overlap.
-        let (c0, c1) = crate::fp::sos::sosd2(&self.c0.0, &self.c1.0, &self.c0.0, &self.c1.0);
+        let (c0, c1) = crate::fp2_fast::f2_square((self.c0.0, self.c1.0));
         Self {
             c0: Fp(c0),
             c1: Fp(c1),
@@ -197,8 +195,7 @@ impl Mul for Fp2 {
     type Output = Self;
     #[inline(always)]
     fn mul(self, rhs: Self) -> Self {
-        // Each component uses one interleaved Montgomery reduction.
-        let (c0, c1) = crate::fp::sos::sosd2(&self.c0.0, &self.c1.0, &rhs.c0.0, &rhs.c1.0);
+        let (c0, c1) = crate::fp2_fast::f2_mul((self.c0.0, self.c1.0), (rhs.c0.0, rhs.c1.0));
         Self {
             c0: Fp(c0),
             c1: Fp(c1),
