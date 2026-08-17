@@ -74,19 +74,73 @@ pub fn interpret_mont4_a64(x: [u64; 4], y: [u64; 4], p: [u64; 4], p_inv: u64) ->
     machine.output()
 }
 
-/// Execute the AArch64 modular add schedule in the interpreter. The modulus
-/// heads the constants table, which is where the `p` argument points.
+/// Execute the AArch64 modular add leaf in the interpreter. The modulus heads
+/// the constants table, which is where the `p` argument points.
 pub fn interpret_add_mod_a64(a: [u64; 4], b: [u64; 4], p: [u64; 4]) -> [u64; 4] {
     let mut machine = a64::interp::InterpA64::call_frame(a, b, p, BN254_P_INV);
-    a64::addsub::add_mod(&mut machine);
+    a64::addsub::add_mod(&mut machine, a64::addsub::MemoryShape::Pointers);
     machine.output()
 }
 
-/// Execute the AArch64 modular subtract schedule in the interpreter.
+/// Execute the AArch64 modular subtract leaf in the interpreter.
 pub fn interpret_sub_mod_a64(a: [u64; 4], b: [u64; 4], p: [u64; 4]) -> [u64; 4] {
     let mut machine = a64::interp::InterpA64::call_frame(a, b, p, BN254_P_INV);
-    a64::addsub::sub_mod(&mut machine);
+    a64::addsub::sub_mod(&mut machine, a64::addsub::MemoryShape::Pointers);
     machine.output()
+}
+
+/// Execute one register-shape fold in the interpreter, exactly as the inline
+/// `asm!` template runs it: operands arrive in the registers its operand
+/// table names, the result leaves in the `Result` registers, and memory stays
+/// empty, so any load or store the schedule kept would fail the run.
+fn interpret_inline_a64(
+    schedule: fn(&mut a64::interp::InterpA64, a64::addsub::MemoryShape),
+    operands: &'static [a64::inline::InlineOperand],
+    a: [u64; 4],
+    b: [u64; 4],
+    p: [u64; 4],
+) -> [u64; 4] {
+    use a64::inline::{InlineRole, role_registers};
+
+    let results = role_registers(operands, InlineRole::Result);
+    let inputs: Vec<(a64::machine::Reg, u64)> = [
+        (InlineRole::Result, a),
+        (InlineRole::Operand, b),
+        (InlineRole::Modulus, p),
+    ]
+    .into_iter()
+    .flat_map(|(role, values)| role_registers(operands, role).into_iter().zip(values))
+    .collect();
+
+    let mut machine = a64::interp::InterpA64::register_frame(&inputs);
+    schedule(&mut machine, a64::addsub::MemoryShape::Registers);
+    machine.registers(
+        results
+            .try_into()
+            .expect("a fold returns four result limbs"),
+    )
+}
+
+/// Execute the inline modular add schedule in the interpreter.
+pub fn interpret_add_mod_inline_a64(a: [u64; 4], b: [u64; 4], p: [u64; 4]) -> [u64; 4] {
+    interpret_inline_a64(
+        a64::addsub::add_mod,
+        a64::addsub::ADD_MOD_INLINE_OPERANDS,
+        a,
+        b,
+        p,
+    )
+}
+
+/// Execute the inline modular subtract schedule in the interpreter.
+pub fn interpret_sub_mod_inline_a64(a: [u64; 4], b: [u64; 4], p: [u64; 4]) -> [u64; 4] {
+    interpret_inline_a64(
+        a64::addsub::sub_mod,
+        a64::addsub::SUB_MOD_INLINE_OPERANDS,
+        a,
+        b,
+        p,
+    )
 }
 
 /// Execute the dual-lane AArch64 sosd2 schedule in the interpreter: returns

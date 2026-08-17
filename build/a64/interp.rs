@@ -87,6 +87,24 @@ impl InterpA64 {
         }
     }
 
+    /// Set up a register-shape frame: the named registers hold the given
+    /// values and memory is empty, so any load or store fails the run.
+    pub fn register_frame(inputs: &[(Reg, u64)]) -> Self {
+        let mut frame = Self::base([0; 4], 0);
+        frame.mem.clear();
+        for &(reg, value) in inputs {
+            frame.regs[reg.index()] = value;
+            frame.defined[reg.index()] = true;
+        }
+        frame
+    }
+
+    /// The values the named registers hold. Register-shape schedules return
+    /// in registers, so there is no store and no `ret` to wait for.
+    pub fn registers(&self, regs: [Reg; 4]) -> [u64; 4] {
+        regs.map(|reg| self.read_reg(reg))
+    }
+
     /// An argument register holding a synthetic buffer address.
     fn pointer(&mut self, reg: Reg, address: u64) {
         self.regs[reg.index()] = address;

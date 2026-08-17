@@ -6,10 +6,11 @@ mod kernel_contract;
 mod kernelgen;
 
 use kernelgen::{
-    BN254_MU, BN254_P, BN254_P_INV, interpret_add_mod_a64, interpret_f2mul, interpret_f2sqr,
-    interpret_g2_ysqr, interpret_mont4_a64, interpret_mont4_mul, interpret_mont4_mulpre,
-    interpret_mont4_redc, interpret_mont4_sqr, interpret_sos, interpret_sosd2_a64,
-    interpret_sosd2_small, interpret_sosd4_a64, interpret_sosd6_a64, interpret_sub_mod_a64,
+    BN254_MU, BN254_P, BN254_P_INV, interpret_add_mod_a64, interpret_add_mod_inline_a64,
+    interpret_f2mul, interpret_f2sqr, interpret_g2_ysqr, interpret_mont4_a64, interpret_mont4_mul,
+    interpret_mont4_mulpre, interpret_mont4_redc, interpret_mont4_sqr, interpret_sos,
+    interpret_sosd2_a64, interpret_sosd2_small, interpret_sosd4_a64, interpret_sosd6_a64,
+    interpret_sub_mod_a64, interpret_sub_mod_inline_a64,
 };
 
 /// Independent CIOS Montgomery multiplication oracle (word-by-word, u128).
@@ -459,6 +460,161 @@ fn a64_addsub_matches_reference_on_random_residues() {
             "sub case {case}",
         );
         assert!(!gte(&difference, &BN254_P), "unreduced difference {case}");
+    }
+}
+
+/// The same two schedules in the register shape, which is what the inline
+/// `asm!` templates run. The interpreter frame holds no memory at all, so a
+/// load or a store left in the body fails the run rather than the review.
+#[test]
+fn a64_inline_addsub_matches_reference_on_edge_corpus() {
+    let corpus = edge_corpus();
+    for (i, a) in corpus.iter().enumerate() {
+        for (j, b) in corpus.iter().enumerate() {
+            let sum = interpret_add_mod_inline_a64(*a, *b, BN254_P);
+            assert_eq!(
+                sum,
+                reference_add_mod(*a, *b, BN254_P),
+                "inline add pair ({i}, {j})",
+            );
+            assert!(!gte(&sum, &BN254_P), "unreduced inline sum ({i}, {j})");
+
+            let difference = interpret_sub_mod_inline_a64(*a, *b, BN254_P);
+            assert_eq!(
+                difference,
+                reference_sub_mod(*a, *b, BN254_P),
+                "inline sub pair ({i}, {j})",
+            );
+            assert!(
+                !gte(&difference, &BN254_P),
+                "unreduced inline difference ({i}, {j})",
+            );
+        }
+    }
+}
+
+#[test]
+fn a64_inline_addsub_matches_the_leaf_on_random_words() {
+    let mut state = 0x9e37_79b9_7f4a_7c15u64;
+    let mut next_word = move || {
+        state ^= state << 13;
+        state ^= state >> 7;
+        state ^= state << 17;
+        state
+    };
+    // Off the canonical bound as well: the Fr modulus and the SoS fold pass
+    // operands up to 2^256, where the two renderings must still agree.
+    for case in 0..100_000 {
+        let a: [u64; 4] = core::array::from_fn(|_| next_word());
+        let b: [u64; 4] = core::array::from_fn(|_| next_word());
+        assert_eq!(
+            interpret_add_mod_inline_a64(a, b, BN254_P),
+            interpret_add_mod_a64(a, b, BN254_P),
+            "inline add case {case}",
+        );
+        assert_eq!(
+            interpret_sub_mod_inline_a64(a, b, BN254_P),
+            interpret_sub_mod_a64(a, b, BN254_P),
+            "inline sub case {case}",
+        );
+    }
+}
+
+/// Instruction text of one emitted leaf, comments and blank lines removed.
+fn a64_leaf_instructions(
+    schedule: fn(&mut kernelgen::a64::emit::EmitterA64, kernelgen::a64::addsub::MemoryShape),
+) -> Vec<String> {
+    let mut emitter = kernelgen::a64::emit::EmitterA64::new();
+    schedule(&mut emitter, kernelgen::a64::addsub::MemoryShape::Pointers);
+    emitter
+        .into_lines()
+        .into_iter()
+        .map(|line| match line.find("/*") {
+            Some(cut) => line[..cut].trim().to_string(),
+            None => line.trim().to_string(),
+        })
+        .filter(|line| !line.is_empty())
+        .collect()
+}
+
+/// Rewrite one leaf instruction into the inline template's placeholders.
+fn a64_placeholder_form(
+    instruction: &str,
+    operands: &[kernelgen::a64::inline::InlineOperand],
+) -> String {
+    let (mnemonic, arguments) = instruction
+        .split_once(' ')
+        .unwrap_or_else(|| panic!("{instruction} has no operands"));
+    let rewritten: Vec<String> = arguments
+        .split(", ")
+        .map(
+            |argument| match operands.iter().find(|o| o.reg.name() == argument) {
+                Some(operand) => format!("{{{}}}", operand.name),
+                None => argument.to_string(),
+            },
+        )
+        .collect();
+    format!("{mnemonic} {}", rewritten.join(", "))
+}
+
+/// The inline template is the leaf's arithmetic core and nothing else: the
+/// same instructions in the same order, minus the loads, the stores and the
+/// `ret`, with every register replaced by its operand placeholder.
+#[test]
+fn a64_inline_template_is_the_leaf_minus_its_memory_traffic() {
+    use kernelgen::a64::addsub::{
+        ADD_MOD_INLINE_OPERANDS, MemoryShape, SUB_MOD_INLINE_OPERANDS, add_mod, sub_mod,
+    };
+    use kernelgen::a64::emit::EmitterA64;
+    use kernelgen::a64::inline::EmitterInlineA64;
+
+    type Leaf = fn(&mut EmitterA64, MemoryShape);
+    type Inline = fn(&mut EmitterInlineA64, MemoryShape);
+
+    for (leaf_schedule, inline_schedule, operands) in [
+        (add_mod as Leaf, add_mod as Inline, ADD_MOD_INLINE_OPERANDS),
+        (sub_mod as Leaf, sub_mod as Inline, SUB_MOD_INLINE_OPERANDS),
+    ] {
+        let leaf = a64_leaf_instructions(leaf_schedule);
+        let core: Vec<String> = leaf
+            .iter()
+            .filter(|line| !["ldp ", "stp ", "ret"].iter().any(|f| line.starts_with(f)))
+            .map(|line| a64_placeholder_form(line, operands))
+            .collect();
+
+        let mut emitter = EmitterInlineA64::new(operands);
+        inline_schedule(&mut emitter, MemoryShape::Registers);
+        let declarations = emitter.declarations();
+        let inline = emitter.into_lines();
+
+        assert_eq!(inline, core, "the inline body must be the leaf's core");
+        assert!(
+            leaf.len() > inline.len(),
+            "the leaf must carry the memory traffic the inline form drops",
+        );
+        let body = inline.join("\n");
+        for token in body
+            .split([' ', ',', '\n'])
+            .filter(|token| !token.is_empty())
+        {
+            assert!(
+                token == "xzr"
+                    || token == "hs"
+                    || token.starts_with('{')
+                    || !token.starts_with('x'),
+                "{token} names a fixed register; the allocator must choose",
+            );
+        }
+        // Every declared operand must be reachable from the template, or the
+        // fragment would bind a value no instruction reads.
+        for operand in operands {
+            assert!(
+                body.contains(&format!("{{{}}}", operand.name)),
+                "operand {} never appears in the template",
+                operand.name,
+            );
+        }
+        assert_eq!(declarations.len(), operands.len());
     }
 }
 

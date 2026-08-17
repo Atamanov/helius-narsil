@@ -3,6 +3,7 @@
 
 pub mod addsub;
 pub mod emit;
+pub mod inline;
 pub mod interp;
 pub mod machine;
 pub mod render;
