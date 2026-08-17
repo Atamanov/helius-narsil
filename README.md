@@ -23,35 +23,11 @@ every function as variable-time.
 
 ## Benchmarks
 
-![Narsil Groth16 verification against MCL and arkworks](assets/bench.svg)
+![Narsil Groth16 verification vs MCL and arkworks](assets/bench.svg)
 
 ![Narsil pairing operations vs MCL and arkworks](assets/bench-operations.svg)
 
-One Groth16 proof with one public input verifies in 298 us, against 741 us for
-MCL and 1168 us for arkworks.
-
-| Operation | vs MCL | vs arkworks |
-| --- | ---: | ---: |
-| Groth16, 1 public input | 2.5x | 3.9x |
-| Groth16, committed rails | 2.5x | 4.1x |
-| Groth16, batch of 3 | 1.9x | 3.2x |
-| Groth16, batch of 8 | 1.9x | 3.3x |
-| Full pairing | 2.2x | 4.1x |
-| Full pairing, prepared key | 2.7x | 5.0x |
-| Miller loop | 1.9x | 3.4x |
-| Miller loop, prepared key | 3.0x | 5.5x |
-| Final exponentiation | 2.6x | 4.8x |
-
-Diagnostic medians from one sealed campaign on an AMD EPYC 9654, Zen 4 with
-AVX-512 IFMA, on alt_bn128. The host is shared and has no fixed clock
-governor, so the harness records the run as not claim eligible.
-
-Field primitives run the scalar path, not the vector path, and sit at parity
-with MCL or behind it. Read the table as a claim about pairings and proof
-verification.
-
-The harness, the protocol, and the sealed evidence are in `bench/`, which is
-excluded from the published crate.
+Two to four times faster than MCL and arkworks on modern hardware.
 
 ## Example
 

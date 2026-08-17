@@ -190,7 +190,7 @@ def render(primary: dict, host: str, out: str, font_dir: str | None,
     fig.text(left, 0.958, spec["title"], fontsize=21 * scale, color=INK,
              weight="bold", va="top")
     fig.text(left, 0.912,
-             f"Median of a sealed four round campaign on {host}.",
+             f"Median time per operation on {host}.",
              fontsize=11.5 * scale, color=DIM, va="top")
     fig.text(left, 0.858,
              f"{speed_ark:.1f}x faster than arkworks      "
