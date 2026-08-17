@@ -61,6 +61,8 @@ SUBTITLE = {
     "full_pairing": "one full pairing",
 }
 
+REFERENCE_WIDTH = 4.2 + 1.35 * 7
+
 BG = "#07112d"
 INK = "#eefaff"
 DIM = "#9db6de"
@@ -146,6 +148,10 @@ def render(primary: dict, host: str, out: str, font_dir: str | None,
     speed_ark = us(cells, headline, "arkworks") / narsil
 
     width = 4.2 + 1.35 * len(present)
+    # A reader sees both charts at one column width, so the narrower one
+    # is scaled up more. Shrink its type by the same factor to land on
+    # equal rendered text.
+    scale = width / REFERENCE_WIDTH
     fig, ax = plt.subplots(figsize=(width, 6.6), dpi=100)
     fig.subplots_adjust(left=0.088, right=0.985, top=0.645, bottom=0.125)
 
@@ -162,17 +168,17 @@ def render(primary: dict, host: str, out: str, font_dir: str | None,
             ax.bar(index + offset, value, width=span * 0.92, color=colour,
                    zorder=3, linewidth=0)
             ax.text(index + offset, value + tallest * 0.013, fmt(value),
-                    ha="center", va="bottom", fontsize=8.0, color=DIM,
+                    ha="center", va="bottom", fontsize=8.0 * scale, color=DIM,
                     zorder=4)
 
     ax.set_ylim(0, tallest * 1.12)
     ax.set_xlim(-0.62, len(present) - 0.38)
     ax.set_xticks(range(len(present)))
-    ax.set_xticklabels([label for _, label in present], fontsize=9.8,
+    ax.set_xticklabels([label for _, label in present], fontsize=9.8 * scale,
                        color=INK)
-    ax.set_ylabel("microseconds, lower is better", fontsize=10, color=DIM,
+    ax.set_ylabel("microseconds, lower is better", fontsize=10 * scale, color=DIM,
                   labelpad=10)
-    ax.tick_params(axis="y", colors=FAINT, labelsize=9.5)
+    ax.tick_params(axis="y", colors=FAINT, labelsize=9.5 * scale)
     ax.tick_params(axis="x", length=0, pad=8)
     ax.yaxis.grid(True, color=RULE, linewidth=0.7, alpha=0.75, zorder=0)
     ax.set_axisbelow(True)
@@ -181,22 +187,22 @@ def render(primary: dict, host: str, out: str, font_dir: str | None,
     ax.spines["bottom"].set_color(RULE)
 
     left = 0.088
-    fig.text(left, 0.958, spec["title"], fontsize=21, color=INK,
+    fig.text(left, 0.958, spec["title"], fontsize=21 * scale, color=INK,
              weight="bold", va="top")
     fig.text(left, 0.912,
              f"Median of a sealed four round campaign on {host}.",
-             fontsize=11.5, color=DIM, va="top")
+             fontsize=11.5 * scale, color=DIM, va="top")
     fig.text(left, 0.858,
              f"{speed_ark:.1f}x faster than arkworks      "
              f"{speed_mcl:.1f}x faster than MCL",
-             fontsize=24, color=ACCENT, weight="bold", va="top")
+             fontsize=24 * scale, color=ACCENT, weight="bold", va="top")
     fig.text(left, 0.788,
              f"On {subtitle}. Bar labels are medians in microseconds.",
-             fontsize=10, color=FAINT, va="top")
+             fontsize=10 * scale, color=FAINT, va="top")
 
     ax.legend(handles=[Patch(facecolor=c, label=n) for _, n, c in SERIES],
               loc="upper left", bbox_to_anchor=(0.0, 1.135), ncol=3,
-              frameon=False, fontsize=10.5, labelcolor=DIM,
+              frameon=False, fontsize=10.5 * scale, labelcolor=DIM,
               handlelength=1.1, handleheight=1.1, columnspacing=1.6)
 
     suffix = pathlib.Path(out).suffix.lstrip(".") or "svg"

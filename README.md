@@ -1,6 +1,7 @@
 # helius-narsil
 
-![Narsil](assets/logo.png)
+<img src="assets/logo.png" alt="Narsil" width="266">
+
 
 **Same silicon. New edge.**
 
@@ -22,64 +23,34 @@ every function as variable-time.
 
 ## Benchmarks
 
-![Narsil Groth16 verification times versus MCL and arkworks](assets/bench.svg)
+![Narsil Groth16 verification against MCL and arkworks](assets/bench.svg)
 
-Verifying one Groth16 proof with one public input takes 298 us against MCL's
-741 us and arkworks' 1168 us, so 2.5x MCL and 3.9x arkworks. Committed rails
-are 506 us against 1259 us and 2093 us, 2.5x and 4.1x. A batch of eight proofs
-under one key is 1174 us against 2275 us and 3880 us, 1.9x and 3.3x, and a
-batch of three is 713 us against 1380 us and 2287 us, 1.9x and 3.2x.
+![Narsil pairing operations vs MCL and arkworks](assets/bench-operations.svg)
 
-![Narsil pairing times versus MCL and arkworks](assets/bench-operations.svg)
+One Groth16 proof with one public input verifies in 298 us, against 741 us for
+MCL and 1168 us for arkworks.
 
-A full pairing is 192 us against 428 us and 784 us, 2.2x MCL and 4.1x arkworks.
-With a prepared key it is 138 us against 376 us and 692 us, 2.7x and 5.0x. The
-prepared Miller loop is 47.6 us against 142 us and 262 us, 3.0x and 5.5x, and
-final exponentiation is 89.3 us against 235 us and 428 us, 2.6x and 4.8x.
+| Operation | vs MCL | vs arkworks |
+| --- | ---: | ---: |
+| Groth16, 1 public input | 2.5x | 3.9x |
+| Groth16, committed rails | 2.5x | 4.1x |
+| Groth16, batch of 3 | 1.9x | 3.2x |
+| Groth16, batch of 8 | 1.9x | 3.3x |
+| Full pairing | 2.2x | 4.1x |
+| Full pairing, prepared key | 2.7x | 5.0x |
+| Miller loop | 1.9x | 3.4x |
+| Miller loop, prepared key | 3.0x | 5.5x |
+| Final exponentiation | 2.6x | 4.8x |
 
-Medians come from one sealed four round campaign on an AMD EPYC 9654, Zen 4
-with AVX-512 IFMA, on the curve alt_bn128, also called BN_SNARK1.
+Diagnostic medians from one sealed campaign on an AMD EPYC 9654, Zen 4 with
+AVX-512 IFMA, on alt_bn128. The host is shared and has no fixed clock
+governor, so the harness records the run as not claim eligible.
 
-A timed verification computes the public-input MSM, the three pair Miller
-product against prepared `gamma` and `delta`, the final exponentiation, and the
-comparison against `e(alpha, beta)`. The MSM feeds the pairing, so it cannot be
-hoisted. Point decoding and validation sit outside the timer in every lane and
-are timed separately by `g1_validate` and `g2_subgroup_check`. Verifying from
-untrusted bytes adds two G1 validations and one G2 subgroup check, about 50 us
-for narsil and 136 us for MCL, which widens the margin rather than narrowing
-it.
+Field primitives run the scalar path, not the vector path, and sit at parity
+with MCL or behind it. Read the table as a claim about pairings and proof
+verification.
 
-Every pairing-level and Groth16-level operation lands at or below 0.55 of MCL's
-time and 0.32 of arkworks'. The narrowest is the live Miller loop at 0.54 of
-MCL, a 2.6 percent margin.
-
-**The field-primitive rows do not share that result.** They run narsil's scalar
-path, not its AVX-512 IFMA path, and they sit at parity with MCL or a little
-behind it. Narsil's own G2 line generation costs about 14 percent more than
-MCL's. The margin above comes from the fused IFMA pipeline that the compound
-operations use, so read the numbers as a claim about pairings and proof
-verification, not about every routine in the crate.
-
-The proofs come from production circuits and their shipped proving keys, proved
-by gnark v0.15.0. Nothing in this repository proved them. All four lanes verify
-every proof before any timing, compute the same equation on the same inputs,
-and must agree bit for bit. Proof bytes come from a hash-pinned pool, and a
-per-session seed picks which of them a run measures and in what order, so no
-two sessions walk the same sequence.
-
-These are diagnostic numbers, not certified ones. The host is a shared rented
-container with no fixed clock governor and default kernel mitigations, so the
-harness records the run as not claim eligible and says why. A cross-harness
-gate against Criterion agrees with the campaign to 1.13 percent, and a
-same-work reference row measured in all four lanes spreads 0.18 percent. The
-cycle cross-check gate needs `perf`, which that kernel does not carry, so it
-did not run.
-
-MCL publishes a faster pairing figure for its own `BN254` parameterization.
-That is a different curve. This harness runs MCL on alt_bn128, which is the
-curve the proofs use.
-
-`bench/` holds the harness, the protocol, and the sealed evidence. It is
+The harness, the protocol, and the sealed evidence are in `bench/`, which is
 excluded from the published crate.
 
 ## Example
@@ -156,8 +127,8 @@ native suite and `ark_differential`. MCL is not in CI.
 
 ```sh
 scripts/install-git-hooks.sh
-# pre-commit runs fmt. pre-push runs fmt, clippy, both test profiles, docs,
-# the deny check, and the publish dry run.
+# pre-commit runs fmt. pre-push refuses a local-only branch, then runs fmt,
+# clippy, and the unit tests. CI owns the full matrix.
 
 cargo test --features std
 # unit tests, integration tests, and the arkworks 0.5 native suite
