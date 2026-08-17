@@ -14,6 +14,8 @@ while read -r local_ref _ _ _; do
     esac
 done
 
+# Both steps use the release profile so they share one build cache. The
+# property tests adapted from arkworks are unusable unoptimized.
 cargo fmt --check
-cargo clippy --features std --lib --tests -- -D warnings
-cargo test --features std --lib
+cargo clippy --release --features std --lib --tests -- -D warnings
+cargo test --release --features std --lib
