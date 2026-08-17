@@ -63,14 +63,14 @@ SUBTITLE = {
 
 REFERENCE_WIDTH = 4.2 + 1.35 * 7
 
-BG = "#07112d"
-INK = "#eefaff"
-DIM = "#9db6de"
-FAINT = "#6f8ab5"
+BG = "#1e2125"
+INK = "#f2f4f6"
+DIM = "#b3b9c0"
+FAINT = "#878d95"
 ACCENT = "#3ad4ff"
 MCL = "#7c4dff"
 ARK = "#5075bd"
-RULE = "#28477e"
+RULE = "#3b4046"
 
 SERIES = [("helius", "Narsil", ACCENT), ("mcl", "MCL", MCL),
           ("arkworks", "arkworks", ARK)]
