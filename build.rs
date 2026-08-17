@@ -6,6 +6,9 @@ mod kernelgen;
 
 use std::path::{Path, PathBuf};
 
+/// The Rust fragment `src/limb.rs` includes when the inline folds are on.
+const A64_INLINE_NAME: &str = "a64_inline.rs";
+
 fn generated_kernels() -> [(&'static str, String); 2] {
     [
         (
@@ -329,6 +332,7 @@ fn main() {
 
     let out_dir = PathBuf::from(std::env::var_os("OUT_DIR").expect("OUT_DIR is set by cargo"));
     let kernels = generated_kernels();
+    let a64_inline_text = kernelgen::a64::render::render_a64_inline();
 
     if let Some(dump) = std::env::var_os("NARSIL_DUMP_ASM") {
         let dump = PathBuf::from(dump);
@@ -341,6 +345,7 @@ fn main() {
         for (name, text) in &kernels {
             write_kernel(&dump, name, text);
         }
+        write_kernel(&dump, A64_INLINE_NAME, &a64_inline_text);
     }
 
     let [(aarch64_name, aarch64_text), (x86_name, x86_text)] = &kernels;
@@ -358,11 +363,12 @@ fn main() {
         if a64_leaf_enabled("NARSIL_A64_SOSD6") {
             println!("cargo:rustc-cfg=narsil_a64_sosd6");
         }
-        // Off by default. Through a call boundary the operands round trip
-        // through memory, and in the tower every add and sub sits on a
-        // dependent chain, so the leaf loses there despite winning on
-        // independent throughput. It stays available for measurement.
-        if std::env::var("NARSIL_A64_ADDSUB").ok().as_deref() == Some("1") {
+        // The folds sit on a dependent chain between multiplies, so they are
+        // rendered inline: through a call boundary the operands would round
+        // trip through memory on that chain. The leaf symbols stay in the
+        // object for the silicon differential.
+        if a64_leaf_enabled("NARSIL_A64_ADDSUB") {
+            write_kernel(&out_dir, A64_INLINE_NAME, &a64_inline_text);
             println!("cargo:rustc-cfg=narsil_a64_addsub");
         }
     }

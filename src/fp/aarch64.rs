@@ -7,7 +7,7 @@ use crate::abi::narsil_sosd2;
 use crate::abi::narsil_sosd4;
 #[cfg(narsil_a64_sosd6)]
 use crate::abi::narsil_sosd6;
-#[cfg(narsil_a64_addsub)]
+#[cfg(all(test, narsil_a64_addsub))]
 use crate::abi::{narsil_add_mod, narsil_sub_mod};
 use crate::fp::Fp;
 #[cfg(any(narsil_a64_sosd4, narsil_a64_sosd6))]
@@ -70,7 +70,9 @@ pub fn mont_sqr(a: &[u64; 4]) -> Fp {
     mont_mul(a, a)
 }
 
-/// `a + b mod p` through the modular-add leaf.
+/// `a + b mod p` through the modular-add leaf. Production takes the inline
+/// rendering of the same schedule in `limb.rs`; this route holds the leaf to
+/// the same values on silicon.
 ///
 /// Kernel contract: `a`, `b`, and `p` are readable, 8-byte-aligned four-limb
 /// arrays and may alias each other. The leaf is bit-exact with the portable
@@ -78,7 +80,7 @@ pub fn mont_sqr(a: &[u64; 4]) -> Fp {
 /// and `a, b < p` gives it. The wrapper supplies a distinct output, live for
 /// the call. The leaf initializes all four output limbs, saves no register
 /// (it stops at x17), moves no stack, and neither calls Rust nor unwinds.
-#[cfg(narsil_a64_addsub)]
+#[cfg(all(test, narsil_a64_addsub))]
 #[inline(always)]
 pub(crate) fn add_mod(a: &[u64; 4], b: &[u64; 4], p: &[u64; 4]) -> [u64; 4] {
     let mut z = core::mem::MaybeUninit::<[u64; 4]>::uninit();
@@ -98,7 +100,7 @@ pub(crate) fn add_mod(a: &[u64; 4], b: &[u64; 4], p: &[u64; 4]) -> [u64; 4] {
 
 /// `a - b mod p` through the modular-subtract leaf. Contract as for
 /// [`add_mod`].
-#[cfg(narsil_a64_addsub)]
+#[cfg(all(test, narsil_a64_addsub))]
 #[inline(always)]
 pub(crate) fn sub_mod(a: &[u64; 4], b: &[u64; 4], p: &[u64; 4]) -> [u64; 4] {
     let mut z = core::mem::MaybeUninit::<[u64; 4]>::uninit();
@@ -433,30 +435,59 @@ mod tests {
         crate::fp::sos::sosd6_portable(products_of(operands))
     }
 
+    /// One schedule text renders two ways, so both must answer the portable
+    /// form: the leaf symbol through its pointer ABI and the inline template
+    /// through registers.
+    #[cfg(narsil_a64_addsub)]
+    type Fold = fn(&[u64; 4], &[u64; 4], &[u64; 4]) -> [u64; 4];
+
+    #[cfg(narsil_a64_addsub)]
+    const ADD_ROUTES: [(&str, Fold); 2] = [
+        ("leaf", super::add_mod),
+        ("inline", crate::limb::add_mod_inline),
+    ];
+
+    #[cfg(narsil_a64_addsub)]
+    const SUB_ROUTES: [(&str, Fold); 2] = [
+        ("leaf", super::sub_mod),
+        ("inline", crate::limb::sub_mod_inline),
+    ];
+
     /// Both modular folds on silicon against the portable forms. The
-    /// interpreter proves the schedule algebra; this proves the assembler and
-    /// the register-only ABI. The corpus opens with zero and p-1, so the
-    /// sweep covers 0 + 0, a + a, (p-1) + (p-1) and 0 - (p-1).
+    /// interpreter proves the schedule algebra; this proves the assembler,
+    /// the register-only ABI and the inline operand table. The corpus opens
+    /// with zero and p-1, so the sweep covers 0 + 0, a + a, (p-1) + (p-1) and
+    /// 0 - (p-1).
     #[cfg(narsil_a64_addsub)]
     #[test]
     fn addsub_assembly_matches_portable_on_edges_and_carries() {
         let cases = residue_corpus(0x0f1e_2d3c_4b5a_6978, 256);
         for (index, a) in cases.iter().enumerate() {
             for (other, b) in cases.iter().enumerate() {
-                let sum = super::add_mod(a, b, &P);
-                assert_eq!(sum, limb::add_mod_portable(a, b, &P), "add {index}/{other}");
-                assert!(!limb::gte(&sum, &P), "unreduced sum {index}/{other}");
-
-                let difference = super::sub_mod(a, b, &P);
-                assert_eq!(
-                    difference,
-                    limb::sub_mod_portable(a, b, &P),
-                    "sub {index}/{other}",
-                );
-                assert!(
-                    !limb::gte(&difference, &P),
-                    "unreduced difference {index}/{other}",
-                );
+                for (route, add) in ADD_ROUTES {
+                    let sum = add(a, b, &P);
+                    assert_eq!(
+                        sum,
+                        limb::add_mod_portable(a, b, &P),
+                        "{route} add {index}/{other}",
+                    );
+                    assert!(
+                        !limb::gte(&sum, &P),
+                        "{route} unreduced sum {index}/{other}"
+                    );
+                }
+                for (route, sub) in SUB_ROUTES {
+                    let difference = sub(a, b, &P);
+                    assert_eq!(
+                        difference,
+                        limb::sub_mod_portable(a, b, &P),
+                        "{route} sub {index}/{other}",
+                    );
+                    assert!(
+                        !limb::gte(&difference, &P),
+                        "{route} unreduced difference {index}/{other}",
+                    );
+                }
             }
         }
     }
@@ -468,16 +499,16 @@ mod tests {
         for case in 0..100_000 {
             let a = next_residue(&mut state);
             let b = next_residue(&mut state);
-            assert_eq!(
-                super::add_mod(&a, &b, &P),
-                limb::add_mod_portable(&a, &b, &P),
-                "add case {case}",
-            );
-            assert_eq!(
-                super::sub_mod(&a, &b, &P),
-                limb::sub_mod_portable(&a, &b, &P),
-                "sub case {case}",
-            );
+            let sum = limb::add_mod_portable(&a, &b, &P);
+            let difference = limb::sub_mod_portable(&a, &b, &P);
+            assert!(!limb::gte(&sum, &P), "unreduced sum, case {case}");
+            assert!(!limb::gte(&difference, &P), "unreduced difference {case}");
+            for (route, add) in ADD_ROUTES {
+                assert_eq!(add(&a, &b, &P), sum, "{route} add case {case}");
+            }
+            for (route, sub) in SUB_ROUTES {
+                assert_eq!(sub(&a, &b, &P), difference, "{route} sub case {case}");
+            }
         }
     }
 
@@ -491,21 +522,25 @@ mod tests {
             let a = next_raw(&mut state);
             let b = next_raw(&mut state);
             for modulus in [P, crate::consts::R] {
-                assert_eq!(
-                    super::sub_mod(&a, &modulus, &modulus),
-                    limb::sub_mod_portable(&a, &modulus, &modulus),
-                    "fold case {case}",
-                );
-                assert_eq!(
-                    super::sub_mod(&a, &b, &modulus),
-                    limb::sub_mod_portable(&a, &b, &modulus),
-                    "sub case {case}",
-                );
-                assert_eq!(
-                    super::add_mod(&a, &b, &modulus),
-                    limb::add_mod_portable(&a, &b, &modulus),
-                    "add case {case}",
-                );
+                for (route, sub) in SUB_ROUTES {
+                    assert_eq!(
+                        sub(&a, &modulus, &modulus),
+                        limb::sub_mod_portable(&a, &modulus, &modulus),
+                        "{route} fold case {case}",
+                    );
+                    assert_eq!(
+                        sub(&a, &b, &modulus),
+                        limb::sub_mod_portable(&a, &b, &modulus),
+                        "{route} sub case {case}",
+                    );
+                }
+                for (route, add) in ADD_ROUTES {
+                    assert_eq!(
+                        add(&a, &b, &modulus),
+                        limb::add_mod_portable(&a, &b, &modulus),
+                        "{route} add case {case}",
+                    );
+                }
             }
         }
     }
@@ -615,7 +650,13 @@ mod ab {
     #[ignore]
     fn ab_add_mod() {
         ab_fold(
-            "add_mod",
+            "add_mod inline",
+            crate::limb::add_mod_inline,
+            crate::limb::add_mod_portable,
+            0x51ed_2701_a4ba_c39f,
+        );
+        ab_fold(
+            "add_mod leaf",
             super::add_mod,
             crate::limb::add_mod_portable,
             0x51ed_2701_a4ba_c39f,
@@ -627,7 +668,13 @@ mod ab {
     #[ignore]
     fn ab_sub_mod() {
         ab_fold(
-            "sub_mod",
+            "sub_mod inline",
+            crate::limb::sub_mod_inline,
+            crate::limb::sub_mod_portable,
+            0x1d8e_4e27_c47d_124f,
+        );
+        ab_fold(
+            "sub_mod leaf",
             super::sub_mod,
             crate::limb::sub_mod_portable,
             0x1d8e_4e27_c47d_124f,

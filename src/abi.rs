@@ -86,10 +86,12 @@ unsafe extern "C" {
         constants: *const crate::fp::aarch64::Mont4Constants,
     );
 
-    #[cfg(narsil_a64_addsub)]
+    // The production route is the inline rendering in `limb.rs`. The leaf
+    // symbols stay for the silicon differential and the paired A/B.
+    #[cfg(all(test, narsil_a64_addsub))]
     pub(crate) fn narsil_add_mod(z: *mut u64, a: *const u64, b: *const u64, p: *const u64);
 
-    #[cfg(narsil_a64_addsub)]
+    #[cfg(all(test, narsil_a64_addsub))]
     pub(crate) fn narsil_sub_mod(z: *mut u64, a: *const u64, b: *const u64, p: *const u64);
 
     #[cfg(narsil_mont4_x86_64_adx)]

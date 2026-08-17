@@ -100,11 +100,17 @@ fn opaque(m: &[u64; 4]) -> &[u64; 4] {
     }
 }
 
+// The register-shape A64 folds, rendered from the same schedules as the
+// `narsil_add_mod` and `narsil_sub_mod` leaf symbols. Inline, so the tower's
+// dependent chains keep their operands in registers.
+#[cfg(narsil_a64_addsub)]
+include!(concat!(env!("OUT_DIR"), "/a64_inline.rs"));
+
 #[inline(always)]
 pub fn sub_mod(a: &[u64; 4], b: &[u64; 4], modulus: &[u64; 4]) -> [u64; 4] {
     #[cfg(narsil_a64_addsub)]
     {
-        crate::fp::aarch64::sub_mod(a, b, modulus)
+        sub_mod_inline(a, b, modulus)
     }
     #[cfg(not(narsil_a64_addsub))]
     {
@@ -116,7 +122,7 @@ pub fn sub_mod(a: &[u64; 4], b: &[u64; 4], modulus: &[u64; 4]) -> [u64; 4] {
 pub fn add_mod(a: &[u64; 4], b: &[u64; 4], modulus: &[u64; 4]) -> [u64; 4] {
     #[cfg(narsil_a64_addsub)]
     {
-        crate::fp::aarch64::add_mod(a, b, modulus)
+        add_mod_inline(a, b, modulus)
     }
     #[cfg(not(narsil_a64_addsub))]
     {
