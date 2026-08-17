@@ -18,11 +18,7 @@ extern crate alloc;
 
 #[cfg(any(
     all(narsil_mont4_x86_64_adx, not(feature = "force-portable")),
-    all(
-        target_arch = "aarch64",
-        target_vendor = "apple",
-        not(feature = "force-portable")
-    )
+    narsil_a64_kernels
 ))]
 mod abi;
 pub mod batch;

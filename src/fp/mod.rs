@@ -2,11 +2,7 @@
 
 use alloc::{string::String, vec::Vec};
 
-#[cfg(all(
-    target_arch = "aarch64",
-    target_vendor = "apple",
-    not(feature = "force-portable")
-))]
+#[cfg(narsil_a64_kernels)]
 pub(crate) mod aarch64;
 // This module exists only when the build emits the x86-64 kernel.
 #[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
@@ -17,12 +13,7 @@ pub(crate) mod x86_64;
     not(feature = "force-portable")
 ))]
 pub(crate) mod avx512ifma;
-#[cfg(any(
-    not(target_arch = "aarch64"),
-    not(target_vendor = "apple"),
-    feature = "force-portable",
-    test,
-))]
+#[cfg(any(not(narsil_a64_kernels), test))]
 pub(crate) mod portable;
 pub(crate) mod sos;
 
@@ -46,18 +37,11 @@ const _: () = assert!(derive::eq4(
     ]
 ));
 
-#[cfg(all(
-    target_arch = "aarch64",
-    target_vendor = "apple",
-    not(feature = "force-portable"),
-))]
+#[cfg(narsil_a64_kernels)]
 use aarch64 as mont_backend;
 #[cfg(any(
     feature = "force-portable",
-    not(any(
-        all(target_arch = "aarch64", target_vendor = "apple"),
-        narsil_mont4_x86_64_adx,
-    )),
+    not(any(narsil_a64_kernels, narsil_mont4_x86_64_adx)),
 ))]
 use portable as mont_backend;
 #[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]

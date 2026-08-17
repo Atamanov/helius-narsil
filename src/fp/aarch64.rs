@@ -1,6 +1,8 @@
 //! AArch64 Montgomery backend generated from `build/a64/schedule.rs`.
 
 use crate::abi::narsil_mont4;
+#[cfg(narsil_a64_sosd2)]
+use crate::abi::narsil_sosd2;
 use crate::fp::Fp;
 
 // `repr(C)` and the assertions bind the Rust constants to the FFI layout.
@@ -60,6 +62,46 @@ pub fn mont_sqr(a: &[u64; 4]) -> Fp {
     mont_mul(a, a)
 }
 
+/// Both Fp halves of `(x0 + x1*u)*(y0 + y1*u)` through the dual-lane leaf.
+///
+/// Kernel contract: every operand is a readable, 8-byte-aligned 32-byte
+/// array holding a residue at most the BN254 base modulus (the SoS operand
+/// bound. The leaf forms `p - y1` itself, which needs `y1 <= p`). Operands
+/// may alias each other: the Fp2 square passes `x` for both sides. The
+/// wrapper supplies a distinct 64-byte output and an immutable constant
+/// table, both suitably aligned and live for the call. The leaf initializes
+/// all eight output limbs, returns two fully reduced residues, saves every
+/// callee-saved register it uses, keeps the 16-byte stack alignment, and
+/// neither calls Rust nor unwinds.
+#[cfg(narsil_a64_sosd2)]
+#[inline(never)]
+pub(crate) fn sosd2(
+    x0: &[u64; 4],
+    x1: &[u64; 4],
+    y0: &[u64; 4],
+    y1: &[u64; 4],
+) -> ([u64; 4], [u64; 4]) {
+    for operand in [x0, x1, y0, y1] {
+        debug_assert!(!crate::limb::gt(operand, &crate::consts::P));
+    }
+    let mut z = core::mem::MaybeUninit::<[u64; 8]>::uninit();
+    unsafe {
+        // SAFETY: fixed-size references and the local output satisfy the
+        // complete kernel contract above. The assembly initializes 64 bytes
+        // before `assume_init` and cannot retain any pointer.
+        narsil_sosd2(
+            z.as_mut_ptr() as *mut u64,
+            x0.as_ptr(),
+            x1.as_ptr(),
+            y0.as_ptr(),
+            y1.as_ptr(),
+            &MONT4_CONSTANTS,
+        );
+        let z = z.assume_init();
+        ([z[0], z[1], z[2], z[3]], [z[4], z[5], z[6], z[7]])
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use alloc::vec;
@@ -78,8 +120,22 @@ mod tests {
         assert_eq!(a.square(), mont_sqr(&a.0));
     }
 
-    #[test]
-    fn assembly_matches_portable_on_edges_and_carries() {
+    fn next_residue(state: &mut u64) -> [u64; 4] {
+        let mut value = [0u64; 4];
+        for limb in &mut value {
+            *state ^= *state << 13;
+            *state ^= *state >> 7;
+            *state ^= *state << 17;
+            *limb = *state;
+        }
+        while limb::gte(&value, &P) {
+            value = limb::sub_noborrow(&value, &P);
+        }
+        value
+    }
+
+    /// Carry edges, the hot conversion constants, and `random` residues.
+    fn residue_corpus(seed: u64, random: usize) -> alloc::vec::Vec<[u64; 4]> {
         let p_minus_one = limb::sub_noborrow(&P, &[1, 0, 0, 0]);
         let mut cases = vec![
             [0; 4],
@@ -95,21 +151,14 @@ mod tests {
                 *value = limb::sub_noborrow(value, &P);
             }
         }
+        let mut state = seed;
+        cases.extend((0..random).map(|_| next_residue(&mut state)));
+        cases
+    }
 
-        let mut state = 0x243f_6a88_85a3_08d3u64;
-        for _ in 0..256 {
-            let mut value = [0u64; 4];
-            for limb in &mut value {
-                state ^= state << 13;
-                state ^= state >> 7;
-                state ^= state << 17;
-                *limb = state;
-            }
-            while limb::gte(&value, &P) {
-                value = limb::sub_noborrow(&value, &P);
-            }
-            cases.push(value);
-        }
+    #[test]
+    fn assembly_matches_portable_on_edges_and_carries() {
+        let cases = residue_corpus(0x243f_6a88_85a3_08d3, 256);
 
         for (index, a) in cases.iter().enumerate() {
             assert_eq!(mont_sqr(a), portable::mont_sqr(a), "square case {index}");
@@ -123,24 +172,49 @@ mod tests {
         }
     }
 
+    /// The one check that runs the emitted dual-lane leaf on silicon. The
+    /// interpreter proves the schedule's algebra. This proves the assembler,
+    /// the ABI, and the callee-saved contract.
+    #[cfg(narsil_a64_sosd2)]
+    #[test]
+    fn sosd2_assembly_matches_portable_on_edges_and_carries() {
+        let cases = residue_corpus(0x9e37_79b9_7f4a_7c15, 256);
+        for (index, x0) in cases.iter().enumerate() {
+            for (step, x1) in cases.iter().step_by(31).enumerate() {
+                for (other, y0) in cases.iter().step_by(37).enumerate() {
+                    for y1 in cases.iter().step_by(41) {
+                        assert_eq!(
+                            super::sosd2(x0, x1, y0, y1),
+                            crate::fp::sos::sosd2_portable(x0, x1, y0, y1),
+                            "case {index}/{step}/{other}",
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    #[cfg(narsil_a64_sosd2)]
+    #[test]
+    fn sosd2_assembly_matches_portable_on_random_residues() {
+        let mut state = 0xbf58_476d_1ce4_e5b9u64;
+        for case in 0..100_000 {
+            let x0 = next_residue(&mut state);
+            let x1 = next_residue(&mut state);
+            let y0 = next_residue(&mut state);
+            let y1 = next_residue(&mut state);
+            assert_eq!(
+                super::sosd2(&x0, &x1, &y0, &y1),
+                crate::fp::sos::sosd2_portable(&x0, &x1, &y0, &y1),
+                "case {case}",
+            );
+        }
+    }
+
     #[test]
     #[ignore = "million-case release stress gate; run explicitly before changing field backends"]
     fn million_products_match_assembly_and_arkworks_raw_montgomery() {
         use ark_ff::BigInt;
-
-        fn next_residue(state: &mut u64) -> [u64; 4] {
-            let mut value = [0u64; 4];
-            for limb in &mut value {
-                *state ^= *state << 13;
-                *state ^= *state >> 7;
-                *state ^= *state << 17;
-                *limb = *state;
-            }
-            while limb::gte(&value, &P) {
-                value = limb::sub_noborrow(&value, &P);
-            }
-            value
-        }
 
         let mut state = 0xd1b5_4a32_d192_ed03u64;
         for case in 0..1_000_000 {

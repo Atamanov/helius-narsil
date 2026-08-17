@@ -212,6 +212,7 @@ macro_rules! debug_assert_operands {
 // Per-lane accumulation order and bounds are identical to the sosT kernels.
 
 /// Dual-lane Fp2 product: `(x0 + x1u)*(y0 + y1u)`, T = 2 per lane.
+#[cfg(any(test, not(narsil_a64_sosd2)))]
 #[inline(never)]
 pub(crate) fn sosd2_portable(
     x0: &[u64; 4],
@@ -716,10 +717,17 @@ pub fn sosd2(x0: &[u64; 4], x1: &[u64; 4], y0: &[u64; 4], y1: &[u64; 4]) -> ([u6
     {
         crate::fp::x86_64::sosd2(x0, x1, y0, y1)
     }
-    #[cfg(not(all(
-        narsil_mont4_x86_64_adx,
-        narsil_sosd2_asm,
-        not(feature = "force-portable")
+    #[cfg(narsil_a64_sosd2)]
+    {
+        crate::fp::aarch64::sosd2(x0, x1, y0, y1)
+    }
+    #[cfg(not(any(
+        all(
+            narsil_mont4_x86_64_adx,
+            narsil_sosd2_asm,
+            not(feature = "force-portable")
+        ),
+        narsil_a64_sosd2,
     )))]
     {
         sosd2_portable(x0, x1, y0, y1)

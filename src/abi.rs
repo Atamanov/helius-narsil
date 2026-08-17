@@ -54,11 +54,21 @@ pub(crate) unsafe fn limbs_from_ptr<'a>(value: *const u64) -> &'a [u64; 4] {
 }
 
 unsafe extern "C" {
-    #[cfg(all(target_arch = "aarch64", target_vendor = "apple"))]
+    #[cfg(narsil_a64_kernels)]
     pub(crate) fn narsil_mont4(
         z: *mut u64,
         x: *const u64,
         y: *const u64,
+        constants: *const crate::fp::aarch64::Mont4Constants,
+    );
+
+    #[cfg(narsil_a64_sosd2)]
+    pub(crate) fn narsil_sosd2(
+        z: *mut u64,
+        x0: *const u64,
+        x1: *const u64,
+        y0: *const u64,
+        y1: *const u64,
         constants: *const crate::fp::aarch64::Mont4Constants,
     );
 
