@@ -3,10 +3,12 @@
 use crate::abi::narsil_mont4;
 #[cfg(narsil_a64_sosd2)]
 use crate::abi::narsil_sosd2;
+#[cfg(narsil_a64_sosd4)]
+use crate::abi::narsil_sosd4;
 #[cfg(narsil_a64_sosd6)]
 use crate::abi::narsil_sosd6;
 use crate::fp::Fp;
-#[cfg(narsil_a64_sosd6)]
+#[cfg(any(narsil_a64_sosd4, narsil_a64_sosd6))]
 use crate::fp::sos::Fp2Product;
 
 // `repr(C)` and the assertions bind the Rust constants to the FFI layout.
@@ -106,11 +108,43 @@ pub(crate) fn sosd2(
     }
 }
 
-/// Both Fp halves of a sum of three Fp2 products through the dual-lane leaf.
+/// The operand pointers of one table-ABI call, in kernel table order.
+/// Every operand must be a residue at most p, the SoS bound the in-kernel
+/// `p - y_i1` image rests on.
+#[cfg(any(narsil_a64_sosd4, narsil_a64_sosd6))]
+#[inline(always)]
+fn table<const N: usize>(operands: [&[u64; 4]; N]) -> [*const u64; N] {
+    operands.map(|operand| {
+        debug_assert!(!crate::limb::gt(operand, &crate::consts::P));
+        operand.as_ptr()
+    })
+}
+
+/// Both Fp halves of a sum of two Fp2 products through the dual-lane leaf.
 ///
-/// Kernel contract: as for [`sosd2`], for all twelve operands. The wrapper
+/// Kernel contract: as for [`sosd2`], for all eight operands. The wrapper
 /// builds the pointer table on its own stack, and the leaf reads it during
 /// the call and retains nothing, so the table needs no lifetime beyond it.
+#[cfg(narsil_a64_sosd4)]
+#[inline(never)]
+pub(crate) fn sosd4(products: [Fp2Product<'_>; 2]) -> ([u64; 4], [u64; 4]) {
+    let [(x00, x01, y00, y01), (x10, x11, y10, y11)] = products;
+    let table = table([x00, x01, y00, y01, x10, x11, y10, y11]);
+    let mut z = core::mem::MaybeUninit::<[u64; 8]>::uninit();
+    unsafe {
+        // SAFETY: the local table holds eight live, aligned four-limb operands
+        // in the order the kernel indexes them, and the local output satisfies
+        // the rest of the contract above. The assembly initializes 64 bytes
+        // before `assume_init`.
+        narsil_sosd4(z.as_mut_ptr() as *mut u64, table.as_ptr(), &MONT4_CONSTANTS);
+        let z = z.assume_init();
+        ([z[0], z[1], z[2], z[3]], [z[4], z[5], z[6], z[7]])
+    }
+}
+
+/// Both Fp halves of a sum of three Fp2 products through the dual-lane leaf.
+///
+/// Kernel contract: as for [`sosd4`], for all twelve operands.
 #[cfg(narsil_a64_sosd6)]
 #[inline(never)]
 pub(crate) fn sosd6(products: [Fp2Product<'_>; 3]) -> ([u64; 4], [u64; 4]) {
@@ -119,16 +153,10 @@ pub(crate) fn sosd6(products: [Fp2Product<'_>; 3]) -> ([u64; 4], [u64; 4]) {
         (x10, x11, y10, y11),
         (x20, x21, y20, y21),
     ] = products;
-    let table = [x00, x01, y00, y01, x10, x11, y10, y11, x20, x21, y20, y21].map(|operand| {
-        debug_assert!(!crate::limb::gt(operand, &crate::consts::P));
-        operand.as_ptr()
-    });
+    let table = table([x00, x01, y00, y01, x10, x11, y10, y11, x20, x21, y20, y21]);
     let mut z = core::mem::MaybeUninit::<[u64; 8]>::uninit();
     unsafe {
-        // SAFETY: the local table holds twelve live, aligned four-limb
-        // operands in the order the kernel indexes them, and the local output
-        // satisfies the rest of the contract above. The assembly initializes
-        // 64 bytes before `assume_init`.
+        // SAFETY: as for `sosd4`, for twelve operands.
         narsil_sosd6(z.as_mut_ptr() as *mut u64, table.as_ptr(), &MONT4_CONSTANTS);
         let z = z.assume_init();
         ([z[0], z[1], z[2], z[3]], [z[4], z[5], z[6], z[7]])
@@ -244,6 +272,63 @@ mod tests {
         }
     }
 
+    /// The eight-operand table ABI on silicon: the assembler, the pointer
+    /// table the wrapper builds, and the callee-saved contract. Slots are
+    /// swept one at a time over the corpus against saturated backgrounds.
+    #[cfg(narsil_a64_sosd4)]
+    #[test]
+    fn sosd4_assembly_matches_portable_on_edges_and_carries() {
+        let cases = residue_corpus(0x3f84_d5b5_b547_0917, 64);
+        let p_minus_one = limb::sub_noborrow(&P, &[1, 0, 0, 0]);
+        for background in [P, p_minus_one, [0; 4]] {
+            for slot in 0..8 {
+                for (index, value) in cases.iter().enumerate() {
+                    let mut operands = [background; 8];
+                    operands[slot] = *value;
+                    assert_eq!(
+                        sosd4_of(&operands),
+                        sosd4_portable_of(&operands),
+                        "slot {slot}, case {index}",
+                    );
+                }
+            }
+        }
+    }
+
+    #[cfg(narsil_a64_sosd4)]
+    #[test]
+    fn sosd4_assembly_matches_portable_on_random_residues() {
+        let mut state = 0x94d0_49bb_1331_11ebu64;
+        for case in 0..100_000 {
+            let operands: [[u64; 4]; 8] = core::array::from_fn(|_| next_residue(&mut state));
+            assert_eq!(
+                sosd4_of(&operands),
+                sosd4_portable_of(&operands),
+                "case {case}",
+            );
+        }
+    }
+
+    /// Eight limb arrays in kernel table order as the two Fp2 products the
+    /// dispatch entry points take.
+    #[cfg(narsil_a64_sosd4)]
+    fn sosd4_products_of(operands: &[[u64; 4]; 8]) -> [crate::fp::sos::Fp2Product<'_>; 2] {
+        core::array::from_fn(|i| {
+            let [x0, x1, y0, y1] = [0, 1, 2, 3].map(|part| &operands[4 * i + part]);
+            (x0, x1, y0, y1)
+        })
+    }
+
+    #[cfg(narsil_a64_sosd4)]
+    fn sosd4_of(operands: &[[u64; 4]; 8]) -> ([u64; 4], [u64; 4]) {
+        super::sosd4(sosd4_products_of(operands))
+    }
+
+    #[cfg(narsil_a64_sosd4)]
+    fn sosd4_portable_of(operands: &[[u64; 4]; 8]) -> ([u64; 4], [u64; 4]) {
+        crate::fp::sos::sosd4_portable(sosd4_products_of(operands))
+    }
+
     /// The twelve-operand table ABI on silicon: the assembler, the pointer
     /// table the wrapper builds, and the callee-saved contract. Slots are
     /// swept one at a time over the corpus against saturated backgrounds,
@@ -331,16 +416,22 @@ mod tests {
 /// same clock and the same background load. The ratio survives noise that
 /// would swamp two separate absolute measurements. Run with
 /// `cargo test --release --features std --lib ab_sosd -- --ignored --nocapture`.
-#[cfg(all(test, any(narsil_a64_sosd2, narsil_a64_sosd6)))]
+#[cfg(all(test, any(narsil_a64_sosd2, narsil_a64_sosd4, narsil_a64_sosd6)))]
 mod ab {
     #[cfg(narsil_a64_sosd2)]
     use super::sosd2;
+    #[cfg(narsil_a64_sosd4)]
+    use super::sosd4;
     #[cfg(narsil_a64_sosd6)]
     use super::sosd6;
+    #[cfg(any(narsil_a64_sosd4, narsil_a64_sosd6))]
+    use crate::fp::sos::Fp2Product;
     #[cfg(narsil_a64_sosd2)]
     use crate::fp::sos::sosd2_portable;
+    #[cfg(narsil_a64_sosd4)]
+    use crate::fp::sos::sosd4_portable;
     #[cfg(narsil_a64_sosd6)]
-    use crate::fp::sos::{Fp2Product, sosd6_portable};
+    use crate::fp::sos::sosd6_portable;
     use core::hint::black_box;
     use std::time::Instant;
 
@@ -426,6 +517,57 @@ mod ab {
             }
         }
         report("sosd2", &mut leaf, &mut port);
+    }
+
+    /// Two Fp2 products per call, so one operand set is eight residues.
+    #[cfg(narsil_a64_sosd4)]
+    fn products4(case: &[[u64; 4]; 8]) -> [Fp2Product<'_>; 2] {
+        core::array::from_fn(|i| {
+            let [x0, x1, y0, y1] = [0, 1, 2, 3].map(|part| &case[4 * i + part]);
+            (x0, x1, y0, y1)
+        })
+    }
+
+    #[cfg(narsil_a64_sosd4)]
+    #[test]
+    #[ignore]
+    fn ab_sosd4() {
+        let pool = residues(5, 256 * 8);
+        let cases: Vec<[[u64; 4]; 8]> = (0..256)
+            .map(|k| core::array::from_fn(|j| pool[8 * k + j]))
+            .collect();
+        let iters = 10_000usize;
+        let samples = 41usize;
+        let mut leaf = Vec::with_capacity(samples);
+        let mut port = Vec::with_capacity(samples);
+        // Warm both.
+        for i in 0..4096 {
+            black_box(sosd4(products4(&cases[i & 255])));
+            black_box(sosd4_portable(products4(&cases[i & 255])));
+        }
+        for s in 0..samples {
+            // Alternate which goes first so drift cancels.
+            let order = if s % 2 == 0 { [0, 1] } else { [1, 0] };
+            for which in order {
+                let t = Instant::now();
+                if which == 0 {
+                    for i in 0..iters {
+                        black_box(sosd4(products4(black_box(&cases[i & 255]))));
+                    }
+                } else {
+                    for i in 0..iters {
+                        black_box(sosd4_portable(products4(black_box(&cases[i & 255]))));
+                    }
+                }
+                let ns = t.elapsed().as_nanos() as f64 / iters as f64;
+                if which == 0 {
+                    leaf.push(ns)
+                } else {
+                    port.push(ns)
+                }
+            }
+        }
+        report("sosd4", &mut leaf, &mut port);
     }
 
     /// Three Fp2 products per call, so one operand set is twelve residues.

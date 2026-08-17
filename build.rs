@@ -144,6 +144,7 @@ fn main() {
     println!("cargo::rustc-check-cfg=cfg(narsil_mont4_x86_64_adx)");
     println!("cargo::rustc-check-cfg=cfg(narsil_a64_kernels)");
     println!("cargo::rustc-check-cfg=cfg(narsil_a64_sosd2)");
+    println!("cargo::rustc-check-cfg=cfg(narsil_a64_sosd4)");
     println!("cargo::rustc-check-cfg=cfg(narsil_a64_sosd6)");
     println!("cargo::rustc-check-cfg=cfg(narsil_x86_intel)");
     println!("cargo::rustc-check-cfg=cfg(narsil_avx512_ifma)");
@@ -166,6 +167,7 @@ fn main() {
     println!("cargo::rustc-check-cfg=cfg(narsil_fp12_mul_asm)");
     println!("cargo::rustc-check-cfg=cfg(narsil_cyc_sqr_asm)");
     println!("cargo:rerun-if-env-changed=NARSIL_A64_SOS");
+    println!("cargo:rerun-if-env-changed=NARSIL_A64_SOSD4");
     println!("cargo:rerun-if-env-changed=NARSIL_A64_SOSD6");
     println!("cargo:rerun-if-env-changed=NARSIL_AVX512_IFMA");
     println!("cargo:rerun-if-env-changed=NARSIL_SOSD2_ASM");
@@ -347,6 +349,9 @@ fn main() {
         println!("cargo:rustc-cfg=narsil_a64_kernels");
         if a64_leaf_enabled("NARSIL_A64_SOS") {
             println!("cargo:rustc-cfg=narsil_a64_sosd2");
+        }
+        if a64_leaf_enabled("NARSIL_A64_SOSD4") {
+            println!("cargo:rustc-cfg=narsil_a64_sosd4");
         }
         if a64_leaf_enabled("NARSIL_A64_SOSD6") {
             println!("cargo:rustc-cfg=narsil_a64_sosd6");

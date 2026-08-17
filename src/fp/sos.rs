@@ -17,7 +17,12 @@
 //! u < p + X/R <= p*(1 + T*p/R) < p*(1 + 0.1891*T): one conditional
 //! subtraction reaches [0, p) for T <= 4, two for T <= 10.
 
+// The portable kernels below, and the row machinery and modulus constants
+// they share, exist only where some SoS entry point still dispatches to them.
+// On Apple with all three dual-lane leaves linked, nothing does.
+#[cfg(any(test, not(all(narsil_a64_sosd2, narsil_a64_sosd4, narsil_a64_sosd6))))]
 use crate::consts::{P, P_INV};
+#[cfg(any(test, not(all(narsil_a64_sosd2, narsil_a64_sosd4, narsil_a64_sosd6))))]
 use crate::limb::{gt, sub_mod, sub_noborrow};
 
 #[cfg(any(test, target_arch = "x86_64"))]
@@ -101,6 +106,7 @@ pub(crate) use sosd8;
 
 /// `p - x` for `x in [0, p]`. Feeds subtracted terms into a sum of products.
 /// Maps 0 to p, which the kernels accept (operand bound is <= p).
+#[cfg(any(test, not(all(narsil_a64_sosd2, narsil_a64_sosd4, narsil_a64_sosd6))))]
 #[inline(always)]
 pub fn negp(x: &[u64; 4]) -> [u64; 4] {
     debug_assert!(!gt(x, &P));
@@ -109,6 +115,7 @@ pub fn negp(x: &[u64; 4]) -> [u64; 4] {
 
 // Four limbs times one word is five limbs. One carry chain so the carry stays
 // in flags (same shape as fp/portable.rs).
+#[cfg(any(test, not(all(narsil_a64_sosd2, narsil_a64_sosd4, narsil_a64_sosd6))))]
 macro_rules! mul_word {
     ($b:expr, $a:expr$(,)?) => {{
         let b = $b;
@@ -128,6 +135,7 @@ macro_rules! mul_word {
 
 // Accumulate a five-limb row. The carry cannot leave the fifth limb while the
 // in-round peak stays below 2^320 (T <= 4).
+#[cfg(any(test, not(all(narsil_a64_sosd2, narsil_a64_sosd4, narsil_a64_sosd6))))]
 macro_rules! acc_row5 {
     ($t0:ident, $t1:ident, $t2:ident, $t3:ident, $t4:ident, $row:expr$(,)?) => {{
         let (r0, r1, r2, r3, r4) = $row;
@@ -176,6 +184,7 @@ macro_rules! acc_row6 {
 
 // One CIOS round over source limb $j: accumulate a_i[j]*b_i for every product,
 // cancel the low limb with q*p, shift the accumulator one limb right.
+#[cfg(any(test, not(all(narsil_a64_sosd2, narsil_a64_sosd4, narsil_a64_sosd6))))]
 macro_rules! round5 {
     ($t0:ident, $t1:ident, $t2:ident, $t3:ident, $t4:ident, $j:expr, $(($a:expr, $b:expr)),+$(,)?) => {{
         $(acc_row5!($t0, $t1, $t2, $t3, $t4, mul_word!($b, $a[$j]));)+
@@ -213,6 +222,7 @@ macro_rules! round6 {
     }};
 }
 
+#[cfg(any(test, not(all(narsil_a64_sosd2, narsil_a64_sosd4, narsil_a64_sosd6))))]
 macro_rules! debug_assert_operands {
     ($($x:expr),+$(,)?) => {
         $(debug_assert!(!gt($x, &P), "SoS operand exceeds p");)+
@@ -260,7 +270,10 @@ pub(crate) fn sosd2_portable(
 /// Dual-lane sum of two Fp2 products, T = 4 per lane.
 #[cfg(any(
     test,
-    not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))
+    not(any(
+        all(narsil_mont4_x86_64_adx, not(feature = "force-portable")),
+        narsil_a64_sosd4,
+    ))
 ))]
 #[inline(never)]
 pub(crate) fn sosd4_portable(products: [Fp2Product<'_>; 2]) -> ([u64; 4], [u64; 4]) {
@@ -774,9 +787,20 @@ pub(crate) fn sos4_terms(products: [Product<'_>; 4]) -> [u64; 4] {
 #[inline(always)]
 pub(crate) fn sosd4_terms(products: [Fp2Product<'_>; 2]) -> ([u64; 4], [u64; 4]) {
     #[cfg(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))]
-    return crate::fp::x86_64::sosd4(products);
-    #[cfg(not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable"))))]
-    sosd4_portable(products)
+    {
+        crate::fp::x86_64::sosd4(products)
+    }
+    #[cfg(narsil_a64_sosd4)]
+    {
+        crate::fp::aarch64::sosd4(products)
+    }
+    #[cfg(not(any(
+        all(narsil_mont4_x86_64_adx, not(feature = "force-portable")),
+        narsil_a64_sosd4,
+    )))]
+    {
+        sosd4_portable(products)
+    }
 }
 
 #[inline(always)]
