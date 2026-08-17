@@ -9,6 +9,7 @@ use kernelgen::{
     BN254_MU, BN254_P, BN254_P_INV, interpret_f2mul, interpret_f2sqr, interpret_g2_ysqr,
     interpret_mont4_a64, interpret_mont4_mul, interpret_mont4_mulpre, interpret_mont4_redc,
     interpret_mont4_sqr, interpret_sos, interpret_sosd2_a64, interpret_sosd2_small,
+    interpret_sosd6_a64,
 };
 
 /// Independent CIOS Montgomery multiplication oracle (word-by-word, u128).
@@ -436,6 +437,113 @@ fn a64_sosd2_matches_the_field_algebra_on_random_residues() {
             fx0 * fy1 + fx1 * fy0,
             "lane 1, case {case}",
         );
+        assert!(
+            !gte(&lane0, &P) && !gte(&lane1, &P),
+            "unreduced, case {case}"
+        );
+    }
+}
+
+/// `p - x` for `x <= p`, the image every subtracted lane0 term enters through.
+fn negp(x: [u64; 4]) -> [u64; 4] {
+    let mut image = [0u64; 4];
+    let mut borrow = 0u64;
+    for k in 0..4 {
+        let (mid, b1) = BN254_P[k].overflowing_sub(x[k]);
+        let (low, b2) = mid.overflowing_sub(borrow);
+        image[k] = low;
+        borrow = (b1 | b2) as u64;
+    }
+    assert_eq!(borrow, 0, "operands are at most p");
+    image
+}
+
+/// Both lanes of a sum of three Fp2 products from the independent u128 sums of
+/// products oracle. Operands are in the kernel's table order.
+fn reference_sosd6(operands: [[u64; 4]; 12]) -> ([u64; 4], [u64; 4]) {
+    let mut lane0 = Vec::with_capacity(6);
+    let mut lane1 = Vec::with_capacity(6);
+    for i in 0..3 {
+        let [x0, x1, y0, y1] = [0, 1, 2, 3].map(|part| operands[4 * i + part]);
+        lane0.push((x0, y0));
+        lane0.push((x1, negp(y1)));
+        lane1.push((x0, y1));
+        lane1.push((x1, y0));
+    }
+    (
+        reference_sos(&lane0, BN254_P, BN254_P_INV),
+        reference_sos(&lane1, BN254_P, BN254_P_INV),
+    )
+}
+
+/// Every operand slot swept over the edge corpus against three saturated
+/// backgrounds: p itself (the operand bound, and the image `p - 0`), p - 1,
+/// and zero, whose `p - y_i1` image is p. The interpreter checks the kernel's
+/// own bound claims (no accumulate carry-out of word 5, no sixth word between
+/// rounds, no fifth word at the end) on each of these inputs.
+#[test]
+fn a64_sosd6_matches_reference_on_edge_corpus() {
+    let corpus = sosd2_a64_corpus();
+    let p_minus_one = {
+        let mut value = BN254_P;
+        value[0] -= 1;
+        value
+    };
+    for background in [BN254_P, p_minus_one, [0; 4]] {
+        for slot in 0..12 {
+            for (index, value) in corpus.iter().enumerate() {
+                let mut operands = [background; 12];
+                operands[slot] = *value;
+                assert_eq!(
+                    interpret_sosd6_a64(operands, BN254_P, BN254_P_INV),
+                    reference_sosd6(operands),
+                    "slot {slot}, corpus {index}",
+                );
+            }
+        }
+    }
+}
+
+/// All twelve slots drawn from the edge corpus at once, so carry patterns that
+/// only appear when several operands are extreme together are covered too.
+#[test]
+fn a64_sosd6_matches_reference_on_mixed_edge_operands() {
+    let corpus = sosd2_a64_corpus();
+    let mut state = 0x736f_7364_365f_6d78u64;
+    for case in 0..20_000 {
+        let operands = core::array::from_fn(|_| {
+            state = state
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            corpus[(state >> 33) as usize % corpus.len()]
+        });
+        assert_eq!(
+            interpret_sosd6_a64(operands, BN254_P, BN254_P_INV),
+            reference_sosd6(operands),
+            "case {case}",
+        );
+    }
+}
+
+#[test]
+fn a64_sosd6_matches_the_field_algebra_on_random_residues() {
+    use helius_narsil::Fp;
+    use helius_narsil::consts::{P, P_INV};
+
+    let mut state = 0x736f_7364_365f_6136u64;
+    for case in 0..100_000 {
+        let operands: [[u64; 4]; 12] = core::array::from_fn(|_| next_residue(&mut state));
+        let f = operands.map(Fp::from_raw_unchecked);
+        let (lane0, lane1) = interpret_sosd6_a64(operands, P, P_INV);
+        let mut want0 = Fp::from_raw_unchecked([0; 4]);
+        let mut want1 = want0;
+        for i in 0..3 {
+            let [x0, x1, y0, y1] = [0, 1, 2, 3].map(|part| f[4 * i + part]);
+            want0 = want0 + x0 * y0 - x1 * y1;
+            want1 = want1 + x0 * y1 + x1 * y0;
+        }
+        assert_eq!(Fp::from_raw_unchecked(lane0), want0, "lane 0, case {case}");
+        assert_eq!(Fp::from_raw_unchecked(lane1), want1, "lane 1, case {case}");
         assert!(
             !gte(&lane0, &P) && !gte(&lane1, &P),
             "unreduced, case {case}"
@@ -1377,6 +1485,20 @@ fn assert_direct_mulpre_and_redc_match_independent_oracles() {
 
 /// Regeneration determinism: the build script must render the identical text
 /// on every host and every run (no timestamps, paths, or host data).
+/// The emitted text of one A64 kernel: from its label to the register map
+/// comment that opens the next one.
+fn a64_kernel_body<'a>(rendered: &'a str, symbol: &str) -> &'a str {
+    let label = format!("\n{symbol}:\n");
+    let start = rendered
+        .find(&label)
+        .unwrap_or_else(|| panic!("{symbol} body present"));
+    let body = &rendered[start..];
+    match body.find("\n/* ") {
+        Some(end) => &body[..end],
+        None => body,
+    }
+}
+
 #[test]
 fn rendered_files_are_deterministic_and_sized() {
     let rendered = kernelgen::render::render_mont4_x86_64();
@@ -1758,17 +1880,33 @@ fn rendered_files_are_deterministic_and_sized() {
             "{symbol} must stay within 8 KiB of text ({bytes} bytes)",
         );
     }
-    // 4 rounds x (4 product rows + 2 reduction rows) x 4 limbs, times two
-    // for MUL and UMULH, plus the eight Montgomery factors.
-    let sosd2_body = rendered_a64
-        .rsplit(kernelgen::a64::render::SOSD2_SYMBOL)
-        .next()
-        .expect("sosd2 kernel body present");
-    assert_eq!(
-        sosd2_body.matches("mul ").count() + sosd2_body.matches("umulh ").count(),
-        200,
-        "sosd2 must issue exactly the schoolbook product count",
-    );
+    // 4 rounds x (product rows + 2 reduction rows) x 4 limbs, times two for
+    // MUL and UMULH, plus the eight Montgomery factors: 4 rows per round for
+    // sosd2 and 12 for sosd6.
+    // The frame carries ten spilled callee-saved registers (5 STP, 5 LDP) and
+    // one `p - y` image per product (2 STP each, reread once per round). A
+    // spilled accumulator word would show up here as a larger count.
+    for (symbol, products, stack) in [
+        (kernelgen::a64::render::SOSD2_SYMBOL, 200, 10 + 2 + 4 * 2),
+        (
+            kernelgen::a64::render::SOSD6_SYMBOL,
+            456,
+            10 + 3 * 2 + 4 * 3 * 2,
+        ),
+    ] {
+        let body = a64_kernel_body(&rendered_a64, symbol);
+        assert_eq!(
+            body.matches("mul ").count() + body.matches("umulh ").count(),
+            products,
+            "{symbol} must issue exactly the schoolbook product count",
+        );
+        assert_eq!(
+            body.matches("[sp").count(),
+            stack,
+            "{symbol} touches the stack outside its frame contract",
+        );
+        assert!(!body.contains("movk"), "{symbol} must not rematerialize p");
+    }
     // Leaf property, and the rounds are unrolled, so the kernel is straight
     // line. (Match with surrounding spaces: `.globl` would otherwise hit the
     // "bl" pattern.)
