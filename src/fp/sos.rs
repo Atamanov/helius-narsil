@@ -146,6 +146,15 @@ macro_rules! acc_row5 {
 }
 
 // Six-limb accumulator variant. The row carry spills into the sixth limb.
+// Both six-limb macros follow `sosd6_portable`: outside `test` nothing else
+// uses them.
+#[cfg(any(
+    test,
+    not(any(
+        all(narsil_mont4_x86_64_adx, not(feature = "force-portable")),
+        narsil_a64_sosd6,
+    ))
+))]
 macro_rules! acc_row6 {
     ($t0:ident, $t1:ident, $t2:ident, $t3:ident, $t4:ident, $t5:ident, $row:expr$(,)?) => {{
         let (r0, r1, r2, r3, r4) = $row;
@@ -181,6 +190,13 @@ macro_rules! round5 {
     }};
 }
 
+#[cfg(any(
+    test,
+    not(any(
+        all(narsil_mont4_x86_64_adx, not(feature = "force-portable")),
+        narsil_a64_sosd6,
+    ))
+))]
 macro_rules! round6 {
     ($t0:ident, $t1:ident, $t2:ident, $t3:ident, $t4:ident, $t5:ident, $j:expr,
      $(($a:expr, $b:expr)),+) => {{
@@ -298,7 +314,10 @@ pub(crate) fn sosd4_portable(products: [Fp2Product<'_>; 2]) -> ([u64; 4], [u64; 
 /// Dual-lane sum of three Fp2 products, T = 6 per lane.
 #[cfg(any(
     test,
-    not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable")))
+    not(any(
+        all(narsil_mont4_x86_64_adx, not(feature = "force-portable")),
+        narsil_a64_sosd6,
+    ))
 ))]
 #[inline(never)]
 pub(crate) fn sosd6_portable(products: [Fp2Product<'_>; 3]) -> ([u64; 4], [u64; 4]) {
@@ -778,7 +797,14 @@ pub(crate) fn sosd6_terms(products: [Fp2Product<'_>; 3]) -> ([u64; 4], [u64; 4])
     {
         crate::fp::x86_64::sosd6(products)
     }
-    #[cfg(not(all(narsil_mont4_x86_64_adx, not(feature = "force-portable"))))]
+    #[cfg(narsil_a64_sosd6)]
+    {
+        crate::fp::aarch64::sosd6(products)
+    }
+    #[cfg(not(any(
+        all(narsil_mont4_x86_64_adx, not(feature = "force-portable")),
+        narsil_a64_sosd6,
+    )))]
     {
         sosd6_portable(products)
     }

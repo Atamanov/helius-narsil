@@ -72,6 +72,13 @@ unsafe extern "C" {
         constants: *const crate::fp::aarch64::Mont4Constants,
     );
 
+    #[cfg(narsil_a64_sosd6)]
+    pub(crate) fn narsil_sosd6(
+        z: *mut u64,
+        table: *const *const u64,
+        constants: *const crate::fp::aarch64::Mont4Constants,
+    );
+
     #[cfg(narsil_mont4_x86_64_adx)]
     pub(crate) fn narsil_mont4_mul_x86(
         z: *mut u64,

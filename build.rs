@@ -24,14 +24,15 @@ fn a64_kernels_enabled(arch: &str, vendor: &str) -> bool {
         && std::env::var_os("CARGO_FEATURE_FORCE_PORTABLE").is_none()
 }
 
-/// Whether the Fp2 tower routes through the dual-lane A64 leaf.
-fn a64_sosd2_enabled() -> bool {
-    match std::env::var("NARSIL_A64_SOS").ok().as_deref() {
+/// Whether one dual-lane A64 leaf serves its tower entry point. Each kernel
+/// has its own switch so an A/B can move one route at a time.
+fn a64_leaf_enabled(variable: &str) -> bool {
+    match std::env::var(variable).ok().as_deref() {
         None | Some("1") => true,
         Some("0") => false,
-        Some(other) => panic!(
-            "NARSIL_A64_SOS={other:?} is not recognized; use 1 (leaf, default) or 0 (portable)"
-        ),
+        Some(other) => {
+            panic!("{variable}={other:?} is not recognized; use 1 (leaf, default) or 0 (portable)")
+        }
     }
 }
 
@@ -143,6 +144,7 @@ fn main() {
     println!("cargo::rustc-check-cfg=cfg(narsil_mont4_x86_64_adx)");
     println!("cargo::rustc-check-cfg=cfg(narsil_a64_kernels)");
     println!("cargo::rustc-check-cfg=cfg(narsil_a64_sosd2)");
+    println!("cargo::rustc-check-cfg=cfg(narsil_a64_sosd6)");
     println!("cargo::rustc-check-cfg=cfg(narsil_x86_intel)");
     println!("cargo::rustc-check-cfg=cfg(narsil_avx512_ifma)");
     println!("cargo::rustc-check-cfg=cfg(narsil_x86_runtime_ifma)");
@@ -164,6 +166,7 @@ fn main() {
     println!("cargo::rustc-check-cfg=cfg(narsil_fp12_mul_asm)");
     println!("cargo::rustc-check-cfg=cfg(narsil_cyc_sqr_asm)");
     println!("cargo:rerun-if-env-changed=NARSIL_A64_SOS");
+    println!("cargo:rerun-if-env-changed=NARSIL_A64_SOSD6");
     println!("cargo:rerun-if-env-changed=NARSIL_AVX512_IFMA");
     println!("cargo:rerun-if-env-changed=NARSIL_SOSD2_ASM");
     println!("cargo:rerun-if-env-changed=NARSIL_SOSD2_SMALL");
@@ -342,8 +345,11 @@ fn main() {
         let path = write_kernel(&out_dir, aarch64_name, aarch64_text);
         cc::Build::new().file(path).compile("narsil_mont4_asm");
         println!("cargo:rustc-cfg=narsil_a64_kernels");
-        if a64_sosd2_enabled() {
+        if a64_leaf_enabled("NARSIL_A64_SOS") {
             println!("cargo:rustc-cfg=narsil_a64_sosd2");
+        }
+        if a64_leaf_enabled("NARSIL_A64_SOSD6") {
+            println!("cargo:rustc-cfg=narsil_a64_sosd6");
         }
     }
 
