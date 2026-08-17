@@ -1,23 +1,53 @@
-//! Render the complete AArch64 `.s` text: provenance header, register map,
-//! and the emitted schedule. The build script writes this text to OUT_DIR
+//! Render the complete AArch64 `.s` text: provenance header, one register
+//! map and one body per kernel. The build script writes this text to OUT_DIR
 //! and assembles it for aarch64-apple targets. No copy is checked in.
 
 use super::emit::EmitterA64;
+use super::machine::Reg;
 use super::schedule::{MONT4_REGISTER_MAP, mont4};
+use super::sos::{SOSD2_REGISTER_MAP, sosd2};
 
 /// Apple Mach-O adds the underscore. Rust names the symbol `narsil_mont4`.
 pub const MONT4_SYMBOL: &str = "_narsil_mont4";
-pub const MONT4_SCHEDULE_NAME: &str = "bn254-mont4-cios-unrolled";
+pub const SOSD2_SYMBOL: &str = "_narsil_sosd2";
+
+/// One emitted symbol: its schedule, its register roles, and the argument
+/// list the wrapper in `src/fp/aarch64.rs` must match.
+pub struct Kernel {
+    pub symbol: &'static str,
+    pub schedule_name: &'static str,
+    schedule: fn(&mut EmitterA64),
+    register_map: &'static [(Reg, &'static str)],
+    signature: &'static [&'static str],
+}
+
+pub const A64_KERNELS: &[Kernel] = &[
+    Kernel {
+        symbol: MONT4_SYMBOL,
+        schedule_name: "bn254-mont4-cios-unrolled",
+        schedule: mont4::<EmitterA64>,
+        register_map: MONT4_REGISTER_MAP,
+        signature: &[
+            "Arguments: (z: *mut u64x4, x: *const u64x4, y: *const u64x4,",
+            "            consts: *const { p: [u64; 4], neg_p_inv: u64 })",
+        ],
+    },
+    Kernel {
+        symbol: SOSD2_SYMBOL,
+        schedule_name: "bn254-sosd2-dual-lane-cios",
+        schedule: sosd2::<EmitterA64>,
+        register_map: SOSD2_REGISTER_MAP,
+        signature: &[
+            "Arguments: (z: *mut u64x8, x0: *const u64x4, x1: *const u64x4,",
+            "            y0: *const u64x4, y1: *const u64x4,",
+            "            consts: *const { p: [u64; 4], neg_p_inv: u64 })",
+        ],
+    },
+];
 
 /// Render the full AArch64 kernel file. Byte-for-byte deterministic (no
 /// timestamps, paths, or host data). Tests assert generate-twice identity.
-pub fn render_mont4_aarch64() -> String {
-    let mut emitter = EmitterA64::new();
-    mont4(&mut emitter);
-    let instructions = emitter.instructions();
-    let bytes = emitter.bytes();
-    let body = emitter.into_lines();
-
+pub fn render_aarch64() -> String {
     let mut out = String::new();
     let mut line = |text: &str| {
         out.push_str(text);
@@ -25,38 +55,52 @@ pub fn render_mont4_aarch64() -> String {
     };
 
     line("/* @generated at build time by the helius-narsil build script.");
-    line("   Source of truth: crates/helius-narsil/build/a64/schedule.rs (ADR 0001).");
+    line("   Source of truth: crates/helius-narsil/build/a64 (ADR 0001).");
     line("   Inspect a copy: NARSIL_DUMP_ASM=<absolute dir> cargo build.");
     line("   Verified by: tests/kernelgen_verify.rs (interpreter + determinism).");
     line("");
-    line(&format!(
-        "   {MONT4_SYMBOL}: schedule {MONT4_SCHEDULE_NAME}, {instructions} instructions, {bytes} bytes",
-    ));
-    line("");
-    line("   AAPCS64 (Apple), leaf; the counted loop is one CIOS round.");
-    line("   Arguments: (z: *mut u64x4, x: *const u64x4, y: *const u64x4,");
-    line("               consts: *const { p: [u64; 4], neg_p_inv: u64 })");
-    line("   Contract and safety boundary live beside the only caller in");
-    line("   src/fp/aarch64.rs; carry bounds live in build/a64/schedule.rs. */");
-    line("");
-    line(&format!("/* {MONT4_SYMBOL} register map:"));
-    for (reg, role) in MONT4_REGISTER_MAP {
-        line(&format!("   {:<4} {}", reg.name(), role));
+    for (kernel, (instructions, bytes)) in A64_KERNELS.iter().zip(kernel_sizes()) {
+        line(&format!(
+            "   {}: schedule {}, {instructions} instructions, {bytes} bytes",
+            kernel.symbol, kernel.schedule_name,
+        ));
     }
-    line("*/");
-    line("    .text");
-    line("    .align 3");
-    line(&format!("    .globl {MONT4_SYMBOL}"));
-    line(&format!("{MONT4_SYMBOL}:"));
-    for body_line in &body {
-        line(body_line);
+    line("");
+    line("   AAPCS64 (Apple), leaf, straight line, no calls and no branches.");
+    line("   Contract and safety boundary live beside the only callers in");
+    line("   src/fp/aarch64.rs; carry bounds live in build/a64. */");
+
+    for kernel in A64_KERNELS {
+        let mut emitter = EmitterA64::new();
+        (kernel.schedule)(&mut emitter);
+        line("");
+        line(&format!("/* {} register map:", kernel.symbol));
+        for text in kernel.signature {
+            line(&format!("   {text}"));
+        }
+        for (reg, role) in kernel.register_map {
+            line(&format!("   {:<4} {}", reg.name(), role));
+        }
+        line("*/");
+        line("    .text");
+        line("    .p2align 5");
+        line(&format!("    .globl {}", kernel.symbol));
+        line(&format!("{}:", kernel.symbol));
+        for body_line in emitter.into_lines() {
+            line(&body_line);
+        }
     }
     out
 }
 
-/// (instructions, bytes) for the kernel.
-pub fn kernel_size() -> (usize, usize) {
-    let mut emitter = EmitterA64::new();
-    mont4(&mut emitter);
-    (emitter.instructions(), emitter.bytes())
+/// (instructions, bytes) for every kernel, in `A64_KERNELS` order.
+pub fn kernel_sizes() -> Vec<(usize, usize)> {
+    A64_KERNELS
+        .iter()
+        .map(|kernel| {
+            let mut emitter = EmitterA64::new();
+            (kernel.schedule)(&mut emitter);
+            (emitter.instructions(), emitter.bytes())
+        })
+        .collect()
 }

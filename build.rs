@@ -9,11 +9,30 @@ use std::path::{Path, PathBuf};
 fn generated_kernels() -> [(&'static str, String); 2] {
     [
         (
-            "mont4_aarch64.s",
-            kernelgen::a64::render::render_mont4_aarch64(),
+            "kernels_aarch64.s",
+            kernelgen::a64::render::render_aarch64(),
         ),
         ("mont4_x86_64.s", kernelgen::render::render_mont4_x86_64()),
     ]
+}
+
+/// The Apple AArch64 assembly kernels, on unless the build is forced
+/// portable.
+fn a64_kernels_enabled(arch: &str, vendor: &str) -> bool {
+    arch == "aarch64"
+        && vendor == "apple"
+        && std::env::var_os("CARGO_FEATURE_FORCE_PORTABLE").is_none()
+}
+
+/// Whether the Fp2 tower routes through the dual-lane A64 leaf.
+fn a64_sosd2_enabled() -> bool {
+    match std::env::var("NARSIL_A64_SOS").ok().as_deref() {
+        None | Some("1") => true,
+        Some("0") => false,
+        Some(other) => panic!(
+            "NARSIL_A64_SOS={other:?} is not recognized; use 1 (leaf, default) or 0 (portable)"
+        ),
+    }
 }
 
 fn write_kernel(directory: &Path, name: &str, text: &str) -> PathBuf {
@@ -122,6 +141,8 @@ fn main() {
     build_mcl_oracle();
     println!("cargo::rustc-check-cfg=cfg(kani)");
     println!("cargo::rustc-check-cfg=cfg(narsil_mont4_x86_64_adx)");
+    println!("cargo::rustc-check-cfg=cfg(narsil_a64_kernels)");
+    println!("cargo::rustc-check-cfg=cfg(narsil_a64_sosd2)");
     println!("cargo::rustc-check-cfg=cfg(narsil_x86_intel)");
     println!("cargo::rustc-check-cfg=cfg(narsil_avx512_ifma)");
     println!("cargo::rustc-check-cfg=cfg(narsil_x86_runtime_ifma)");
@@ -142,6 +163,7 @@ fn main() {
     println!("cargo::rustc-check-cfg=cfg(narsil_fp12_sqr_mcl_asm)");
     println!("cargo::rustc-check-cfg=cfg(narsil_fp12_mul_asm)");
     println!("cargo::rustc-check-cfg=cfg(narsil_cyc_sqr_asm)");
+    println!("cargo:rerun-if-env-changed=NARSIL_A64_SOS");
     println!("cargo:rerun-if-env-changed=NARSIL_AVX512_IFMA");
     println!("cargo:rerun-if-env-changed=NARSIL_SOSD2_ASM");
     println!("cargo:rerun-if-env-changed=NARSIL_SOSD2_SMALL");
@@ -316,9 +338,13 @@ fn main() {
 
     let [(aarch64_name, aarch64_text), (x86_name, x86_text)] = &kernels;
 
-    if arch == "aarch64" && vendor == "apple" {
+    if a64_kernels_enabled(&arch, &vendor) {
         let path = write_kernel(&out_dir, aarch64_name, aarch64_text);
         cc::Build::new().file(path).compile("narsil_mont4_asm");
+        println!("cargo:rustc-cfg=narsil_a64_kernels");
+        if a64_sosd2_enabled() {
+            println!("cargo:rustc-cfg=narsil_a64_sosd2");
+        }
     }
 
     if arch == "x86_64" && os == "linux" && has("bmi2") && has("adx") {
