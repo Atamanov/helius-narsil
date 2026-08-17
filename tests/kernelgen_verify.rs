@@ -1664,11 +1664,12 @@ fn rendered_files_are_deterministic_and_sized() {
         rendered_a64.contains(&format!("{instructions} instructions, {bytes} bytes")),
         "a64 header sizes missing",
     );
-    // Leaf property: the only branch is the counted round loop. (Match with
-    // surrounding spaces: `.globl` would otherwise hit the "bl" pattern.)
+    // Leaf property, and the rounds are unrolled, so the kernel is straight
+    // line. (Match with surrounding spaces: `.globl` would otherwise hit the
+    // "bl" pattern.)
     assert!(!rendered_a64.contains(" bl "), "kernel must remain a leaf");
     assert!(!rendered_a64.contains(" blr "), "kernel must remain a leaf");
-    assert_eq!(rendered_a64.matches("b.ne").count(), 1);
+    assert_eq!(rendered_a64.matches("b.ne").count(), 0);
 }
 
 #[test]

@@ -7,7 +7,7 @@ use super::schedule::{MONT4_REGISTER_MAP, mont4};
 
 /// Apple Mach-O adds the underscore. Rust names the symbol `narsil_mont4`.
 pub const MONT4_SYMBOL: &str = "_narsil_mont4";
-pub const MONT4_SCHEDULE_NAME: &str = "bn254-mont4-cios-rolled";
+pub const MONT4_SCHEDULE_NAME: &str = "bn254-mont4-cios-unrolled";
 
 /// Render the full AArch64 kernel file. Byte-for-byte deterministic (no
 /// timestamps, paths, or host data). Tests assert generate-twice identity.

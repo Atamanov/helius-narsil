@@ -92,7 +92,9 @@ pub fn mont4<M: MachineA64>(m: &mut M) {
     }
 
     m.comment("");
-    m.counted_loop(X3, 4, "L_round", &mut |m| {
+    // Unrolled so the out of order engine can start the next round's
+    // independent products while this round's carry chain drains.
+    for _round in 0..4 {
         m.comment("product row: t += a * b_i, one column chain via S");
         m.ldr_post(V, X2, 8, "b_i (y walks one limb per round)");
         column_products(m, V, A, "a", "b_i");
@@ -112,7 +114,7 @@ pub fn mont4<M: MachineA64>(m: &mut M) {
         m.adcs(T[2], T[3], S[3], "t2 = t3 + S3");
         m.adcs(T[3], T[4], S[4], "t3 = t4 + S4");
         m.cset_hs(T[4], "t4 = chain carry");
-    });
+    }
 
     m.comment("");
     m.comment("four CIOS rounds leave t < 2p: one branch-free conditional");
