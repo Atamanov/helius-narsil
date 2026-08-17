@@ -1,5 +1,9 @@
 #!/bin/sh
-# Reject local-only branches, then require the publish gates.
+# Reject local-only branches, then run a fast smoke test.
+#
+# The branch guard is the one check CI cannot make, because by the time CI
+# sees a ref it has already left the machine. The rest of the publish gates
+# live in CI, which runs them across both toolchains and all feature sets.
 set -eu
 while read -r local_ref _ _ _; do
     case "$local_ref" in
@@ -11,13 +15,5 @@ while read -r local_ref _ _ _; do
 done
 
 cargo fmt --check
-cargo clippy --features std --all-targets -- -D warnings
-cargo test --no-default-features
-cargo test --features std
-RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --features std
-if command -v cargo-deny >/dev/null 2>&1; then
-    cargo deny --exclude-dev check
-else
-    echo "pre-push: cargo-deny not installed, skipping deny check" >&2
-fi
-cargo publish --dry-run
+cargo clippy --features std --lib --tests -- -D warnings
+cargo test --features std --lib
