@@ -8,7 +8,7 @@ mod kernelgen;
 use kernelgen::{
     BN254_MU, BN254_P, BN254_P_INV, interpret_f2mul, interpret_f2sqr, interpret_g2_ysqr,
     interpret_mont4_a64, interpret_mont4_mul, interpret_mont4_mulpre, interpret_mont4_redc,
-    interpret_mont4_sqr, interpret_sos, interpret_sosd2_small,
+    interpret_mont4_sqr, interpret_sos, interpret_sosd2_a64, interpret_sosd2_small,
 };
 
 /// Independent CIOS Montgomery multiplication oracle (word-by-word, u128).
@@ -359,6 +359,86 @@ fn schedules_match_reference_on_random_residues() {
             interpret_mont4_a64(a, b, BN254_P, BN254_P_INV),
             product,
             "a64 case {case}",
+        );
+    }
+}
+
+/// The four-limb operands the dual-lane A64 leaf must survive: the shared
+/// edge corpus plus p itself, which is the operand bound and the value the
+/// in-kernel `p - y1` produces when `y1` is zero.
+fn sosd2_a64_corpus() -> Vec<[u64; 4]> {
+    let mut corpus = edge_corpus();
+    corpus.push(BN254_P);
+    corpus
+}
+
+/// Both lanes of `(x0 + x1*u)*(y0 + y1*u)` from the independent u128 sums of
+/// products oracle. Lane 0 subtracts through `p - y1`, exactly as the kernel.
+fn reference_sosd2(x0: [u64; 4], x1: [u64; 4], y0: [u64; 4], y1: [u64; 4]) -> ([u64; 4], [u64; 4]) {
+    let mut ny1 = [0u64; 4];
+    let mut borrow = 0u64;
+    for k in 0..4 {
+        let (mid, b1) = BN254_P[k].overflowing_sub(y1[k]);
+        let (low, b2) = mid.overflowing_sub(borrow);
+        ny1[k] = low;
+        borrow = (b1 | b2) as u64;
+    }
+    assert_eq!(borrow, 0, "operands are at most p");
+    (
+        reference_sos(&[(x0, y0), (x1, ny1)], BN254_P, BN254_P_INV),
+        reference_sos(&[(x0, y1), (x1, y0)], BN254_P, BN254_P_INV),
+    )
+}
+
+/// The dual-lane A64 leaf against the independent oracle on every ordered
+/// quadruple of the edge corpus, then on random residues. The interpreter
+/// checks the kernel's own bound claims (no accumulator carry-out, no fifth
+/// word between rounds) on each of these inputs.
+#[test]
+fn a64_sosd2_matches_reference_on_edge_corpus() {
+    let corpus = sosd2_a64_corpus();
+    for (i, x0) in corpus.iter().enumerate() {
+        for (j, x1) in corpus.iter().enumerate() {
+            for (k, y0) in corpus.iter().enumerate() {
+                for (l, y1) in corpus.iter().enumerate() {
+                    assert_eq!(
+                        interpret_sosd2_a64(*x0, *x1, *y0, *y1, BN254_P, BN254_P_INV),
+                        reference_sosd2(*x0, *x1, *y0, *y1),
+                        "edge quadruple ({i}, {j}, {k}, {l})",
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn a64_sosd2_matches_the_field_algebra_on_random_residues() {
+    use helius_narsil::Fp;
+    use helius_narsil::consts::{P, P_INV};
+
+    let mut state = 0x736f_7364_325f_6136u64;
+    for case in 0..100_000 {
+        let x0 = next_residue(&mut state);
+        let x1 = next_residue(&mut state);
+        let y0 = next_residue(&mut state);
+        let y1 = next_residue(&mut state);
+        let (fx0, fx1) = (Fp::from_raw_unchecked(x0), Fp::from_raw_unchecked(x1));
+        let (fy0, fy1) = (Fp::from_raw_unchecked(y0), Fp::from_raw_unchecked(y1));
+        let (lane0, lane1) = interpret_sosd2_a64(x0, x1, y0, y1, P, P_INV);
+        assert_eq!(
+            Fp::from_raw_unchecked(lane0),
+            fx0 * fy0 - fx1 * fy1,
+            "lane 0, case {case}",
+        );
+        assert_eq!(
+            Fp::from_raw_unchecked(lane1),
+            fx0 * fy1 + fx1 * fy0,
+            "lane 1, case {case}",
+        );
+        assert!(
+            !gte(&lane0, &P) && !gte(&lane1, &P),
+            "unreduced, case {case}"
         );
     }
 }
@@ -1651,18 +1731,43 @@ fn rendered_files_are_deterministic_and_sized() {
         "g2_ysqr must stay within 2 KiB of text ({g2_ysqr_bytes} bytes)",
     );
 
-    let rendered_a64 = kernelgen::a64::render::render_mont4_aarch64();
+    let rendered_a64 = kernelgen::a64::render::render_aarch64();
     assert_eq!(
         rendered_a64,
-        kernelgen::a64::render::render_mont4_aarch64(),
+        kernelgen::a64::render::render_aarch64(),
         "aarch64 rendering must be pure",
     );
-    let (instructions, bytes) = kernelgen::a64::render::kernel_size();
-    assert_eq!(bytes, 4 * instructions, "A64 instructions are 4 bytes");
-    assert!(rendered_a64.contains(kernelgen::a64::render::MONT4_SYMBOL));
-    assert!(
-        rendered_a64.contains(&format!("{instructions} instructions, {bytes} bytes")),
-        "a64 header sizes missing",
+    let sizes = kernelgen::a64::render::kernel_sizes();
+    assert_eq!(sizes.len(), kernelgen::a64::render::A64_KERNELS.len());
+    for (kernel, (instructions, bytes)) in kernelgen::a64::render::A64_KERNELS.iter().zip(sizes) {
+        let symbol = kernel.symbol;
+        assert_eq!(bytes, 4 * instructions, "A64 instructions are 4 bytes");
+        assert!(
+            rendered_a64.contains(&format!("{symbol}:")),
+            "{symbol} absent"
+        );
+        assert!(
+            rendered_a64.contains(&format!("{instructions} instructions, {bytes} bytes")),
+            "a64 header sizes missing for {symbol}",
+        );
+        // L1I is 192 KiB, so the budget is about text discipline, not the
+        // instruction cache: a kernel over it has grown a structure the
+        // generator was not meant to produce.
+        assert!(
+            bytes <= 8192,
+            "{symbol} must stay within 8 KiB of text ({bytes} bytes)",
+        );
+    }
+    // 4 rounds x (4 product rows + 2 reduction rows) x 4 limbs, times two
+    // for MUL and UMULH, plus the eight Montgomery factors.
+    let sosd2_body = rendered_a64
+        .rsplit(kernelgen::a64::render::SOSD2_SYMBOL)
+        .next()
+        .expect("sosd2 kernel body present");
+    assert_eq!(
+        sosd2_body.matches("mul ").count() + sosd2_body.matches("umulh ").count(),
+        200,
+        "sosd2 must issue exactly the schoolbook product count",
     );
     // Leaf property, and the rounds are unrolled, so the kernel is straight
     // line. (Match with surrounding spaces: `.globl` would otherwise hit the
