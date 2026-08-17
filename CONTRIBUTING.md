@@ -7,7 +7,7 @@ scripts/install-git-hooks.sh
 That sets `core.hooksPath` to `scripts/git-hooks`. The pre-commit hook runs
 `cargo fmt --check`. The pre-push hook runs fmt, clippy, both test profiles,
 docs, the deny check when `cargo-deny` is installed, and the crates.io dry
-run. The only escape is Git's `--no-verify`; integrators decide when to use
+run. The only escape is Git's `--no-verify`. Integrators decide when to use
 it.
 
 ```sh
