@@ -1,0 +1,46 @@
+# harness tests, on the measured host at the sealed commit
+
+## cargo test --manifest-path bench/Cargo.toml --release
+running 14 tests
+test tests::a_campaign_never_repeats_a_rotation_window ... ok
+test tests::a_pool_too_small_for_the_round_stops_the_run - should panic ... ok
+test tests::a_seeded_draw_order_is_a_reproducible_permutation ... ok
+test tests::rotation_windows_move_with_the_round ... ok
+test tests::four_lane_field_fixtures_agree_and_fold_identically ... ok
+test tests::four_lane_subgroup_fixtures_agree_and_reject_off_subgroup_g2 ... ok
+test tests::four_lane_msm_fixtures_agree_across_sizes ... ok
+test tests::fresh_g2_schedules_replay_alike_and_bind_their_own_point ... ok
+test tests::four_lane_miller_ops_fold_identically_across_lanes ... ok
+test tests::gnark_fresh_pool_folds_identically_across_lanes_and_rejects_its_invalid_vectors ... ok
+test tests::production_pool_folds_identically_across_lanes_and_moves_with_the_statement ... ok
+test tests::a_run_seed_redraws_the_gnark_row ... ok
+test tests::a_run_seed_redraws_the_production_rows_and_their_batches ... ok
+test tests::production_batches_agree_across_lanes_and_reject_a_negated_member ... ok
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.18s
+running 14 tests
+test tests::a_run_seed_moves_every_pool_entry_and_keeps_domains_apart ... ok
+test tests::a_repeated_window_is_caught_even_when_it_is_not_adjacent ... ok
+test tests::a_zero_run_seed_keeps_the_frozen_pools ... ok
+test tests::fixture_seed_parses_both_radices_and_rejects_junk ... ok
+test tests::gates_admit_a_conforming_x86_build ... ok
+test tests::gates_bind_arkworks_lanes_to_their_build_regime ... ok
+test tests::gates_pin_the_mcl_manifest ... ok
+test tests::gates_reject_non_native_regimes_on_x86 ... ok
+test tests::gates_skip_x86_regime_checks_off_x86 ... ok
+test tests::gates_require_the_fast_backends_per_lane ... ok
+test tests::operation_names_are_unique_and_complete ... ok
+test tests::the_gnark_row_digest_moves_with_the_seed_and_the_round ... ok
+test tests::a_campaign_draws_a_fresh_window_on_every_row ... ok
+test tests::four_rounds_draw_four_sets_wherever_the_pool_allows_it ... ok
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.35s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+running 0 tests
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+## python3 bench/scripts/test_run_campaign.py
+....................
+----------------------------------------------------------------------
+Ran 52 tests in 10.129s
+
+OK

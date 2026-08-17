@@ -1,0 +1,25 @@
+PASS row count is 4 rounds x 27 ops x 4 lanes 432
+PASS no unsupported row
+PASS every exit code is 0
+PASS every lane reports the campaign seed 0x06a13fbe4590bb3d
+PASS fixture_set_sha256 is one value per operation across all lanes {}
+PASS helius_backend is avx512-ifma on every row
+PASS ark_asm true for helius/arkworks/mcl and false for arkworks-portable {'helius': [True], 'arkworks': [True], 'arkworks-portable': [False], 'mcl': [True]}
+PASS mcl archive hash constant
+PASS mcl manifest hash constant
+PASS target cpu native everywhere
+PASS cross lane digest equality on every row and rotation (104 rotations, 26 ops x 4) []
+NOTE g2_prepare_87_lines is the documented lane local exception, 4 rotations carry four lane local digests
+  g2_prepare_87_lines rotation 0 arkworks=9daeeb729f17ef99 arkworks-portable=9daeeb729f17ef99 helius=6209a74cd99f5381 mcl=cef36276959e0e4d
+  g2_prepare_87_lines rotation 1 arkworks=aee39b1d239a932e arkworks-portable=aee39b1d239a932e helius=bc8d127f4d00297f mcl=a6afc26798d41214
+  g2_prepare_87_lines rotation 2 arkworks=ebc5767b95ae10b5 arkworks-portable=ebc5767b95ae10b5 helius=b766dbf652b35418 mcl=4a94206721d7ca85
+  g2_prepare_87_lines rotation 3 arkworks=ef7479f8a1f9a220 arkworks-portable=ef7479f8a1f9a220 helius=8b4f5fb3fdbd9727 mcl=6a1ab49faad07347
+PASS lane arkworks binary still hashes as lanes.json records
+PASS lane arkworks-portable binary still hashes as lanes.json records
+PASS lane helius binary still hashes as lanes.json records
+PASS lane mcl binary still hashes as lanes.json records
+PASS helius, arkworks and mcl share one binary
+PASS arkworks-portable uses a separate binary
+PASS summary claim_eligible is false
+PASS summary records the diagnostic host
+ALL CHECKS PASS

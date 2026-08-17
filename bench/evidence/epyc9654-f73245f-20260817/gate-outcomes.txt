@@ -1,0 +1,61 @@
+== A_cross_harness status skipped
+   reason no --criterion-dir
+== B_cycle_cross_check status skipped
+   reason no --perf
+== C_scale_windows status pass
+== D_time_identities status pass
+flags {'ark_asm_indistinct': False}
+claim_eligible False
+
+-- gate D identities, judged
+   ok   helius             full_pairing ~ miller_live + final_exponentiation deviation 0.98%
+   ok   helius             miller_prepared < miller_live
+   ok   helius             full_pairing_prepared ~ miller_prepared + final_exponentiation deviation 0.54%
+   ok   helius             full_pairing_prepared < full_pairing
+   ok   helius             groth16_batch8_one_key < 8 * groth16_one_input batch/sequential 0.490
+   ok   helius             groth16_batch8_mixed_keys < 8 * groth16_one_input batch/sequential 0.578
+   ok   helius             groth16_batch3_one_key < 3 * groth16_one_input batch/sequential 0.790
+   ok   helius             groth16_batch8_mixed_keys > groth16_batch8_one_key
+   ok   helius             groth16_batch3_mixed_keys > groth16_batch3_one_key
+   ok   helius             fp_square <= 1.1 * fp_mul
+   ok   arkworks           full_pairing ~ miller_live + final_exponentiation deviation 0.87%
+   ok   arkworks           miller_prepared < miller_live
+   ok   arkworks           full_pairing_prepared ~ miller_prepared + final_exponentiation deviation 1.23%
+   ok   arkworks           full_pairing_prepared < full_pairing
+   ok   arkworks           groth16_batch8_one_key < 8 * groth16_one_input batch/sequential 0.418
+   ok   arkworks           groth16_batch8_mixed_keys < 8 * groth16_one_input batch/sequential 0.504
+   ok   arkworks           groth16_batch3_one_key < 3 * groth16_one_input batch/sequential 0.656
+   ok   arkworks           groth16_batch8_mixed_keys > groth16_batch8_one_key
+   ok   arkworks           groth16_batch3_mixed_keys > groth16_batch3_one_key
+   ok   arkworks           fp_square <= 1.1 * fp_mul
+   ok   arkworks-portable  full_pairing ~ miller_live + final_exponentiation deviation 1.00%
+   ok   arkworks-portable  miller_prepared < miller_live
+   ok   arkworks-portable  full_pairing_prepared ~ miller_prepared + final_exponentiation deviation 0.93%
+   ok   arkworks-portable  full_pairing_prepared < full_pairing
+   ok   arkworks-portable  groth16_batch8_one_key < 8 * groth16_one_input batch/sequential 0.412
+   ok   arkworks-portable  groth16_batch8_mixed_keys < 8 * groth16_one_input batch/sequential 0.500
+   ok   arkworks-portable  groth16_batch3_one_key < 3 * groth16_one_input batch/sequential 0.648
+   ok   arkworks-portable  groth16_batch8_mixed_keys > groth16_batch8_one_key
+   ok   arkworks-portable  groth16_batch3_mixed_keys > groth16_batch3_one_key
+   ok   arkworks-portable  fp_square <= 1.1 * fp_mul
+   ok   mcl                full_pairing ~ miller_live + final_exponentiation deviation 0.72%
+   ok   mcl                miller_prepared < miller_live
+   ok   mcl                full_pairing_prepared ~ miller_prepared + final_exponentiation deviation 0.09%
+   ok   mcl                full_pairing_prepared < full_pairing
+   ok   mcl                groth16_batch8_one_key < 8 * groth16_one_input batch/sequential 0.383
+   ok   mcl                groth16_batch8_mixed_keys < 8 * groth16_one_input batch/sequential 0.470
+   ok   mcl                groth16_batch3_one_key < 3 * groth16_one_input batch/sequential 0.619
+   ok   mcl                groth16_batch3_mixed_keys < 3 * groth16_one_input batch/sequential 0.848
+   ok   mcl                groth16_batch8_mixed_keys > groth16_batch8_one_key
+   ok   mcl                groth16_batch3_mixed_keys > groth16_batch3_one_key
+   ok   mcl                fp_square <= 1.1 * fp_mul
+   ok   fp_mul             arkworks-portable not far below arkworks portable/asm 1.049
+   ok   fp2_mul            arkworks-portable not far below arkworks portable/asm 1.019
+   ok   fp12_mul           arkworks-portable not far below arkworks portable/asm 1.162
+
+-- gate D identities, reported only
+   helius             groth16_batch3_mixed_keys < 3 * groth16_one_input batch/sequential 1.021 reason batch size 3 is below the measured multi_vk crossover 4 for helius, where batching is not expected to win
+   arkworks           groth16_batch3_mixed_keys < 3 * groth16_one_input batch/sequential 0.884 reason batch size 3 is below the measured multi_vk crossover 4 for arkworks, where batching is not expected to win
+   arkworks-portable  groth16_batch3_mixed_keys < 3 * groth16_one_input batch/sequential 0.881 reason batch size 3 is below the measured multi_vk crossover 4 for arkworks-portable, where batching is not expected to win
+
+-- gate C, 108 checks, all inside their window

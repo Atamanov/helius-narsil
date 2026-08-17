@@ -1,0 +1,1651 @@
+{
+  "claim_eligible": false,
+  "flags": {
+    "ark_asm_indistinct": false
+  },
+  "gates": {
+    "A_cross_harness": {
+      "comparisons": [
+        {
+          "campaign_median_ns": 102574.0,
+          "criterion_median_ns": 102196.47532467532,
+          "deviation": 0.0036805104151605246,
+          "lane": "helius",
+          "operation": "miller_live"
+        },
+        {
+          "campaign_median_ns": 346773.0,
+          "criterion_median_ns": 348152.7789855072,
+          "deviation": 0.003978911234459442,
+          "lane": "arkworks",
+          "operation": "miller_live"
+        },
+        {
+          "campaign_median_ns": 191411.75,
+          "criterion_median_ns": 191097.86458333334,
+          "deviation": 0.0016398440360461516,
+          "lane": "mcl",
+          "operation": "miller_live"
+        },
+        {
+          "campaign_median_ns": 192108.28125,
+          "criterion_median_ns": 191297.66667568006,
+          "deviation": 0.004219571218093676,
+          "lane": "helius",
+          "operation": "full_pairing"
+        },
+        {
+          "campaign_median_ns": 783649.09375,
+          "criterion_median_ns": 781823.2234848484,
+          "deviation": 0.0023299590080737035,
+          "lane": "arkworks",
+          "operation": "full_pairing"
+        },
+        {
+          "campaign_median_ns": 427549.9375,
+          "criterion_median_ns": 426770.1788847118,
+          "deviation": 0.0018237837195057126,
+          "lane": "mcl",
+          "operation": "full_pairing"
+        },
+        {
+          "campaign_median_ns": 89263.9375,
+          "criterion_median_ns": 88352.13727405961,
+          "deviation": 0.010214653884614797,
+          "lane": "helius",
+          "operation": "final_exponentiation"
+        },
+        {
+          "campaign_median_ns": 427911.78125,
+          "criterion_median_ns": 427948.48829766724,
+          "deviation": 8.578181128832366e-05,
+          "lane": "arkworks",
+          "operation": "final_exponentiation"
+        },
+        {
+          "campaign_median_ns": 234877.34375,
+          "criterion_median_ns": 234488.07471479502,
+          "deviation": 0.0016573290083666619,
+          "lane": "mcl",
+          "operation": "final_exponentiation"
+        },
+        {
+          "campaign_median_ns": 297894.125,
+          "criterion_median_ns": 294882.23868312757,
+          "deviation": 0.010110593207813127,
+          "lane": "helius",
+          "operation": "groth16_one_input"
+        },
+        {
+          "campaign_median_ns": 1168026.1875,
+          "criterion_median_ns": 1162198.7674319728,
+          "deviation": 0.004989117650264343,
+          "lane": "arkworks",
+          "operation": "groth16_one_input"
+        },
+        {
+          "campaign_median_ns": 740743.5,
+          "criterion_median_ns": 738749.9389204546,
+          "deviation": 0.002691297432303371,
+          "lane": "mcl",
+          "operation": "groth16_one_input"
+        },
+        {
+          "campaign_median_ns": 47649.59375,
+          "criterion_median_ns": 47672.33858355964,
+          "deviation": 0.0004773353090684398,
+          "lane": "helius",
+          "operation": "miller_prepared"
+        },
+        {
+          "campaign_median_ns": 262049.34375,
+          "criterion_median_ns": 259098.06249011232,
+          "deviation": 0.0112623112031269,
+          "lane": "arkworks",
+          "operation": "miller_prepared"
+        },
+        {
+          "campaign_median_ns": 141726.25,
+          "criterion_median_ns": 143036.9017857143,
+          "deviation": 0.009247770160533351,
+          "lane": "mcl",
+          "operation": "miller_prepared"
+        }
+      ],
+      "failures": [],
+      "status": "pass",
+      "tolerance": 0.1
+    },
+    "B_cycle_cross_check": {
+      "reason": "no --perf",
+      "status": "skipped"
+    },
+    "C_scale_windows": {
+      "checks": [
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 24.379180908203125,
+          "operation": "fp_mul",
+          "window_ns": [
+            4.0,
+            60.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 22.241790771484375,
+          "operation": "fp_mul",
+          "window_ns": [
+            4.0,
+            60.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 23.413970947265625,
+          "operation": "fp_mul",
+          "window_ns": [
+            4.0,
+            60.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 24.47137451171875,
+          "operation": "fp_mul",
+          "window_ns": [
+            4.0,
+            60.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 22.3909912109375,
+          "operation": "fp_square",
+          "window_ns": [
+            4.0,
+            60.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 20.7025146484375,
+          "operation": "fp_square",
+          "window_ns": [
+            4.0,
+            60.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 20.10406494140625,
+          "operation": "fp_square",
+          "window_ns": [
+            4.0,
+            60.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 21.72723388671875,
+          "operation": "fp_square",
+          "window_ns": [
+            4.0,
+            60.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 68.7965087890625,
+          "operation": "fp2_mul",
+          "window_ns": [
+            8.0,
+            250.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 88.50079345703125,
+          "operation": "fp2_mul",
+          "window_ns": [
+            8.0,
+            250.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 89.19781494140625,
+          "operation": "fp2_mul",
+          "window_ns": [
+            8.0,
+            250.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 57.54058837890625,
+          "operation": "fp2_mul",
+          "window_ns": [
+            8.0,
+            250.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 55.59979248046875,
+          "operation": "fp2_square",
+          "window_ns": [
+            6.0,
+            200.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 63.66119384765625,
+          "operation": "fp2_square",
+          "window_ns": [
+            6.0,
+            200.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 65.62762451171875,
+          "operation": "fp2_square",
+          "window_ns": [
+            6.0,
+            200.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 57.43194580078125,
+          "operation": "fp2_square",
+          "window_ns": [
+            6.0,
+            200.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 1465.59814453125,
+          "operation": "fp12_mul",
+          "window_ns": [
+            150.0,
+            3500.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 1867.5986328125,
+          "operation": "fp12_mul",
+          "window_ns": [
+            150.0,
+            3500.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 2153.4140625,
+          "operation": "fp12_mul",
+          "window_ns": [
+            150.0,
+            3500.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 1421.97021484375,
+          "operation": "fp12_mul",
+          "window_ns": [
+            150.0,
+            3500.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 982.450927734375,
+          "operation": "fp12_square",
+          "window_ns": [
+            100.0,
+            2500.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 1338.182373046875,
+          "operation": "fp12_square",
+          "window_ns": [
+            100.0,
+            2500.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 1557.55615234375,
+          "operation": "fp12_square",
+          "window_ns": [
+            100.0,
+            2500.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 1065.43994140625,
+          "operation": "fp12_square",
+          "window_ns": [
+            100.0,
+            2500.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 859.537353515625,
+          "operation": "fp12_sparse_034",
+          "window_ns": [
+            100.0,
+            2500.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 1385.82568359375,
+          "operation": "fp12_sparse_034",
+          "window_ns": [
+            100.0,
+            2500.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 1502.933349609375,
+          "operation": "fp12_sparse_034",
+          "window_ns": [
+            100.0,
+            2500.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 918.193603515625,
+          "operation": "fp12_sparse_034",
+          "window_ns": [
+            100.0,
+            2500.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 749.93701171875,
+          "operation": "fp12_cyclotomic_square",
+          "window_ns": [
+            60.0,
+            1600.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 725.181884765625,
+          "operation": "fp12_cyclotomic_square",
+          "window_ns": [
+            60.0,
+            1600.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 1015.045166015625,
+          "operation": "fp12_cyclotomic_square",
+          "window_ns": [
+            60.0,
+            1600.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 695.796875,
+          "operation": "fp12_cyclotomic_square",
+          "window_ns": [
+            60.0,
+            1600.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 46.093017578125,
+          "operation": "g1_line_scaling",
+          "window_ns": [
+            5.0,
+            130.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 41.9658203125,
+          "operation": "g1_line_scaling",
+          "window_ns": [
+            5.0,
+            130.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 42.5494384765625,
+          "operation": "g1_line_scaling",
+          "window_ns": [
+            5.0,
+            130.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 42.1231689453125,
+          "operation": "g1_line_scaling",
+          "window_ns": [
+            5.0,
+            130.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 55672.59375,
+          "operation": "g2_prepare_87_lines",
+          "window_ns": [
+            8000.0,
+            250000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 88868.9375,
+          "operation": "g2_prepare_87_lines",
+          "window_ns": [
+            8000.0,
+            250000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 91836.71875,
+          "operation": "g2_prepare_87_lines",
+          "window_ns": [
+            8000.0,
+            250000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 48993.875,
+          "operation": "g2_prepare_87_lines",
+          "window_ns": [
+            8000.0,
+            250000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 37133.26171875,
+          "operation": "g1_msm_pub_inputs_1",
+          "window_ns": [
+            8000.0,
+            300000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 118661.0576171875,
+          "operation": "g1_msm_pub_inputs_1",
+          "window_ns": [
+            8000.0,
+            300000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 124124.91796875,
+          "operation": "g1_msm_pub_inputs_1",
+          "window_ns": [
+            8000.0,
+            300000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 38582.33984375,
+          "operation": "g1_msm_pub_inputs_1",
+          "window_ns": [
+            8000.0,
+            300000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 51876.98828125,
+          "operation": "g1_msm_pub_inputs_2",
+          "window_ns": [
+            9000.0,
+            350000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 163540.9267578125,
+          "operation": "g1_msm_pub_inputs_2",
+          "window_ns": [
+            9000.0,
+            350000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 172551.4033203125,
+          "operation": "g1_msm_pub_inputs_2",
+          "window_ns": [
+            9000.0,
+            350000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 53960.693359375,
+          "operation": "g1_msm_pub_inputs_2",
+          "window_ns": [
+            9000.0,
+            350000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 66471.984375,
+          "operation": "g1_msm_pub_inputs_3",
+          "window_ns": [
+            10000.0,
+            400000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 208017.4912109375,
+          "operation": "g1_msm_pub_inputs_3",
+          "window_ns": [
+            10000.0,
+            400000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 222048.3486328125,
+          "operation": "g1_msm_pub_inputs_3",
+          "window_ns": [
+            10000.0,
+            400000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 68805.083984375,
+          "operation": "g1_msm_pub_inputs_3",
+          "window_ns": [
+            10000.0,
+            400000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 161.107177734375,
+          "operation": "g1_validate",
+          "window_ns": [
+            15.0,
+            700.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 403.322509765625,
+          "operation": "g1_validate",
+          "window_ns": [
+            15.0,
+            700.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 409.49658203125,
+          "operation": "g1_validate",
+          "window_ns": [
+            15.0,
+            700.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 167.5400390625,
+          "operation": "g1_validate",
+          "window_ns": [
+            15.0,
+            700.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 49263.25830078125,
+          "operation": "g2_subgroup_check",
+          "window_ns": [
+            15000.0,
+            800000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 126272.6533203125,
+          "operation": "g2_subgroup_check",
+          "window_ns": [
+            15000.0,
+            800000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 135791.845703125,
+          "operation": "g2_subgroup_check",
+          "window_ns": [
+            15000.0,
+            800000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 135303.0166015625,
+          "operation": "g2_subgroup_check",
+          "window_ns": [
+            15000.0,
+            800000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 102574.0,
+          "operation": "miller_live",
+          "window_ns": [
+            40000.0,
+            250000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 346773.0,
+          "operation": "miller_live",
+          "window_ns": [
+            40000.0,
+            600000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 382987.46875,
+          "operation": "miller_live",
+          "window_ns": [
+            40000.0,
+            600000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 191411.75,
+          "operation": "miller_live",
+          "window_ns": [
+            40000.0,
+            310000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 47649.59375,
+          "operation": "miller_prepared",
+          "window_ns": [
+            30000.0,
+            250000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 262049.34375,
+          "operation": "miller_prepared",
+          "window_ns": [
+            30000.0,
+            600000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 288282.40625,
+          "operation": "miller_prepared",
+          "window_ns": [
+            30000.0,
+            600000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 141726.25,
+          "operation": "miller_prepared",
+          "window_ns": [
+            30000.0,
+            310000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 192108.28125,
+          "operation": "full_pairing",
+          "window_ns": [
+            80000.0,
+            500000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 783649.09375,
+          "operation": "full_pairing",
+          "window_ns": [
+            80000.0,
+            1200000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 885385.03125,
+          "operation": "full_pairing",
+          "window_ns": [
+            80000.0,
+            1200000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 427549.9375,
+          "operation": "full_pairing",
+          "window_ns": [
+            80000.0,
+            620000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 138347.25,
+          "operation": "full_pairing_prepared",
+          "window_ns": [
+            70000.0,
+            500000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 692476.125,
+          "operation": "full_pairing_prepared",
+          "window_ns": [
+            70000.0,
+            1200000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 788333.6875,
+          "operation": "full_pairing_prepared",
+          "window_ns": [
+            70000.0,
+            1200000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 376358.5625,
+          "operation": "full_pairing_prepared",
+          "window_ns": [
+            70000.0,
+            620000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 89263.9375,
+          "operation": "final_exponentiation",
+          "window_ns": [
+            40000.0,
+            250000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 427911.78125,
+          "operation": "final_exponentiation",
+          "window_ns": [
+            40000.0,
+            600000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 494803.875,
+          "operation": "final_exponentiation",
+          "window_ns": [
+            40000.0,
+            600000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 234877.34375,
+          "operation": "final_exponentiation",
+          "window_ns": [
+            40000.0,
+            310000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 331794.8125,
+          "operation": "groth16_gnark",
+          "window_ns": [
+            150000.0,
+            1800000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 1342059.25,
+          "operation": "groth16_gnark",
+          "window_ns": [
+            150000.0,
+            1800000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 1494814.3125,
+          "operation": "groth16_gnark",
+          "window_ns": [
+            150000.0,
+            1800000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 774827.4375,
+          "operation": "groth16_gnark",
+          "window_ns": [
+            150000.0,
+            1800000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 297894.125,
+          "operation": "groth16_one_input",
+          "window_ns": [
+            150000.0,
+            1600000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 1168026.1875,
+          "operation": "groth16_one_input",
+          "window_ns": [
+            150000.0,
+            1600000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 1301266.625,
+          "operation": "groth16_one_input",
+          "window_ns": [
+            150000.0,
+            1600000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 740743.5,
+          "operation": "groth16_one_input",
+          "window_ns": [
+            150000.0,
+            1600000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 506044.5625,
+          "operation": "groth16_committed_rails",
+          "window_ns": [
+            200000.0,
+            3600000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 2092611.875,
+          "operation": "groth16_committed_rails",
+          "window_ns": [
+            200000.0,
+            3600000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 2345781.0625,
+          "operation": "groth16_committed_rails",
+          "window_ns": [
+            200000.0,
+            3600000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 1259319.75,
+          "operation": "groth16_committed_rails",
+          "window_ns": [
+            200000.0,
+            3600000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 1173938.0,
+          "operation": "groth16_batch8_one_key",
+          "window_ns": [
+            350000.0,
+            6000000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 3880418.375,
+          "operation": "groth16_batch8_one_key",
+          "window_ns": [
+            350000.0,
+            6000000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 4260557.625,
+          "operation": "groth16_batch8_one_key",
+          "window_ns": [
+            350000.0,
+            6000000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 2274617.125,
+          "operation": "groth16_batch8_one_key",
+          "window_ns": [
+            350000.0,
+            6000000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 1385097.5,
+          "operation": "groth16_batch8_mixed_keys",
+          "window_ns": [
+            400000.0,
+            7000000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 4702933.25,
+          "operation": "groth16_batch8_mixed_keys",
+          "window_ns": [
+            400000.0,
+            7000000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 5164819.875,
+          "operation": "groth16_batch8_mixed_keys",
+          "window_ns": [
+            400000.0,
+            7000000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 2784877.875,
+          "operation": "groth16_batch8_mixed_keys",
+          "window_ns": [
+            400000.0,
+            7000000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 712854.625,
+          "operation": "groth16_batch3_one_key",
+          "window_ns": [
+            150000.0,
+            3500000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 2286896.9375,
+          "operation": "groth16_batch3_one_key",
+          "window_ns": [
+            150000.0,
+            3500000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 2518820.875,
+          "operation": "groth16_batch3_one_key",
+          "window_ns": [
+            150000.0,
+            3500000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 1379791.8125,
+          "operation": "groth16_batch3_one_key",
+          "window_ns": [
+            150000.0,
+            3500000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 923343.8125,
+          "operation": "groth16_batch3_mixed_keys",
+          "window_ns": [
+            200000.0,
+            4500000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 3102638.8125,
+          "operation": "groth16_batch3_mixed_keys",
+          "window_ns": [
+            200000.0,
+            4500000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 3407324.5,
+          "operation": "groth16_batch3_mixed_keys",
+          "window_ns": [
+            200000.0,
+            4500000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 1878537.0,
+          "operation": "groth16_batch3_mixed_keys",
+          "window_ns": [
+            200000.0,
+            4500000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "helius",
+          "median_ns": 1376.6680908203125,
+          "operation": "lane_reference",
+          "window_ns": [
+            700.0,
+            8000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks",
+          "median_ns": 1378.336669921875,
+          "operation": "lane_reference",
+          "window_ns": [
+            700.0,
+            8000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "arkworks-portable",
+          "median_ns": 1377.3016357421875,
+          "operation": "lane_reference",
+          "window_ns": [
+            700.0,
+            8000.0
+          ]
+        },
+        {
+          "inside": true,
+          "lane": "mcl",
+          "median_ns": 1375.878173828125,
+          "operation": "lane_reference",
+          "window_ns": [
+            700.0,
+            8000.0
+          ]
+        }
+      ],
+      "failures": [],
+      "status": "pass"
+    },
+    "D_time_identities": {
+      "ark_asm_indistinct": false,
+      "checks": [
+        {
+          "deviation": 0.0014092298610122412,
+          "holds": true,
+          "identity": "full_pairing ~ miller_live + final_exponentiation",
+          "lane": "helius"
+        },
+        {
+          "holds": true,
+          "identity": "miller_prepared < miller_live",
+          "lane": "helius",
+          "miller_live_ns": 102574.0,
+          "miller_prepared_ns": 47649.59375
+        },
+        {
+          "deviation": 0.010471709676248673,
+          "holds": true,
+          "identity": "full_pairing_prepared ~ miller_prepared + final_exponentiation",
+          "lane": "helius"
+        },
+        {
+          "holds": true,
+          "identity": "full_pairing_prepared < full_pairing",
+          "lane": "helius",
+          "live_ns": 192108.28125,
+          "prepared_ns": 138347.25
+        },
+        {
+          "batch_ns": 1173938.0,
+          "batch_over_sequential": 0.49259867075257024,
+          "batch_size": 8,
+          "crossover_size": 3,
+          "holds": true,
+          "identity": "groth16_batch8_one_key < 8 * groth16_one_input",
+          "lane": "helius",
+          "single_ns": 297894.125
+        },
+        {
+          "batch_ns": 1385097.5,
+          "batch_over_sequential": 0.5812037666066762,
+          "batch_size": 8,
+          "crossover_size": 4,
+          "holds": true,
+          "identity": "groth16_batch8_mixed_keys < 8 * groth16_one_input",
+          "lane": "helius",
+          "single_ns": 297894.125
+        },
+        {
+          "batch_ns": 712854.625,
+          "batch_over_sequential": 0.7976599348286353,
+          "batch_size": 3,
+          "crossover_size": 3,
+          "holds": true,
+          "identity": "groth16_batch3_one_key < 3 * groth16_one_input",
+          "lane": "helius",
+          "single_ns": 297894.125
+        },
+        {
+          "batch_ns": 923343.8125,
+          "batch_over_sequential": 1.0331901336870384,
+          "batch_size": 3,
+          "crossover_size": 4,
+          "holds": null,
+          "identity": "groth16_batch3_mixed_keys < 3 * groth16_one_input",
+          "lane": "helius",
+          "reason": "batch size 3 is below the measured multi_vk crossover 4 for helius, where batching is not expected to win",
+          "reported_only": true,
+          "single_ns": 297894.125
+        },
+        {
+          "batch_size": 8,
+          "holds": true,
+          "identity": "groth16_batch8_mixed_keys > groth16_batch8_one_key",
+          "lane": "helius",
+          "multi_vk_ns": 1385097.5,
+          "same_vk_ns": 1173938.0
+        },
+        {
+          "batch_size": 3,
+          "holds": true,
+          "identity": "groth16_batch3_mixed_keys > groth16_batch3_one_key",
+          "lane": "helius",
+          "multi_vk_ns": 923343.8125,
+          "same_vk_ns": 712854.625
+        },
+        {
+          "fp_mul_ns": 24.379180908203125,
+          "fp_square_ns": 22.3909912109375,
+          "holds": true,
+          "identity": "fp_square <= 1.1 * fp_mul",
+          "lane": "helius"
+        },
+        {
+          "deviation": 0.011571561384664803,
+          "holds": true,
+          "identity": "full_pairing ~ miller_live + final_exponentiation",
+          "lane": "arkworks"
+        },
+        {
+          "holds": true,
+          "identity": "miller_prepared < miller_live",
+          "lane": "arkworks",
+          "miller_live_ns": 346773.0,
+          "miller_prepared_ns": 262049.34375
+        },
+        {
+          "deviation": 0.00364513290513288,
+          "holds": true,
+          "identity": "full_pairing_prepared ~ miller_prepared + final_exponentiation",
+          "lane": "arkworks"
+        },
+        {
+          "holds": true,
+          "identity": "full_pairing_prepared < full_pairing",
+          "lane": "arkworks",
+          "live_ns": 783649.09375,
+          "prepared_ns": 692476.125
+        },
+        {
+          "batch_ns": 3880418.375,
+          "batch_over_sequential": 0.4152751899451741,
+          "batch_size": 8,
+          "crossover_size": 2,
+          "holds": true,
+          "identity": "groth16_batch8_one_key < 8 * groth16_one_input",
+          "lane": "arkworks",
+          "single_ns": 1168026.1875
+        },
+        {
+          "batch_ns": 4702933.25,
+          "batch_over_sequential": 0.503299208991408,
+          "batch_size": 8,
+          "crossover_size": 4,
+          "holds": true,
+          "identity": "groth16_batch8_mixed_keys < 8 * groth16_one_input",
+          "lane": "arkworks",
+          "single_ns": 1168026.1875
+        },
+        {
+          "batch_ns": 2286896.9375,
+          "batch_over_sequential": 0.6526386029051824,
+          "batch_size": 3,
+          "crossover_size": 2,
+          "holds": true,
+          "identity": "groth16_batch3_one_key < 3 * groth16_one_input",
+          "lane": "arkworks",
+          "single_ns": 1168026.1875
+        },
+        {
+          "batch_ns": 3102638.8125,
+          "batch_over_sequential": 0.8854364299088114,
+          "batch_size": 3,
+          "crossover_size": 4,
+          "holds": null,
+          "identity": "groth16_batch3_mixed_keys < 3 * groth16_one_input",
+          "lane": "arkworks",
+          "reason": "batch size 3 is below the measured multi_vk crossover 4 for arkworks, where batching is not expected to win",
+          "reported_only": true,
+          "single_ns": 1168026.1875
+        },
+        {
+          "batch_size": 8,
+          "holds": true,
+          "identity": "groth16_batch8_mixed_keys > groth16_batch8_one_key",
+          "lane": "arkworks",
+          "multi_vk_ns": 4702933.25,
+          "same_vk_ns": 3880418.375
+        },
+        {
+          "batch_size": 3,
+          "holds": true,
+          "identity": "groth16_batch3_mixed_keys > groth16_batch3_one_key",
+          "lane": "arkworks",
+          "multi_vk_ns": 3102638.8125,
+          "same_vk_ns": 2286896.9375
+        },
+        {
+          "fp_mul_ns": 22.241790771484375,
+          "fp_square_ns": 20.7025146484375,
+          "holds": true,
+          "identity": "fp_square <= 1.1 * fp_mul",
+          "lane": "arkworks"
+        },
+        {
+          "deviation": 0.008650902693525224,
+          "holds": true,
+          "identity": "full_pairing ~ miller_live + final_exponentiation",
+          "lane": "arkworks-portable"
+        },
+        {
+          "holds": true,
+          "identity": "miller_prepared < miller_live",
+          "lane": "arkworks-portable",
+          "miller_live_ns": 382987.46875,
+          "miller_prepared_ns": 288282.40625
+        },
+        {
+          "deviation": 0.006700929866404808,
+          "holds": true,
+          "identity": "full_pairing_prepared ~ miller_prepared + final_exponentiation",
+          "lane": "arkworks-portable"
+        },
+        {
+          "holds": true,
+          "identity": "full_pairing_prepared < full_pairing",
+          "lane": "arkworks-portable",
+          "live_ns": 885385.03125,
+          "prepared_ns": 788333.6875
+        },
+        {
+          "batch_ns": 4260557.625,
+          "batch_over_sequential": 0.40927023939079354,
+          "batch_size": 8,
+          "crossover_size": 2,
+          "holds": true,
+          "identity": "groth16_batch8_one_key < 8 * groth16_one_input",
+          "lane": "arkworks-portable",
+          "single_ns": 1301266.625
+        },
+        {
+          "batch_ns": 5164819.875,
+          "batch_over_sequential": 0.49613389905777383,
+          "batch_size": 8,
+          "crossover_size": 4,
+          "holds": true,
+          "identity": "groth16_batch8_mixed_keys < 8 * groth16_one_input",
+          "lane": "arkworks-portable",
+          "single_ns": 1301266.625
+        },
+        {
+          "batch_ns": 2518820.875,
+          "batch_over_sequential": 0.6452228484176588,
+          "batch_size": 3,
+          "crossover_size": 2,
+          "holds": true,
+          "identity": "groth16_batch3_one_key < 3 * groth16_one_input",
+          "lane": "arkworks-portable",
+          "single_ns": 1301266.625
+        },
+        {
+          "batch_ns": 3407324.5,
+          "batch_over_sequential": 0.8728225342237863,
+          "batch_size": 3,
+          "crossover_size": 4,
+          "holds": null,
+          "identity": "groth16_batch3_mixed_keys < 3 * groth16_one_input",
+          "lane": "arkworks-portable",
+          "reason": "batch size 3 is below the measured multi_vk crossover 4 for arkworks-portable, where batching is not expected to win",
+          "reported_only": true,
+          "single_ns": 1301266.625
+        },
+        {
+          "batch_size": 8,
+          "holds": true,
+          "identity": "groth16_batch8_mixed_keys > groth16_batch8_one_key",
+          "lane": "arkworks-portable",
+          "multi_vk_ns": 5164819.875,
+          "same_vk_ns": 4260557.625
+        },
+        {
+          "batch_size": 3,
+          "holds": true,
+          "identity": "groth16_batch3_mixed_keys > groth16_batch3_one_key",
+          "lane": "arkworks-portable",
+          "multi_vk_ns": 3407324.5,
+          "same_vk_ns": 2518820.875
+        },
+        {
+          "fp_mul_ns": 23.413970947265625,
+          "fp_square_ns": 20.10406494140625,
+          "holds": true,
+          "identity": "fp_square <= 1.1 * fp_mul",
+          "lane": "arkworks-portable"
+        },
+        {
+          "deviation": 0.002957719933457716,
+          "holds": true,
+          "identity": "full_pairing ~ miller_live + final_exponentiation",
+          "lane": "mcl"
+        },
+        {
+          "holds": true,
+          "identity": "miller_prepared < miller_live",
+          "lane": "mcl",
+          "miller_live_ns": 191411.75,
+          "miller_prepared_ns": 141726.25
+        },
+        {
+          "deviation": 0.0006506343913506535,
+          "holds": true,
+          "identity": "full_pairing_prepared ~ miller_prepared + final_exponentiation",
+          "lane": "mcl"
+        },
+        {
+          "holds": true,
+          "identity": "full_pairing_prepared < full_pairing",
+          "lane": "mcl",
+          "live_ns": 427549.9375,
+          "prepared_ns": 376358.5625
+        },
+        {
+          "batch_ns": 2274617.125,
+          "batch_over_sequential": 0.3838402100389676,
+          "batch_size": 8,
+          "crossover_size": 2,
+          "holds": true,
+          "identity": "groth16_batch8_one_key < 8 * groth16_one_input",
+          "lane": "mcl",
+          "single_ns": 740743.5
+        },
+        {
+          "batch_ns": 2784877.875,
+          "batch_over_sequential": 0.4699463908559441,
+          "batch_size": 8,
+          "crossover_size": 3,
+          "holds": true,
+          "identity": "groth16_batch8_mixed_keys < 8 * groth16_one_input",
+          "lane": "mcl",
+          "single_ns": 740743.5
+        },
+        {
+          "batch_ns": 1379791.8125,
+          "batch_over_sequential": 0.6209040027575897,
+          "batch_size": 3,
+          "crossover_size": 2,
+          "holds": true,
+          "identity": "groth16_batch3_one_key < 3 * groth16_one_input",
+          "lane": "mcl",
+          "single_ns": 740743.5
+        },
+        {
+          "batch_ns": 1878537.0,
+          "batch_over_sequential": 0.8453385011140834,
+          "batch_size": 3,
+          "crossover_size": 3,
+          "holds": true,
+          "identity": "groth16_batch3_mixed_keys < 3 * groth16_one_input",
+          "lane": "mcl",
+          "single_ns": 740743.5
+        },
+        {
+          "batch_size": 8,
+          "holds": true,
+          "identity": "groth16_batch8_mixed_keys > groth16_batch8_one_key",
+          "lane": "mcl",
+          "multi_vk_ns": 2784877.875,
+          "same_vk_ns": 2274617.125
+        },
+        {
+          "batch_size": 3,
+          "holds": true,
+          "identity": "groth16_batch3_mixed_keys > groth16_batch3_one_key",
+          "lane": "mcl",
+          "multi_vk_ns": 1878537.0,
+          "same_vk_ns": 1379791.8125
+        },
+        {
+          "fp_mul_ns": 24.47137451171875,
+          "fp_square_ns": 21.72723388671875,
+          "holds": true,
+          "identity": "fp_square <= 1.1 * fp_mul",
+          "lane": "mcl"
+        },
+        {
+          "holds": true,
+          "identity": "arkworks-portable not far below arkworks",
+          "lane": "fp_mul",
+          "portable_over_asm": 1.0527016995989402
+        },
+        {
+          "holds": true,
+          "identity": "arkworks-portable not far below arkworks",
+          "lane": "fp2_mul",
+          "portable_over_asm": 1.0078758783638864
+        },
+        {
+          "holds": true,
+          "identity": "arkworks-portable not far below arkworks",
+          "lane": "fp12_mul",
+          "portable_over_asm": 1.1530390013495981
+        }
+      ],
+      "failures": [],
+      "status": "pass"
+    },
+    "E_lane_reference": {
+      "failures": [],
+      "lane_median_ns": 1376.98486328125,
+      "medians_ns": {
+        "arkworks": 1378.336669921875,
+        "arkworks-portable": 1377.3016357421875,
+        "helius": 1376.6680908203125,
+        "mcl": 1375.878173828125
+      },
+      "spread": 0.0017868559444544907,
+      "status": "pass",
+      "tolerance": 0.05
+    }
+  },
+  "schema": "four-lane-validity-v1"
+}

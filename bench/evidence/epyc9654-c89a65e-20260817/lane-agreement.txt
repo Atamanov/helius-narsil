@@ -1,0 +1,65 @@
+# lane agreement, replayed from raw.jsonl
+
+spawns  448
+lanes   ['arkworks', 'arkworks-portable', 'helius', 'mcl']
+rows    28
+rounds  [0, 1, 2, 3]
+
+## session seed
+one value across all 448 spawns: ['0x664c86bb6b618691']
+
+## fixture_set_sha256, one value per operation across four lanes
+  ok   final_exponentiation               feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe
+  ok   fp12_cyclotomic_square             eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880
+  ok   fp12_mul                           eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880
+  ok   fp12_sparse_034                    eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880
+  ok   fp12_square                        eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880
+  ok   fp2_mul                            eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880
+  ok   fp2_square                         eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880
+  ok   fp_mul                             eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880
+  ok   fp_square                          eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880
+  ok   full_pairing                       feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe
+  ok   full_pairing_prepared              feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe
+  ok   g1_line_scaling                    eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880
+  ok   g1_msm_pub_inputs_1                7a0663180b5ec98d60f5c7dd5e798ca8e104118c9a2b2bc90f1413f0482579ed
+  ok   g1_msm_pub_inputs_2                46fc274afa81665830e2a102bda88c1f5e8ca7455e44aae2467ff74968f78ab3
+  ok   g1_msm_pub_inputs_3                52a3b8138dbc820485f0ba2df0594aafe3f9a39258dea7f06b04563ce050c7bb
+  ok   g1_validate                        7a89f1855e402c569d21a1627f8056e607f3c130230382972d024ecf528633f1
+  ok   g2_prepare_87_lines                feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe
+  ok   g2_subgroup_check                  7a89f1855e402c569d21a1627f8056e607f3c130230382972d024ecf528633f1
+  ok   groth16_batch3_mixed_keys          f39576d42e26e5440f198c88c57b5fe2ab7993615cc65b81d5382e3875f34dc2
+  ok   groth16_batch3_one_key             de89781309dc5421e6889b44a28cefa520e4e72d59b7530d7e748f5751619457
+  ok   groth16_batch8_mixed_keys          f86375b189eb6f44dd809b0278950e48c8f883afeeaf46077107f39fb689cf33
+  ok   groth16_batch8_one_key             261ef6b179f3f314795a8f594e61180997f93a848bc184f9ea62a9f0c8f3f60f
+  ok   groth16_committed_rails            d5988ed49045177fa7aa0ce61b2b1341b0e198c645515084d0f048538c6959dd
+  ok   groth16_gnark                      f1857b595fe82d9e1f2286d31afca6fe6c78b51b0a59ad0f2167b5d884cdf777
+  ok   groth16_one_input                  d5988ed49045177fa7aa0ce61b2b1341b0e198c645515084d0f048538c6959dd
+  ok   lane_reference                     eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880
+  ok   miller_live                        feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe
+  ok   miller_prepared                    feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe
+
+## cross-lane digest equality, per operation and rotation
+   g2_prepare_87_lines is the documented lane-local exception
+  note g2_prepare_87_lines round 0 arkworks=dfad14eac2cbc337 arkworks-portable=dfad14eac2cbc337 helius=5e3446645a7dbabd mcl=c4d51ad5ca89397b
+  note g2_prepare_87_lines round 1 arkworks=de37ca3923793662 arkworks-portable=de37ca3923793662 helius=374d31b5a6ae7717 mcl=702e5442b5c54607
+  note g2_prepare_87_lines round 2 arkworks=c56d7d024d4de69d arkworks-portable=c56d7d024d4de69d helius=94f16d01aed7b59c mcl=95c8436cdd2a71d1
+  note g2_prepare_87_lines round 3 arkworks=ff35e25c4835c87f arkworks-portable=ff35e25c4835c87f helius=e7e9b6ded7276f1f mcl=1810d44912ac346b
+  ok   108 shared rotations agree, one digest each
+
+## digest freshness across rounds, per operation and lane
+  ok   every operation and lane reports four distinct round digests
+
+## lane binaries, hashed again after the campaign
+  ok   arkworks           871a2bfd4716ceb3e4106548cab182c6a02bf3f71ac0287e6cea0415f76e7422  /root/narsil-bench/target/lane-asm/release/four_lane
+  ok   arkworks-portable  c438b9e20628eb19e78ad22d72b38e2f65e22605fc8c904c5bbdbeb1ac9eaaeb  /root/narsil-bench/target/lane-ark-portable/release/four_lane
+  ok   helius             871a2bfd4716ceb3e4106548cab182c6a02bf3f71ac0287e6cea0415f76e7422  /root/narsil-bench/target/lane-asm/release/four_lane
+  ok   mcl                871a2bfd4716ceb3e4106548cab182c6a02bf3f71ac0287e6cea0415f76e7422  /root/narsil-bench/target/lane-asm/release/four_lane
+
+## helius backend, per spawn
+  every spawn reports ['avx512-ifma']
+
+## exit codes
+  {0: 448}
+
+## verdict
+  every replayed check holds

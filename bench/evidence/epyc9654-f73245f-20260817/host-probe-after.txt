@@ -1,0 +1,29 @@
+# host probe, after the campaign
+## date
+2026-08-17T02:24:21Z
+## boot_id
+1b49e9f2-7a80-4f00-afa2-b8c59b2b4b46
+## swaps
+Filename				Type		Size		Used		Priority
+## vmstat swap and oom counters
+pswpin 0
+pswpout 0
+oom_kill 47
+## cgroup memory events
+low 0
+high 0
+max 0
+oom 0
+oom_kill 0
+## meminfo head
+MemTotal:       123624876 kB
+MemFree:        98755028 kB
+MemAvailable:   120870848 kB
+Buffers:           83348 kB
+Cached:         22472360 kB
+SwapCached:            0 kB
+## dmesg oom scan
+0
+dmesg unavailable
+## uptime and load
+ 02:24:21 up 74 days, 15:02,  0 user,  load average: 0.75, 1.09, 1.16

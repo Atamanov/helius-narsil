@@ -1,0 +1,774 @@
+{
+  "cells": {
+    "final_exponentiation": {
+      "arkworks": {
+        "iqr_ns_per_call": 682.046875,
+        "median_ns_per_call": 426911.9375,
+        "min_ns_per_call": 426468.125,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 855.734375,
+        "median_ns_per_call": 494619.28125,
+        "min_ns_per_call": 492837.75,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 2336.21875,
+        "median_ns_per_call": 90180.09375,
+        "min_ns_per_call": 88992.25,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 593.109375,
+        "median_ns_per_call": 234007.25,
+        "min_ns_per_call": 233296.25,
+        "samples": 4
+      }
+    },
+    "fp12_cyclotomic_square": {
+      "arkworks": {
+        "iqr_ns_per_call": 18.587890625,
+        "median_ns_per_call": 738.50390625,
+        "min_ns_per_call": 730.453125,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 11.07421875,
+        "median_ns_per_call": 1015.765625,
+        "min_ns_per_call": 1011.3125,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 4.0234375,
+        "median_ns_per_call": 743.9296875,
+        "min_ns_per_call": 738.6640625,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 4.1640625,
+        "median_ns_per_call": 689.20703125,
+        "min_ns_per_call": 684.8359375,
+        "samples": 4
+      }
+    },
+    "fp12_mul": {
+      "arkworks": {
+        "iqr_ns_per_call": 15.78125,
+        "median_ns_per_call": 1880.515625,
+        "min_ns_per_call": 1867.0,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 63.58984375,
+        "median_ns_per_call": 2173.328125,
+        "min_ns_per_call": 2165.28125,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 18.984375,
+        "median_ns_per_call": 1464.421875,
+        "min_ns_per_call": 1453.734375,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 20.6015625,
+        "median_ns_per_call": 1415.9140625,
+        "min_ns_per_call": 1402.0,
+        "samples": 4
+      }
+    },
+    "fp12_sparse_034": {
+      "arkworks": {
+        "iqr_ns_per_call": 26.2265625,
+        "median_ns_per_call": 1318.69140625,
+        "min_ns_per_call": 1308.5703125,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 8.615234375,
+        "median_ns_per_call": 1469.3515625,
+        "min_ns_per_call": 1448.1015625,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 22.1171875,
+        "median_ns_per_call": 871.08203125,
+        "min_ns_per_call": 839.75,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 3.814453125,
+        "median_ns_per_call": 914.75390625,
+        "min_ns_per_call": 905.0625,
+        "samples": 4
+      }
+    },
+    "fp12_square": {
+      "arkworks": {
+        "iqr_ns_per_call": 104.59375,
+        "median_ns_per_call": 1397.82421875,
+        "min_ns_per_call": 1342.640625,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 30.013671875,
+        "median_ns_per_call": 1574.73828125,
+        "min_ns_per_call": 1559.7421875,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 16.015625,
+        "median_ns_per_call": 981.703125,
+        "min_ns_per_call": 976.78125,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 21.37890625,
+        "median_ns_per_call": 1054.74609375,
+        "min_ns_per_call": 1049.90625,
+        "samples": 4
+      }
+    },
+    "fp2_mul": {
+      "arkworks": {
+        "iqr_ns_per_call": 0.63525390625,
+        "median_ns_per_call": 88.1328125,
+        "min_ns_per_call": 87.751953125,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 0.6640625,
+        "median_ns_per_call": 89.67578125,
+        "min_ns_per_call": 88.005859375,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 1.44677734375,
+        "median_ns_per_call": 68.4462890625,
+        "min_ns_per_call": 67.6171875,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 0.44970703125,
+        "median_ns_per_call": 57.392578125,
+        "min_ns_per_call": 57.126953125,
+        "samples": 4
+      }
+    },
+    "fp2_square": {
+      "arkworks": {
+        "iqr_ns_per_call": 5.2080078125,
+        "median_ns_per_call": 65.0087890625,
+        "min_ns_per_call": 63.22265625,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 2.70361328125,
+        "median_ns_per_call": 64.2275390625,
+        "min_ns_per_call": 62.8125,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 11.76611328125,
+        "median_ns_per_call": 59.1201171875,
+        "min_ns_per_call": 54.353515625,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 0.21630859375,
+        "median_ns_per_call": 56.5517578125,
+        "min_ns_per_call": 56.365234375,
+        "samples": 4
+      }
+    },
+    "fp_mul": {
+      "arkworks": {
+        "iqr_ns_per_call": 0.215087890625,
+        "median_ns_per_call": 20.9912109375,
+        "min_ns_per_call": 20.9267578125,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 0.295166015625,
+        "median_ns_per_call": 23.1875,
+        "min_ns_per_call": 22.939453125,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 2.181640625,
+        "median_ns_per_call": 24.45751953125,
+        "min_ns_per_call": 23.935546875,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 0.010009765625,
+        "median_ns_per_call": 22.734375,
+        "min_ns_per_call": 22.7333984375,
+        "samples": 4
+      }
+    },
+    "fp_square": {
+      "arkworks": {
+        "iqr_ns_per_call": 0.315673828125,
+        "median_ns_per_call": 20.20458984375,
+        "min_ns_per_call": 20.1943359375,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 0.044677734375,
+        "median_ns_per_call": 19.50146484375,
+        "min_ns_per_call": 19.4921875,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 0.082275390625,
+        "median_ns_per_call": 22.91455078125,
+        "min_ns_per_call": 22.6171875,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 0.281005859375,
+        "median_ns_per_call": 21.7626953125,
+        "min_ns_per_call": 21.5224609375,
+        "samples": 4
+      }
+    },
+    "full_pairing": {
+      "arkworks": {
+        "iqr_ns_per_call": 4112.4375,
+        "median_ns_per_call": 784073.75,
+        "min_ns_per_call": 781714.375,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 1618.0,
+        "median_ns_per_call": 884157.125,
+        "min_ns_per_call": 882429.625,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 904.359375,
+        "median_ns_per_call": 192126.3125,
+        "min_ns_per_call": 191515.125,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 2172.03125,
+        "median_ns_per_call": 427461.3125,
+        "min_ns_per_call": 425860.625,
+        "samples": 4
+      }
+    },
+    "full_pairing_prepared": {
+      "arkworks": {
+        "iqr_ns_per_call": 3902.53125,
+        "median_ns_per_call": 695081.8125,
+        "min_ns_per_call": 693072.6875,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 4397.0625,
+        "median_ns_per_call": 788764.0,
+        "min_ns_per_call": 785643.75,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 1031.640625,
+        "median_ns_per_call": 137652.46875,
+        "min_ns_per_call": 136417.25,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 382.046875,
+        "median_ns_per_call": 377262.375,
+        "min_ns_per_call": 376754.5625,
+        "samples": 4
+      }
+    },
+    "g1_line_scaling": {
+      "arkworks": {
+        "iqr_ns_per_call": 0.322265625,
+        "median_ns_per_call": 41.97265625,
+        "min_ns_per_call": 41.9140625,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 0.1171875,
+        "median_ns_per_call": 42.4609375,
+        "min_ns_per_call": 42.3828125,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 2.44140625,
+        "median_ns_per_call": 46.07421875,
+        "min_ns_per_call": 44.7265625,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 0.2412109375,
+        "median_ns_per_call": 41.990234375,
+        "min_ns_per_call": 41.8359375,
+        "samples": 4
+      }
+    },
+    "g1_msm_pub_inputs_1": {
+      "arkworks": {
+        "iqr_ns_per_call": 1563.8125,
+        "median_ns_per_call": 128090.46875,
+        "min_ns_per_call": 127192.9375,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 3488.9453125,
+        "median_ns_per_call": 136079.21875,
+        "min_ns_per_call": 134135.65625,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 1143.8203125,
+        "median_ns_per_call": 38485.625,
+        "min_ns_per_call": 38333.75,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 95.65625,
+        "median_ns_per_call": 38867.359375,
+        "min_ns_per_call": 38759.34375,
+        "samples": 4
+      }
+    },
+    "g1_msm_pub_inputs_2": {
+      "arkworks": {
+        "iqr_ns_per_call": 3516.890625,
+        "median_ns_per_call": 174558.9375,
+        "min_ns_per_call": 174154.71875,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 3461.8515625,
+        "median_ns_per_call": 187920.453125,
+        "min_ns_per_call": 183988.03125,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 1190.6796875,
+        "median_ns_per_call": 53609.921875,
+        "min_ns_per_call": 52935.6875,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 428.2109375,
+        "median_ns_per_call": 54522.109375,
+        "min_ns_per_call": 54078.21875,
+        "samples": 4
+      }
+    },
+    "g1_msm_pub_inputs_3": {
+      "arkworks": {
+        "iqr_ns_per_call": 1859.8359375,
+        "median_ns_per_call": 215409.359375,
+        "min_ns_per_call": 213538.1875,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 632.890625,
+        "median_ns_per_call": 228449.15625,
+        "min_ns_per_call": 226776.03125,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 116.3828125,
+        "median_ns_per_call": 68484.234375,
+        "min_ns_per_call": 68100.46875,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 656.03125,
+        "median_ns_per_call": 69610.609375,
+        "min_ns_per_call": 69273.5625,
+        "samples": 4
+      }
+    },
+    "g1_validate": {
+      "arkworks": {
+        "iqr_ns_per_call": 2.1220703125,
+        "median_ns_per_call": 401.419921875,
+        "min_ns_per_call": 400.85546875,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 1.474609375,
+        "median_ns_per_call": 403.44921875,
+        "min_ns_per_call": 402.6484375,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 7.9462890625,
+        "median_ns_per_call": 161.189453125,
+        "min_ns_per_call": 157.57421875,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 2.51953125,
+        "median_ns_per_call": 166.4609375,
+        "min_ns_per_call": 164.41015625,
+        "samples": 4
+      }
+    },
+    "g2_prepare_87_lines": {
+      "arkworks": {
+        "iqr_ns_per_call": 503.859375,
+        "median_ns_per_call": 87641.09375,
+        "min_ns_per_call": 86996.0625,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 640.859375,
+        "median_ns_per_call": 91417.59375,
+        "min_ns_per_call": 90516.125,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 210.8125,
+        "median_ns_per_call": 55923.78125,
+        "min_ns_per_call": 55649.75,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 257.03125,
+        "median_ns_per_call": 49056.9375,
+        "min_ns_per_call": 48791.6875,
+        "samples": 4
+      }
+    },
+    "g2_subgroup_check": {
+      "arkworks": {
+        "iqr_ns_per_call": 919.49609375,
+        "median_ns_per_call": 136381.328125,
+        "min_ns_per_call": 135423.46875,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 1491.484375,
+        "median_ns_per_call": 147122.265625,
+        "min_ns_per_call": 145897.515625,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 314.80078125,
+        "median_ns_per_call": 49555.546875,
+        "min_ns_per_call": 49366.875,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 1046.5,
+        "median_ns_per_call": 134493.0078125,
+        "min_ns_per_call": 133826.921875,
+        "samples": 4
+      }
+    },
+    "groth16_batch3_mixed_keys": {
+      "arkworks": {
+        "iqr_ns_per_call": 9289.875,
+        "median_ns_per_call": 3099310.0,
+        "min_ns_per_call": 3080392.375,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 33431.21875,
+        "median_ns_per_call": 3394767.0625,
+        "min_ns_per_call": 3387192.625,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 2664.34375,
+        "median_ns_per_call": 919172.875,
+        "min_ns_per_call": 918676.625,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 941.53125,
+        "median_ns_per_call": 1875697.5625,
+        "min_ns_per_call": 1875027.5,
+        "samples": 4
+      }
+    },
+    "groth16_batch3_one_key": {
+      "arkworks": {
+        "iqr_ns_per_call": 4070.46875,
+        "median_ns_per_call": 2278676.9375,
+        "min_ns_per_call": 2272153.75,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 9540.59375,
+        "median_ns_per_call": 2523125.5625,
+        "min_ns_per_call": 2515873.75,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 1637.5,
+        "median_ns_per_call": 709514.125,
+        "min_ns_per_call": 706911.375,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 4052.1875,
+        "median_ns_per_call": 1372284.9375,
+        "min_ns_per_call": 1369057.0,
+        "samples": 4
+      }
+    },
+    "groth16_batch8_mixed_keys": {
+      "arkworks": {
+        "iqr_ns_per_call": 15435.5625,
+        "median_ns_per_call": 4709250.875,
+        "min_ns_per_call": 4685540.5,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 12305.125,
+        "median_ns_per_call": 5169788.875,
+        "min_ns_per_call": 5164325.25,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 6964.1875,
+        "median_ns_per_call": 1383100.5,
+        "min_ns_per_call": 1378825.75,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 9829.375,
+        "median_ns_per_call": 2789399.375,
+        "min_ns_per_call": 2778665.5,
+        "samples": 4
+      }
+    },
+    "groth16_batch8_one_key": {
+      "arkworks": {
+        "iqr_ns_per_call": 36446.3125,
+        "median_ns_per_call": 3888630.375,
+        "min_ns_per_call": 3868700.5,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 17398.125,
+        "median_ns_per_call": 4259523.375,
+        "min_ns_per_call": 4251959.5,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 7452.0625,
+        "median_ns_per_call": 1170310.0,
+        "min_ns_per_call": 1167349.0,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 6102.0625,
+        "median_ns_per_call": 2272096.125,
+        "min_ns_per_call": 2269338.75,
+        "samples": 4
+      }
+    },
+    "groth16_committed_rails": {
+      "arkworks": {
+        "iqr_ns_per_call": 4351.21875,
+        "median_ns_per_call": 2089489.8125,
+        "min_ns_per_call": 2087670.25,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 10607.53125,
+        "median_ns_per_call": 2345350.875,
+        "min_ns_per_call": 2338877.75,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 1256.6875,
+        "median_ns_per_call": 506310.6875,
+        "min_ns_per_call": 505866.75,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 2071.5625,
+        "median_ns_per_call": 1256084.875,
+        "min_ns_per_call": 1253270.0,
+        "samples": 4
+      }
+    },
+    "groth16_gnark": {
+      "arkworks": {
+        "iqr_ns_per_call": 10933.34375,
+        "median_ns_per_call": 1340249.25,
+        "min_ns_per_call": 1339829.625,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 4404.8125,
+        "median_ns_per_call": 1498806.125,
+        "min_ns_per_call": 1493147.25,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 2145.9375,
+        "median_ns_per_call": 330454.125,
+        "min_ns_per_call": 328617.25,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 4313.90625,
+        "median_ns_per_call": 771083.375,
+        "min_ns_per_call": 769361.5,
+        "samples": 4
+      }
+    },
+    "groth16_one_input": {
+      "arkworks": {
+        "iqr_ns_per_call": 28487.90625,
+        "median_ns_per_call": 1176819.9375,
+        "min_ns_per_call": 1161060.125,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 6516.34375,
+        "median_ns_per_call": 1300710.5625,
+        "min_ns_per_call": 1298896.875,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 1453.4375,
+        "median_ns_per_call": 297650.875,
+        "min_ns_per_call": 295349.0,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 5971.125,
+        "median_ns_per_call": 742705.5625,
+        "min_ns_per_call": 739538.25,
+        "samples": 4
+      }
+    },
+    "lane_reference": {
+      "arkworks": {
+        "iqr_ns_per_call": 24.8017578125,
+        "median_ns_per_call": 1375.408203125,
+        "min_ns_per_call": 1363.4140625,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 6.53125,
+        "median_ns_per_call": 1363.41796875,
+        "min_ns_per_call": 1363.37890625,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 7.3984375,
+        "median_ns_per_call": 1363.435546875,
+        "min_ns_per_call": 1363.41796875,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 8.330078125,
+        "median_ns_per_call": 1364.44921875,
+        "min_ns_per_call": 1363.37890625,
+        "samples": 4
+      }
+    },
+    "miller_live": {
+      "arkworks": {
+        "iqr_ns_per_call": 4890.796875,
+        "median_ns_per_call": 350208.75,
+        "min_ns_per_call": 346177.625,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 3530.796875,
+        "median_ns_per_call": 382568.90625,
+        "min_ns_per_call": 381558.875,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 559.125,
+        "median_ns_per_call": 103004.59375,
+        "min_ns_per_call": 102258.9375,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 1044.8125,
+        "median_ns_per_call": 191586.34375,
+        "min_ns_per_call": 191015.0,
+        "samples": 4
+      }
+    },
+    "miller_prepared": {
+      "arkworks": {
+        "iqr_ns_per_call": 510.03125,
+        "median_ns_per_call": 259056.21875,
+        "min_ns_per_call": 258330.25,
+        "samples": 4
+      },
+      "arkworks-portable": {
+        "iqr_ns_per_call": 3515.671875,
+        "median_ns_per_call": 286638.625,
+        "min_ns_per_call": 285040.4375,
+        "samples": 4
+      },
+      "helius": {
+        "iqr_ns_per_call": 836.53125,
+        "median_ns_per_call": 48051.75,
+        "min_ns_per_call": 47644.25,
+        "samples": 4
+      },
+      "mcl": {
+        "iqr_ns_per_call": 934.203125,
+        "median_ns_per_call": 142705.5,
+        "min_ns_per_call": 142330.875,
+        "samples": 4
+      }
+    }
+  },
+  "claim_eligible": false,
+  "diagnostic_host": true,
+  "fixture_seed": "0x0b208376d81cea32",
+  "provenance": {
+    "native": {
+      "ark_asm": true,
+      "cxx": "/usr/bin/c++",
+      "cxx_native_flag": "-march=native",
+      "fixture_seed": "0x0b208376d81cea32",
+      "fixture_set_sha256": "80809dc61feb9620521b649b75213cff7f2483d9d4d4bd17573fd58d39cbf188",
+      "git_rev": "UNKNOWN",
+      "helius_backend": "avx512-ifma",
+      "mcl_archive_sha256": "e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f",
+      "mcl_manifest_sha256": "ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727",
+      "mcl_runtime": "xbyak-jit",
+      "rustflags": "-C target-cpu=native",
+      "schema": "four-lane-provenance-v1",
+      "target_cpu": "native",
+      "timer_overhead_ns_per_iter": 1.3619418144226074,
+      "tsc_agreement_pct": 99.99990900071853
+    },
+    "portable": {
+      "ark_asm": false,
+      "cxx": "/usr/bin/c++",
+      "cxx_native_flag": "-march=native",
+      "fixture_seed": "0x0b208376d81cea32",
+      "fixture_set_sha256": "80809dc61feb9620521b649b75213cff7f2483d9d4d4bd17573fd58d39cbf188",
+      "git_rev": "UNKNOWN",
+      "helius_backend": "avx512-ifma",
+      "mcl_archive_sha256": "e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f",
+      "mcl_manifest_sha256": "ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727",
+      "mcl_runtime": "xbyak-jit",
+      "rustflags": "-C target-cpu=native",
+      "schema": "four-lane-provenance-v1",
+      "target_cpu": "native",
+      "timer_overhead_ns_per_iter": 1.360478162765503,
+      "tsc_agreement_pct": 99.99999000186057
+    }
+  },
+  "quick": true,
+  "rounds": 4,
+  "schema": "four-lane-summary-v1"
+}

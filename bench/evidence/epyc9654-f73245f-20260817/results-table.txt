@@ -1,0 +1,57 @@
+operation                               helius         mcl    arkworks  ark-portable  mcl/hel  ark/hel
+final_exponentiation                    89.275       234.3       428.2         492.4     2.63     4.80
+fp12_cyclotomic_square                  0.7522      0.6961      0.7330         1.003     0.93     0.97
+fp12_mul                                 1.491       1.426       1.869         2.171     0.96     1.25
+fp12_sparse_034                         0.8438      0.9186       1.358         1.473     1.09     1.61
+fp12_square                              1.001       1.081       1.332         1.563     1.08     1.33
+fp2_mul                                 0.0688      0.0569      0.0890        0.0907     0.83     1.29
+fp2_square                              0.0557      0.0578      0.0625        0.0647     1.04     1.12
+fp_mul                                  0.0246      0.0248      0.0220        0.0231     1.01     0.89
+fp_square                               0.0227      0.0220      0.0206        0.0193     0.97     0.91
+full_pairing                             193.2       428.8       782.7         882.7     2.22     4.05
+full_pairing_prepared                    136.9       376.1       695.2         785.8     2.75     5.08
+g1_line_scaling                         0.0464      0.0423      0.0422        0.0426     0.91     0.91
+g1_msm_pub_inputs_1                     37.290      38.262       116.0         122.0     1.03     3.11
+g1_msm_pub_inputs_2                     51.848      53.709       162.0         171.9     1.04     3.12
+g1_msm_pub_inputs_3                     65.753      68.838       209.1         222.8     1.05     3.18
+g1_validate                             0.1554      0.1679      0.3991        0.4064     1.08     2.57
+g2_prepare_87_lines                     55.453      49.108      86.920        90.502     0.89     1.57
+g2_subgroup_check                       49.187       134.9       127.9         136.4     2.74     2.60
+groth16_batch3_mixed_keys                914.3      1875.6      3090.1        3422.4     2.05     3.38
+groth16_batch3_one_key                   707.5      1369.1      2293.4        2518.7     1.94     3.24
+groth16_batch8_mixed_keys               1380.4      2774.1      4698.5        5174.9     2.01     3.40
+groth16_batch8_one_key                  1169.4      2258.6      3895.1        4266.1     1.93     3.33
+groth16_committed_rails                  504.5      1265.6      2096.4        2348.7     2.51     4.16
+groth16_gnark                            329.8       770.7      1350.2        1494.5     2.34     4.09
+groth16_one_input                        298.6       737.7      1165.1        1294.9     2.47     3.90
+miller_live                              102.1       191.3       347.7         381.6     1.87     3.41
+miller_prepared                         48.332       142.1       258.5         286.2     2.94     5.35
+
+spread per lane, iqr as percent of median
+  final_exponentiation               heli   0.5% mcl   1.0% arkw   0.4% arkw   0.3%
+  fp12_cyclotomic_square             heli   0.9% mcl   0.6% arkw   0.6% arkw   1.9%
+  fp12_mul                           heli   0.5% mcl   1.7% arkw   0.3% arkw   0.3%
+  fp12_sparse_034                    heli   0.3% mcl   0.3% arkw   0.8% arkw   0.8%
+  fp12_square                        heli   0.4% mcl   1.1% arkw   0.2% arkw   1.5%
+  fp2_mul                            heli   1.8% mcl   0.6% arkw   0.6% arkw   8.8%
+  fp2_square                         heli   1.0% mcl   0.5% arkw  11.4% arkw   1.5%
+  fp_mul                             heli   2.8% mcl   0.6% arkw   1.2% arkw   7.4%
+  fp_square                          heli   0.6% mcl   3.0% arkw   1.3% arkw   0.9%
+  full_pairing                       heli   0.4% mcl   1.1% arkw   1.0% arkw   1.2%
+  full_pairing_prepared              heli   0.2% mcl   0.2% arkw   1.1% arkw   0.3%
+  g1_line_scaling                    heli   0.9% mcl   1.2% arkw   0.4% arkw   0.1%
+  g1_msm_pub_inputs_1                heli   0.3% mcl   0.3% arkw   0.3% arkw   0.6%
+  g1_msm_pub_inputs_2                heli   0.8% mcl   0.5% arkw   0.5% arkw   0.8%
+  g1_msm_pub_inputs_3                heli   0.1% mcl   0.1% arkw   1.2% arkw   0.5%
+  g1_validate                        heli   2.0% mcl   1.4% arkw   1.1% arkw   1.5%
+  g2_prepare_87_lines                heli   0.6% mcl   1.1% arkw   1.9% arkw   3.2%
+  g2_subgroup_check                  heli   0.0% mcl   0.3% arkw   3.2% arkw   1.5%
+  groth16_batch3_mixed_keys          heli   0.4% mcl   0.3% arkw   0.8% arkw   0.9%
+  groth16_batch3_one_key             heli   0.2% mcl   0.3% arkw   0.8% arkw   0.2%
+  groth16_batch8_mixed_keys          heli   1.3% mcl   0.4% arkw   0.4% arkw   0.6%
+  groth16_batch8_one_key             heli   0.6% mcl   0.6% arkw   1.6% arkw   0.3%
+  groth16_committed_rails            heli   0.4% mcl   0.7% arkw   0.3% arkw   0.2%
+  groth16_gnark                      heli   1.1% mcl   0.1% arkw   1.2% arkw   0.3%
+  groth16_one_input                  heli   0.9% mcl   0.3% arkw   0.5% arkw   0.3%
+  miller_live                        heli   0.7% mcl   0.4% arkw   0.9% arkw   1.2%
+  miller_prepared                    heli   1.8% mcl   1.4% arkw   0.6% arkw   1.2%

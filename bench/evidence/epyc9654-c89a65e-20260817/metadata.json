@@ -1,0 +1,81 @@
+{
+  "boost": null,
+  "boot_id": "1b49e9f2-7a80-4f00-afa2-b8c59b2b4b46",
+  "cpu": "1",
+  "diagnostic_host": true,
+  "finished_unix_ns": 1786940504135001333,
+  "host": "b3a3af04e429",
+  "host_gate_warnings": [
+    "cpu1 exposes no cpufreq governor",
+    "kernel booted without mitigations=off; add it to GRUB_CMDLINE_LINUX in /etc/default/grub, update-grub, and reboot"
+  ],
+  "host_gates": {
+    "governor": null,
+    "sibling": null,
+    "sibling_busy_pct": null
+  },
+  "iterations": {
+    "final_exponentiation": 16,
+    "fp12_cyclotomic_square": 2048,
+    "fp12_mul": 1024,
+    "fp12_sparse_034": 2048,
+    "fp12_square": 2048,
+    "fp2_mul": 8192,
+    "fp2_square": 8192,
+    "fp_mul": 16384,
+    "fp_square": 16384,
+    "full_pairing": 16,
+    "full_pairing_prepared": 16,
+    "g1_line_scaling": 4096,
+    "g1_msm_pub_inputs_1": 512,
+    "g1_msm_pub_inputs_2": 512,
+    "g1_msm_pub_inputs_3": 512,
+    "g1_validate": 4096,
+    "g2_prepare_87_lines": 16,
+    "g2_subgroup_check": 1024,
+    "groth16_batch3_mixed_keys": 8,
+    "groth16_batch3_one_key": 8,
+    "groth16_batch8_mixed_keys": 4,
+    "groth16_batch8_one_key": 4,
+    "groth16_committed_rails": 8,
+    "groth16_gnark": 8,
+    "groth16_one_input": 8,
+    "lane_reference": 4096,
+    "miller_live": 16,
+    "miller_prepared": 16
+  },
+  "kernel": "5.15.0-179-generic",
+  "lanes": {
+    "arkworks": {
+      "binary": "/root/narsil-bench/target/lane-asm/release/four_lane",
+      "expected_backend": null,
+      "sha256": "871a2bfd4716ceb3e4106548cab182c6a02bf3f71ac0287e6cea0415f76e7422"
+    },
+    "arkworks-portable": {
+      "binary": "/root/narsil-bench/target/lane-ark-portable/release/four_lane",
+      "expected_backend": null,
+      "sha256": "c438b9e20628eb19e78ad22d72b38e2f65e22605fc8c904c5bbdbeb1ac9eaaeb"
+    },
+    "helius": {
+      "binary": "/root/narsil-bench/target/lane-asm/release/four_lane",
+      "expected_backend": "avx512-ifma",
+      "sha256": "871a2bfd4716ceb3e4106548cab182c6a02bf3f71ac0287e6cea0415f76e7422"
+    },
+    "mcl": {
+      "binary": "/root/narsil-bench/target/lane-asm/release/four_lane",
+      "expected_backend": null,
+      "sha256": "871a2bfd4716ceb3e4106548cab182c6a02bf3f71ac0287e6cea0415f76e7422"
+    }
+  },
+  "mitigations": {
+    "cmdline": "BOOT_IMAGE=/boot/vmlinuz-5.15.0-179-generic root=UUID=f6499218-2b19-482b-9b39-a1a8f23a5c19 ro console=tty1 console=ttyS0",
+    "spec_rstack_overflow": "Mitigation: safe RET",
+    "spectre_v2": "Mitigation: Enhanced / Automatic IBRS; IBPB: conditional; STIBP: disabled; PBRSB-eIBRS: Not affected; BHI: Not affected"
+  },
+  "quick": false,
+  "rounds": 4,
+  "runner_git_rev": null,
+  "schema": "four-lane-metadata-v1",
+  "sibling": null,
+  "started_unix_ns": 1786940268524695805
+}

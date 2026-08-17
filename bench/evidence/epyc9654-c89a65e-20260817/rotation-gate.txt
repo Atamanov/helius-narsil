@@ -1,0 +1,25 @@
+# rotation gate, live negative control
+# binary /root/narsil-bench/target/lane-asm/release/four_lane
+# seed   0x664c86bb6b618691
+
+## last round the pool can serve, must exit 0
+fp_mul                             iters 16384  rotation 7   exit 0  field pool of 8, capacity 8
+miller_live                        iters 16     rotation 63  exit 0  miller pool of 64, capacity 64
+groth16_one_input                  iters 8      rotation 63  exit 0  production standard pool of 64, capacity 64
+groth16_committed_rails            iters 8      rotation 15  exit 0  committed pool of 16, capacity 16
+groth16_batch8_one_key             iters 4      rotation 7   exit 0  batch-8 pool of 8, capacity 8
+groth16_batch3_one_key             iters 8      rotation 15  exit 0  batch-3 pool of 16, capacity 16
+
+## first round past the capacity, must exit 4 and time nothing
+fp_mul                             iters 16384  rotation 8   exit 4  field pool of 8, capacity 8
+    rotation: fp_mul: round 8 has no fresh window, a pool of 8 serves 8 windows at 16384 iterations
+miller_live                        iters 16     rotation 64  exit 4  miller pool of 64, capacity 64
+    rotation: miller_live: round 64 has no fresh window, a pool of 64 serves 64 windows at 16 iterations
+groth16_one_input                  iters 8      rotation 64  exit 4  production standard pool of 64, capacity 64
+    rotation: groth16_one_input: round 64 has no fresh window, a pool of 64 serves 64 windows at 8 iterations
+groth16_committed_rails            iters 8      rotation 16  exit 4  committed pool of 16, capacity 16
+    rotation: groth16_committed_rails: round 16 has no fresh window, a pool of 16 serves 16 windows at 8 iterations
+groth16_batch8_one_key             iters 4      rotation 8   exit 4  batch-8 pool of 8, capacity 8
+    rotation: groth16_batch8_one_key: round 8 has no fresh window, a pool of 8 serves 8 windows at 4 iterations
+groth16_batch3_one_key             iters 8      rotation 16  exit 4  batch-3 pool of 16, capacity 16
+    rotation: groth16_batch3_one_key: round 16 has no fresh window, a pool of 16 serves 16 windows at 8 iterations

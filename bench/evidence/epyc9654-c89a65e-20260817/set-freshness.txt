@@ -1,0 +1,73 @@
+# set freshness per row, replayed from the sealed iteration table
+
+rounds 4
+
+A round draws min(iterations, pool) entries from its own start. Distinct
+sets are reachable only while one round draws a proper subset of the pool.
+A row above that line is set-fresh; a row at or past it is order-only, and
+the harness records it as order-only rather than calling it fresh.
+
+row                                              pool  size  iters  cap class       starts           distinct sets
+------------------------------------------------------------------------------------------------------------------
+final_exponentiation                           miller    64     16   64 set-fresh   [0, 16, 32, 48]  4
+fp12_cyclotomic_square                          field     8   2048    8 order-only  [0, 1, 2, 3]     1
+fp12_mul                                        field     8   1024    8 order-only  [0, 1, 2, 3]     1
+fp12_sparse_034                                 field     8   2048    8 order-only  [0, 1, 2, 3]     1
+fp12_square                                     field     8   2048    8 order-only  [0, 1, 2, 3]     1
+fp2_mul                                         field     8   8192    8 order-only  [0, 1, 2, 3]     1
+fp2_square                                      field     8   8192    8 order-only  [0, 1, 2, 3]     1
+fp_mul                                          field     8  16384    8 order-only  [0, 1, 2, 3]     1
+fp_square                                       field     8  16384    8 order-only  [0, 1, 2, 3]     1
+full_pairing                                   miller    64     16   64 set-fresh   [0, 16, 32, 48]  4
+full_pairing_prepared                          miller    64     16   64 set-fresh   [0, 16, 32, 48]  4
+g1_line_scaling                                 field     8   4096    8 order-only  [0, 1, 2, 3]     1
+g1_msm_pub_inputs_1                               msm     8    512    8 order-only  [0, 1, 2, 3]     1
+g1_msm_pub_inputs_2                               msm     8    512    8 order-only  [0, 1, 2, 3]     1
+g1_msm_pub_inputs_3                               msm     8    512    8 order-only  [0, 1, 2, 3]     1
+g1_validate                                  subgroup     8   4096    8 order-only  [0, 1, 2, 3]     1
+g2_prepare_87_lines                            miller    64     16   64 set-fresh   [0, 16, 32, 48]  4
+g2_subgroup_check                            subgroup     8   1024    8 order-only  [0, 1, 2, 3]     1
+groth16_batch3_mixed_keys          production-batch-3    16      8   16 set-fresh   [0, 8, 1, 9]     4
+groth16_batch3_one_key             production-batch-3    16      8   16 set-fresh   [0, 8, 1, 9]     4
+groth16_batch8_mixed_keys          production-batch-8     8      4    8 set-fresh   [0, 4, 1, 5]     4
+groth16_batch8_one_key             production-batch-8     8      4    8 set-fresh   [0, 4, 1, 5]     4
+groth16_committed_rails          production-committed    16      8   16 set-fresh   [0, 8, 1, 9]     4
+groth16_gnark                                   gnark    64      8   64 set-fresh   [0, 8, 16, 24]   4
+groth16_one_input                 production-standard    64      8   64 set-fresh   [0, 8, 16, 24]   4
+lane_reference                                  field     8   4096    8 order-only  [0, 1, 2, 3]     1
+miller_live                                    miller    64     16   64 set-fresh   [0, 16, 32, 48]  4
+miller_prepared                                miller    64     16   64 set-fresh   [0, 16, 32, 48]  4
+
+set-fresh rows  13
+  final_exponentiation
+  full_pairing
+  full_pairing_prepared
+  g2_prepare_87_lines
+  groth16_batch3_mixed_keys
+  groth16_batch3_one_key
+  groth16_batch8_mixed_keys
+  groth16_batch8_one_key
+  groth16_committed_rails
+  groth16_gnark
+  groth16_one_input
+  miller_live
+  miller_prepared
+order-only rows 15
+  fp12_cyclotomic_square
+  fp12_mul
+  fp12_sparse_034
+  fp12_square
+  fp2_mul
+  fp2_square
+  fp_mul
+  fp_square
+  g1_line_scaling
+  g1_msm_pub_inputs_1
+  g1_msm_pub_inputs_2
+  g1_msm_pub_inputs_3
+  g1_validate
+  g2_subgroup_check
+  lane_reference
+
+## verdict
+  every set-fresh row gives 4 different fixture sets over 4 rounds, and every order-only row is recorded as order-only

@@ -1,0 +1,92 @@
+# host probe, before the campaign
+## date
+2026-08-17T02:20:27Z
+## uname
+Linux b3a3af04e429 5.15.0-179-generic #189-Ubuntu SMP Tue May 5 18:20:56 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+## os
+PRETTY_NAME="Ubuntu 24.04.4 LTS"
+## container
+vast.ai instance, docker overlay root, hostname b3a3af04e429
+## lscpu
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           52 bits physical, 57 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  48
+On-line CPU(s) list:                     0-47
+Vendor ID:                               AuthenticAMD
+Model name:                              AMD EPYC 9654 96-Core Processor
+CPU family:                              25
+Model:                                   17
+Thread(s) per core:                      1
+Core(s) per socket:                      48
+Socket(s):                               1
+Stepping:                                1
+BogoMIPS:                                4800.00
+Flags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm rep_good nopl cpuid extd_apicid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm cmp_legacy svm cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw perfctr_core invpcid_single ssbd ibrs ibpb stibp ibrs_enhanced vmmcall fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx512_bf16 clzero xsaveerptr wbnoinvd arat npt lbrv nrip_save tsc_scale vmcb_clean flushbyasid pausefilter pfthreshold v_vmsave_vmload vgif avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid fsrm flush_l1d arch_capabilities
+Virtualization:                          AMD-V
+Hypervisor vendor:                       KVM
+Virtualization type:                     full
+L1d cache:                               3 MiB (48 instances)
+L1i cache:                               3 MiB (48 instances)
+L2 cache:                                24 MiB (48 instances)
+L3 cache:                                768 MiB (48 instances)
+NUMA node(s):                            1
+NUMA node0 CPU(s):                       0-47
+Vulnerability Gather data sampling:      Not affected
+Vulnerability Indirect target selection: Not affected
+Vulnerability Itlb multihit:             Not affected
+Vulnerability L1tf:                      Not affected
+Vulnerability Mds:                       Not affected
+Vulnerability Meltdown:                  Not affected
+Vulnerability Mmio stale data:           Not affected
+Vulnerability Reg file data sampling:    Not affected
+Vulnerability Retbleed:                  Not affected
+Vulnerability Spec rstack overflow:      Mitigation; safe RET
+Vulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl and seccomp
+Vulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; STIBP disabled; PBRSB-eIBRS Not affected; BHI Not affected
+Vulnerability Srbds:                     Not affected
+Vulnerability Tsa:                       Vulnerable: Clear CPU buffers attempted, no microcode
+Vulnerability Tsx async abort:           Not affected
+Vulnerability Vmscape:                   Not affected
+## cmdline
+BOOT_IMAGE=/boot/vmlinuz-5.15.0-179-generic root=UUID=f6499218-2b19-482b-9b39-a1a8f23a5c19 ro console=tty1 console=ttyS0
+## boot_id
+1b49e9f2-7a80-4f00-afa2-b8c59b2b4b46
+## meminfo head
+MemTotal:       123624876 kB
+MemFree:        98750820 kB
+MemAvailable:   120866056 kB
+Buffers:           83344 kB
+Cached:         22471312 kB
+SwapCached:            0 kB
+## swaps
+Filename				Type		Size		Used		Priority
+## vmstat swap and oom counters
+pswpin 0
+pswpout 0
+oom_kill 47
+## cgroup memory events
+low 0
+high 0
+max 0
+oom 0
+oom_kill 0
+## cpu1 thread siblings
+1
+## cpu1 cpufreq
+ls: cannot access '/sys/devices/system/cpu/cpu1/cpufreq': No such file or directory
+## affinity of this shell
+pid 323099's current affinity list: 0-47
+## uptime and load
+ 02:20:27 up 74 days, 14:58,  0 user,  load average: 0.87, 1.26, 1.22
+## top processes
+%CPU     PID COMMAND
+ 0.1      51 bash
+ 0.0     261 sshd
+ 0.0       1 sh
+ 0.0  323079 sshd
+ 0.0  323098 sleep
+ 0.0  323099 bash
+ 0.0  323117 ps

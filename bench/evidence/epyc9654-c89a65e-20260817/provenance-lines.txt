@@ -1,0 +1,455 @@
+# verbatim provenance line per operation and lane
+
+seed 0x664c86bb6b618691, one iteration, rotation 0
+every field must equal the campaign line for that cell, apart from ('timer_overhead_ns_per_iter', 'tsc_agreement_pct')
+
+## final_exponentiation arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3648910522460938,"tsc_agreement_pct":99.99999899953913}
+   matches the campaign line for this cell
+
+## final_exponentiation arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3625237941741943,"tsc_agreement_pct":99.99999100062257}
+   matches the campaign line for this cell
+
+## final_exponentiation helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3595507144927979,"tsc_agreement_pct":99.99969900347186}
+   matches the campaign line for this cell
+
+## final_exponentiation mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3587403297424316,"tsc_agreement_pct":99.99970100371024}
+   matches the campaign line for this cell
+
+## fp12_cyclotomic_square arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3609647750854492,"tsc_agreement_pct":99.99999200092616}
+   matches the campaign line for this cell
+
+## fp12_cyclotomic_square arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.35805082321167,"tsc_agreement_pct":99.99998800185277}
+   matches the campaign line for this cell
+
+## fp12_cyclotomic_square helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3605210781097412,"tsc_agreement_pct":99.99999100046787}
+   matches the campaign line for this cell
+
+## fp12_cyclotomic_square mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3597321510314941,"tsc_agreement_pct":99.99999200169593}
+   matches the campaign line for this cell
+
+## fp12_mul arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3598222732543945,"tsc_agreement_pct":99.99970200429674}
+   matches the campaign line for this cell
+
+## fp12_mul arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3594937324523926,"tsc_agreement_pct":99.99969900446224}
+   matches the campaign line for this cell
+
+## fp12_mul helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.359903335571289,"tsc_agreement_pct":99.99970200395454}
+   matches the campaign line for this cell
+
+## fp12_mul mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3599393367767334,"tsc_agreement_pct":99.99999100046787}
+   matches the campaign line for this cell
+
+## fp12_sparse_034 arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3598272800445557,"tsc_agreement_pct":99.99999100154356}
+   matches the campaign line for this cell
+
+## fp12_sparse_034 arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.357151985168457,"tsc_agreement_pct":99.99969200464793}
+   matches the campaign line for this cell
+
+## fp12_sparse_034 helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3604567050933838,"tsc_agreement_pct":99.99970900387166}
+   matches the campaign line for this cell
+
+## fp12_sparse_034 mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.362182855606079,"tsc_agreement_pct":99.99971100382614}
+   matches the campaign line for this cell
+
+## fp12_square arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.361588954925537,"tsc_agreement_pct":99.99999100123415}
+   matches the campaign line for this cell
+
+## fp12_square arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3608834743499756,"tsc_agreement_pct":99.99999900046289}
+   matches the campaign line for this cell
+
+## fp12_square helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.5223090648651123,"tsc_agreement_pct":99.99999000154216}
+   matches the campaign line for this cell
+
+## fp12_square mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3634130954742432,"tsc_agreement_pct":99.99999100154356}
+   matches the campaign line for this cell
+
+## fp2_mul arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3636393547058105,"tsc_agreement_pct":99.99999000154418}
+   matches the campaign line for this cell
+
+## fp2_mul arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3621375560760498,"tsc_agreement_pct":99.99999000108178}
+   matches the campaign line for this cell
+
+## fp2_mul helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3662645816802979,"tsc_agreement_pct":99.99999100077366}
+   matches the campaign line for this cell
+
+## fp2_mul mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3645453453063965,"tsc_agreement_pct":99.99999800138696}
+   matches the campaign line for this cell
+
+## fp2_square arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3626430034637451,"tsc_agreement_pct":99.99999100108126}
+   matches the campaign line for this cell
+
+## fp2_square arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.376387596130371,"tsc_agreement_pct":99.99999899877045}
+   matches the campaign line for this cell
+
+## fp2_square helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3640756607055664,"tsc_agreement_pct":99.99998800093117}
+   matches the campaign line for this cell
+
+## fp2_square mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3622186183929443,"tsc_agreement_pct":99.99999100077547}
+   matches the campaign line for this cell
+
+## fp_mul arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3705463409423828,"tsc_agreement_pct":99.99999999861582}
+   matches the campaign line for this cell
+
+## fp_mul arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3630149364471436,"tsc_agreement_pct":99.9999979984653}
+   matches the campaign line for this cell
+
+## fp_mul helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3847322463989258,"tsc_agreement_pct":99.99971100371054}
+   matches the campaign line for this cell
+
+## fp_mul mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3607120513916016,"tsc_agreement_pct":99.99999899846284}
+   matches the campaign line for this cell
+
+## fp_square arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3608620166778564,"tsc_agreement_pct":99.99973000378975}
+   matches the campaign line for this cell
+
+## fp_square arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3591525554656982,"tsc_agreement_pct":99.99971200330636}
+   matches the campaign line for this cell
+
+## fp_square helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3610098361968994,"tsc_agreement_pct":99.99999800123359}
+   matches the campaign line for this cell
+
+## fp_square mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3596384525299072,"tsc_agreement_pct":99.99999000123657}
+   matches the campaign line for this cell
+
+## full_pairing arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.360194444656372,"tsc_agreement_pct":99.99970900312887}
+   matches the campaign line for this cell
+
+## full_pairing arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.37103271484375,"tsc_agreement_pct":99.99971100361545}
+   matches the campaign line for this cell
+
+## full_pairing helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3680095672607422,"tsc_agreement_pct":99.99997999940521}
+   matches the campaign line for this cell
+
+## full_pairing mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3593933582305908,"tsc_agreement_pct":99.99999999938481}
+   matches the campaign line for this cell
+
+## full_pairing_prepared arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3615915775299072,"tsc_agreement_pct":99.99968900490416}
+   matches the campaign line for this cell
+
+## full_pairing_prepared arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3590073585510254,"tsc_agreement_pct":99.99999300031308}
+   matches the campaign line for this cell
+
+## full_pairing_prepared helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.362304449081421,"tsc_agreement_pct":99.99998999924622}
+   matches the campaign line for this cell
+
+## full_pairing_prepared mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3613078594207764,"tsc_agreement_pct":99.99999000123657}
+   matches the campaign line for this cell
+
+## g1_line_scaling arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3609287738800049,"tsc_agreement_pct":99.99998800154718}
+   matches the campaign line for this cell
+
+## g1_line_scaling arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3599729537963867,"tsc_agreement_pct":99.99999200184668}
+   matches the campaign line for this cell
+
+## g1_line_scaling helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.359412431716919,"tsc_agreement_pct":99.99969000444175}
+   matches the campaign line for this cell
+
+## g1_line_scaling mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3593385219573975,"tsc_agreement_pct":99.9997310039929}
+   matches the campaign line for this cell
+
+## g1_msm_pub_inputs_1 arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"7a0663180b5ec98d60f5c7dd5e798ca8e104118c9a2b2bc90f1413f0482579ed","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3598225116729736,"tsc_agreement_pct":99.99999300061748}
+   matches the campaign line for this cell
+
+## g1_msm_pub_inputs_1 arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"7a0663180b5ec98d60f5c7dd5e798ca8e104118c9a2b2bc90f1413f0482579ed","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3607356548309326,"tsc_agreement_pct":99.99999899969724}
+   matches the campaign line for this cell
+
+## g1_msm_pub_inputs_1 helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"7a0663180b5ec98d60f5c7dd5e798ca8e104118c9a2b2bc90f1413f0482579ed","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3622636795043945,"tsc_agreement_pct":99.99998999864101}
+   matches the campaign line for this cell
+
+## g1_msm_pub_inputs_1 mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"7a0663180b5ec98d60f5c7dd5e798ca8e104118c9a2b2bc90f1413f0482579ed","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3630623817443848,"tsc_agreement_pct":99.9999890013921}
+   matches the campaign line for this cell
+
+## g1_msm_pub_inputs_2 arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"46fc274afa81665830e2a102bda88c1f5e8ca7455e44aae2467ff74968f78ab3","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.367189645767212,"tsc_agreement_pct":99.9999979990797}
+   matches the campaign line for this cell
+
+## g1_msm_pub_inputs_2 arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"46fc274afa81665830e2a102bda88c1f5e8ca7455e44aae2467ff74968f78ab3","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3599584102630615,"tsc_agreement_pct":99.99963900404276}
+   matches the campaign line for this cell
+
+## g1_msm_pub_inputs_2 helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"46fc274afa81665830e2a102bda88c1f5e8ca7455e44aae2467ff74968f78ab3","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3878958225250244,"tsc_agreement_pct":99.99999899953933}
+   matches the campaign line for this cell
+
+## g1_msm_pub_inputs_2 mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"46fc274afa81665830e2a102bda88c1f5e8ca7455e44aae2467ff74968f78ab3","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3672895431518555,"tsc_agreement_pct":99.99953000708489}
+   matches the campaign line for this cell
+
+## g1_msm_pub_inputs_3 arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"52a3b8138dbc820485f0ba2df0594aafe3f9a39258dea7f06b04563ce050c7bb","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.360487699508667,"tsc_agreement_pct":99.99997999834464}
+   matches the campaign line for this cell
+
+## g1_msm_pub_inputs_3 arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"52a3b8138dbc820485f0ba2df0594aafe3f9a39258dea7f06b04563ce050c7bb","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3634464740753174,"tsc_agreement_pct":99.99999000154216}
+   matches the campaign line for this cell
+
+## g1_msm_pub_inputs_3 helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"52a3b8138dbc820485f0ba2df0594aafe3f9a39258dea7f06b04563ce050c7bb","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3631365299224854,"tsc_agreement_pct":99.99999800138696}
+   matches the campaign line for this cell
+
+## g1_msm_pub_inputs_3 mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"52a3b8138dbc820485f0ba2df0594aafe3f9a39258dea7f06b04563ce050c7bb","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3648815155029297,"tsc_agreement_pct":99.99999000046857}
+   matches the campaign line for this cell
+
+## g1_validate arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"7a89f1855e402c569d21a1627f8056e607f3c130230382972d024ecf528633f1","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3632149696350098,"tsc_agreement_pct":99.9999990013847}
+   matches the campaign line for this cell
+
+## g1_validate arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"7a89f1855e402c569d21a1627f8056e607f3c130230382972d024ecf528633f1","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.358656883239746,"tsc_agreement_pct":99.99999000139137}
+   matches the campaign line for this cell
+
+## g1_validate helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"7a89f1855e402c569d21a1627f8056e607f3c130230382972d024ecf528633f1","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3622424602508545,"tsc_agreement_pct":99.99999000169699}
+   matches the campaign line for this cell
+
+## g1_validate mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"7a89f1855e402c569d21a1627f8056e607f3c130230382972d024ecf528633f1","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3625378608703613,"tsc_agreement_pct":99.99971125001801}
+   matches the campaign line for this cell
+
+## g2_prepare_87_lines arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3621468544006348,"tsc_agreement_pct":99.99999900199988}
+   matches the campaign line for this cell
+
+## g2_prepare_87_lines arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3649318218231201,"tsc_agreement_pct":99.9996800051839}
+   matches the campaign line for this cell
+
+## g2_prepare_87_lines helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3622300624847412,"tsc_agreement_pct":99.99998900046711}
+   matches the campaign line for this cell
+
+## g2_prepare_87_lines mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.361543893814087,"tsc_agreement_pct":99.9999999996924}
+   matches the campaign line for this cell
+
+## g2_subgroup_check arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"7a89f1855e402c569d21a1627f8056e607f3c130230382972d024ecf528633f1","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.4110984802246094,"tsc_agreement_pct":99.99973000378975}
+   matches the campaign line for this cell
+
+## g2_subgroup_check arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"7a89f1855e402c569d21a1627f8056e607f3c130230382972d024ecf528633f1","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3878791332244873,"tsc_agreement_pct":99.99999099955289}
+   matches the campaign line for this cell
+
+## g2_subgroup_check helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"7a89f1855e402c569d21a1627f8056e607f3c130230382972d024ecf528633f1","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3612480163574219,"tsc_agreement_pct":99.99999000062138}
+   matches the campaign line for this cell
+
+## g2_subgroup_check mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"7a89f1855e402c569d21a1627f8056e607f3c130230382972d024ecf528633f1","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3599989414215088,"tsc_agreement_pct":99.9999990009236}
+   matches the campaign line for this cell
+
+## groth16_batch3_mixed_keys arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"f39576d42e26e5440f198c88c57b5fe2ab7993615cc65b81d5382e3875f34dc2","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3620445728302002,"tsc_agreement_pct":99.99972100306483}
+   matches the campaign line for this cell
+
+## groth16_batch3_mixed_keys arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"f39576d42e26e5440f198c88c57b5fe2ab7993615cc65b81d5382e3875f34dc2","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3641188144683838,"tsc_agreement_pct":99.99999800077042}
+   matches the campaign line for this cell
+
+## groth16_batch3_mixed_keys helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"f39576d42e26e5440f198c88c57b5fe2ab7993615cc65b81d5382e3875f34dc2","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.362783670425415,"tsc_agreement_pct":99.9997090033785}
+   matches the campaign line for this cell
+
+## groth16_batch3_mixed_keys mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"f39576d42e26e5440f198c88c57b5fe2ab7993615cc65b81d5382e3875f34dc2","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.365976095199585,"tsc_agreement_pct":99.99972700304905}
+   matches the campaign line for this cell
+
+## groth16_batch3_one_key arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"de89781309dc5421e6889b44a28cefa520e4e72d59b7530d7e748f5751619457","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.364786148071289,"tsc_agreement_pct":99.99999900046174}
+   matches the campaign line for this cell
+
+## groth16_batch3_one_key arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"de89781309dc5421e6889b44a28cefa520e4e72d59b7530d7e748f5751619457","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.366316795349121,"tsc_agreement_pct":99.99970000356394}
+   matches the campaign line for this cell
+
+## groth16_batch3_one_key helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"de89781309dc5421e6889b44a28cefa520e4e72d59b7530d7e748f5751619457","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3653132915496826,"tsc_agreement_pct":99.99999799877374}
+   matches the campaign line for this cell
+
+## groth16_batch3_one_key mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"de89781309dc5421e6889b44a28cefa520e4e72d59b7530d7e748f5751619457","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3607501983642578,"tsc_agreement_pct":99.99973000313558}
+   matches the campaign line for this cell
+
+## groth16_batch8_mixed_keys arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"f86375b189eb6f44dd809b0278950e48c8f883afeeaf46077107f39fb689cf33","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3651819229125977,"tsc_agreement_pct":99.99972800294523}
+   matches the campaign line for this cell
+
+## groth16_batch8_mixed_keys arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"f86375b189eb6f44dd809b0278950e48c8f883afeeaf46077107f39fb689cf33","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.370128870010376,"tsc_agreement_pct":99.99999800107761}
+   matches the campaign line for this cell
+
+## groth16_batch8_mixed_keys helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"f86375b189eb6f44dd809b0278950e48c8f883afeeaf46077107f39fb689cf33","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3631222248077393,"tsc_agreement_pct":99.99999300168989}
+   matches the campaign line for this cell
+
+## groth16_batch8_mixed_keys mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"f86375b189eb6f44dd809b0278950e48c8f883afeeaf46077107f39fb689cf33","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3803048133850098,"tsc_agreement_pct":99.9999820010849}
+   matches the campaign line for this cell
+
+## groth16_batch8_one_key arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"261ef6b179f3f314795a8f594e61180997f93a848bc184f9ea62a9f0c8f3f60f","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3695950508117676,"tsc_agreement_pct":99.99973200302831}
+   matches the campaign line for this cell
+
+## groth16_batch8_one_key arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"261ef6b179f3f314795a8f594e61180997f93a848bc184f9ea62a9f0c8f3f60f","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3650081157684326,"tsc_agreement_pct":99.99998900093082}
+   matches the campaign line for this cell
+
+## groth16_batch8_one_key helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"261ef6b179f3f314795a8f594e61180997f93a848bc184f9ea62a9f0c8f3f60f","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3815228939056396,"tsc_agreement_pct":99.99999000154037}
+   matches the campaign line for this cell
+
+## groth16_batch8_one_key mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"261ef6b179f3f314795a8f594e61180997f93a848bc184f9ea62a9f0c8f3f60f","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3636562824249268,"tsc_agreement_pct":99.99970000356394}
+   matches the campaign line for this cell
+
+## groth16_committed_rails arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"d5988ed49045177fa7aa0ce61b2b1341b0e198c645515084d0f048538c6959dd","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3653297424316406,"tsc_agreement_pct":99.99999100169242}
+   matches the campaign line for this cell
+
+## groth16_committed_rails arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"d5988ed49045177fa7aa0ce61b2b1341b0e198c645515084d0f048538c6959dd","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3619015216827393,"tsc_agreement_pct":99.99998000154477}
+   matches the campaign line for this cell
+
+## groth16_committed_rails helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"d5988ed49045177fa7aa0ce61b2b1341b0e198c645515084d0f048538c6959dd","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.360332727432251,"tsc_agreement_pct":99.99998900108112}
+   matches the campaign line for this cell
+
+## groth16_committed_rails mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"d5988ed49045177fa7aa0ce61b2b1341b0e198c645515084d0f048538c6959dd","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3662619590759277,"tsc_agreement_pct":99.99998800169607}
+   matches the campaign line for this cell
+
+## groth16_gnark arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"f1857b595fe82d9e1f2286d31afca6fe6c78b51b0a59ad0f2167b5d884cdf777","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3610813617706299,"tsc_agreement_pct":99.99999400169074}
+   matches the campaign line for this cell
+
+## groth16_gnark arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"f1857b595fe82d9e1f2286d31afca6fe6c78b51b0a59ad0f2167b5d884cdf777","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.373764991760254,"tsc_agreement_pct":99.9999909987912}
+   matches the campaign line for this cell
+
+## groth16_gnark helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"f1857b595fe82d9e1f2286d31afca6fe6c78b51b0a59ad0f2167b5d884cdf777","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.365976095199585,"tsc_agreement_pct":99.99998599910087}
+   matches the campaign line for this cell
+
+## groth16_gnark mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"f1857b595fe82d9e1f2286d31afca6fe6c78b51b0a59ad0f2167b5d884cdf777","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.363701581954956,"tsc_agreement_pct":99.99999000062138}
+   matches the campaign line for this cell
+
+## groth16_one_input arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"d5988ed49045177fa7aa0ce61b2b1341b0e198c645515084d0f048538c6959dd","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3616604804992676,"tsc_agreement_pct":99.99971100417002}
+   matches the campaign line for this cell
+
+## groth16_one_input arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"d5988ed49045177fa7aa0ce61b2b1341b0e198c645515084d0f048538c6959dd","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3636798858642578,"tsc_agreement_pct":99.99998800124021}
+   matches the campaign line for this cell
+
+## groth16_one_input helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"d5988ed49045177fa7aa0ce61b2b1341b0e198c645515084d0f048538c6959dd","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3616678714752197,"tsc_agreement_pct":99.9999900003138}
+   matches the campaign line for this cell
+
+## groth16_one_input mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"d5988ed49045177fa7aa0ce61b2b1341b0e198c645515084d0f048538c6959dd","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.364145040512085,"tsc_agreement_pct":99.99998900108011}
+   matches the campaign line for this cell
+
+## lane_reference arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3600678443908691,"tsc_agreement_pct":99.99999899862019}
+   matches the campaign line for this cell
+
+## lane_reference arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3599753379821777,"tsc_agreement_pct":99.99999400122967}
+   matches the campaign line for this cell
+
+## lane_reference helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3622162342071533,"tsc_agreement_pct":99.99999200184445}
+   matches the campaign line for this cell
+
+## lane_reference mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"eec53fd94038e51b68b9d4955d8d06c1ea8301e6f5684c06f784c47a2b761880","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3622803688049316,"tsc_agreement_pct":99.99998800062208}
+   matches the campaign line for this cell
+
+## miller_live arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3593769073486328,"tsc_agreement_pct":99.9999910015381}
+   matches the campaign line for this cell
+
+## miller_live arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3601133823394775,"tsc_agreement_pct":99.99999099833728}
+   matches the campaign line for this cell
+
+## miller_live helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3778278827667236,"tsc_agreement_pct":99.99998900123362}
+   matches the campaign line for this cell
+
+## miller_live mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3634727001190186,"tsc_agreement_pct":99.99999099985685}
+   matches the campaign line for this cell
+
+## miller_prepared arkworks exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.361556053161621,"tsc_agreement_pct":99.99999900092243}
+   matches the campaign line for this cell
+
+## miller_prepared arkworks-portable exit 0
+provenance|{"ark_asm":false,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3609073162078857,"tsc_agreement_pct":99.99998900092642}
+   matches the campaign line for this cell
+
+## miller_prepared helius exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3692424297332764,"tsc_agreement_pct":99.99999900030785}
+   matches the campaign line for this cell
+
+## miller_prepared mcl exit 0
+provenance|{"ark_asm":true,"cxx":"/usr/bin/c++","cxx_native_flag":"-march=native","fixture_seed":"0x664c86bb6b618691","fixture_set_sha256":"feece4be5058c92aec815205e6fcec926051bd3240a8fa4be27d24f32760b1fe","git_rev":"UNKNOWN","helius_backend":"avx512-ifma","mcl_archive_sha256":"e5f5e7cef2ee2eecf1a9b0d7a80588d6314c5edfc80c93af7ffb9430fb00207f","mcl_manifest_sha256":"ac3582b57fe2f5dac31d0c687f2a7501769f34100db3fc9f9338bdb365fb4727","mcl_runtime":"xbyak-jit","rustflags":"-C target-cpu=native","schema":"four-lane-provenance-v1","target_cpu":"native","timer_overhead_ns_per_iter":1.3618943691253662,"tsc_agreement_pct":99.99971200386226}
+   matches the campaign line for this cell
+
+## verdict
+  every replayed line reproduces the campaign provenance
