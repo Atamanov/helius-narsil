@@ -1,0 +1,85 @@
+From 4ca7c8483e158055930deb32c678d426ded3e14f Mon Sep 17 00:00:00 2001
+From: helius-bench <bench@helius.local>
+Date: Sat, 15 Aug 2026 00:00:00 +0000
+Subject: [PATCH 1/2] expose cyclotomic squaring
+
+---
+ include/mcl/bn.hpp   | 2 ++
+ src/pairing_impl.hpp | 5 +++++
+ 2 files changed, 7 insertions(+)
+
+diff --git a/include/mcl/bn.hpp b/include/mcl/bn.hpp
+index 3e0fbe5e..e1a1fd90 100644
+--- a/include/mcl/bn.hpp
++++ b/include/mcl/bn.hpp
+@@ -18,6 +18,8 @@
+ namespace mcl {
+ 
+ MCL_CXX_API void finalExp(Fp12& y, const Fp12& x);
++// x must lie in the cyclotomic subgroup, the Fp4 shortcut is wrong otherwise
++MCL_CXX_API void cyclotomicSqr(Fp12& y, const Fp12& x);
+ MCL_CXX_API void millerLoop(Fp12& f, const G1& P_, const G2& Q_);
+ MCL_CXX_API void pairing(Fp12& f, const G1& P, const G2& Q);
+ 
+diff --git a/src/pairing_impl.hpp b/src/pairing_impl.hpp
+index 77fbea9a..b3a292d3 100644
+--- a/src/pairing_impl.hpp
++++ b/src/pairing_impl.hpp
+@@ -709,6 +709,11 @@ MCL_CXX_API void finalExp(Fp12& y, const Fp12& x)
+ 	}
+ }
+ 
++MCL_CXX_API void cyclotomicSqr(Fp12& y, const Fp12& x)
++{
++	fasterSqr(y, x);
++}
++
+ MCL_CXX_API void millerLoop(Fp12& f, const G1& P_, const G2& Q_)
+ {
+ 	using namespace local;
+-- 
+2.50.1 (Apple Git-155)
+
+
+From b70288469cd065b28a31764450f85238508c4d1e Mon Sep 17 00:00:00 2001
+From: helius-bench <bench@helius.local>
+Date: Sat, 15 Aug 2026 00:00:00 +0000
+Subject: [PATCH 2/2] expose sparse line multiply
+
+---
+ include/mcl/bn.hpp   | 2 ++
+ src/pairing_impl.hpp | 5 +++++
+ 2 files changed, 7 insertions(+)
+
+diff --git a/include/mcl/bn.hpp b/include/mcl/bn.hpp
+index e1a1fd90..a92b46d1 100644
+--- a/include/mcl/bn.hpp
++++ b/include/mcl/bn.hpp
+@@ -20,6 +20,8 @@ namespace mcl {
+ MCL_CXX_API void finalExp(Fp12& y, const Fp12& x);
+ // x must lie in the cyclotomic subgroup, the Fp4 shortcut is wrong otherwise
+ MCL_CXX_API void cyclotomicSqr(Fp12& y, const Fp12& x);
++// x is one D-twist Miller line, Fp6 (a,b,c) = mul_by_034 (c4,c0,c3)
++MCL_CXX_API void mulSparseLine(Fp12& z, const Fp6& x);
+ MCL_CXX_API void millerLoop(Fp12& f, const G1& P_, const G2& Q_);
+ MCL_CXX_API void pairing(Fp12& f, const G1& P, const G2& Q);
+ 
+diff --git a/src/pairing_impl.hpp b/src/pairing_impl.hpp
+index b3a292d3..f9eaf0d1 100644
+--- a/src/pairing_impl.hpp
++++ b/src/pairing_impl.hpp
+@@ -714,6 +714,11 @@ MCL_CXX_API void cyclotomicSqr(Fp12& y, const Fp12& x)
+ 	fasterSqr(y, x);
+ }
+ 
++MCL_CXX_API void mulSparseLine(Fp12& z, const Fp6& x)
++{
++	mulSparse(z, x);
++}
++
+ MCL_CXX_API void millerLoop(Fp12& f, const G1& P_, const G2& Q_)
+ {
+ 	using namespace local;
+-- 
+2.50.1 (Apple Git-155)
+
