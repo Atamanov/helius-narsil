@@ -18,7 +18,13 @@ pub const Y_ADDR: u64 = 0x3_0000;
 pub const CONSTS_ADDR: u64 = 0x4_0000;
 pub const X1_ADDR: u64 = 0x5_0000;
 pub const Y1_ADDR: u64 = 0x6_0000;
+pub const TABLE_ADDR: u64 = 0x7_0000;
 const STACK_TOP: u64 = 0x8_0000;
+/// Operand `k` of the table ABI. Well above the stack, one page apart, so a
+/// stray offset lands on uninitialized memory instead of another operand.
+const fn table_operand(index: usize) -> u64 {
+    0x10_0000 + 0x1000 * index as u64
+}
 /// Recognizable poison for registers the ABI leaves undefined.
 const POISON: u64 = 0xdead_0000_dead_0000;
 
@@ -50,32 +56,22 @@ pub struct InterpA64 {
 }
 
 impl InterpA64 {
-    /// Set up an AAPCS64 call frame:
-    /// `x0 = out`, `x1 = x`, `x2 = y`, `x3 = { p[4], -p^-1 }`.
-    pub fn call_frame(x: [u64; 4], y: [u64; 4], p: [u64; 4], p_inv: u64) -> Self {
+    /// The part of the frame every kernel shares: poisoned registers, the
+    /// stack, `x0 = out`, and the constant table.
+    fn base(p: [u64; 4], p_inv: u64) -> Self {
         let mut regs = [0u64; REGS];
         let mut defined = [false; REGS];
         for (index, value) in regs.iter_mut().enumerate() {
             *value = POISON | (index as u64) << 16;
         }
-        let arguments = [
-            (Reg::X0, OUT_ADDR),
-            (Reg::X1, X_ADDR),
-            (Reg::X2, Y_ADDR),
-            (Reg::X3, CONSTS_ADDR),
-            (Reg::Sp, STACK_TOP),
-            (Reg::Xzr, 0),
-        ];
-        for (reg, value) in arguments {
+        for (reg, value) in [(Reg::X0, OUT_ADDR), (Reg::Sp, STACK_TOP), (Reg::Xzr, 0)] {
             regs[reg.index()] = value;
             defined[reg.index()] = true;
         }
 
         let mut mem = BTreeMap::new();
-        for limb in 0..4 {
-            mem.insert(X_ADDR + 8 * limb as u64, x[limb]);
-            mem.insert(Y_ADDR + 8 * limb as u64, y[limb]);
-            mem.insert(CONSTS_ADDR + 8 * limb as u64, p[limb]);
+        for (limb, word) in p.into_iter().enumerate() {
+            mem.insert(CONSTS_ADDR + 8 * limb as u64, word);
         }
         mem.insert(CONSTS_ADDR + 32, p_inv);
 
@@ -91,6 +87,46 @@ impl InterpA64 {
         }
     }
 
+    /// An argument register holding a synthetic buffer address.
+    fn pointer(&mut self, reg: Reg, address: u64) {
+        self.regs[reg.index()] = address;
+        self.defined[reg.index()] = true;
+    }
+
+    fn operand(&mut self, address: u64, value: [u64; 4]) {
+        for (limb, word) in value.into_iter().enumerate() {
+            self.mem.insert(address + 8 * limb as u64, word);
+        }
+    }
+
+    /// Set up an AAPCS64 call frame:
+    /// `x0 = out`, `x1 = x`, `x2 = y`, `x3 = { p[4], -p^-1 }`.
+    pub fn call_frame(x: [u64; 4], y: [u64; 4], p: [u64; 4], p_inv: u64) -> Self {
+        let mut frame = Self::base(p, p_inv);
+        frame.pointer(Reg::X1, X_ADDR);
+        frame.pointer(Reg::X2, Y_ADDR);
+        frame.pointer(Reg::X3, CONSTS_ADDR);
+        frame.operand(X_ADDR, x);
+        frame.operand(Y_ADDR, y);
+        frame
+    }
+
+    /// Set up an AAPCS64 call frame for the twelve-pointer table ABI:
+    /// `x0 = z` (8 limbs, lane0 then lane1), `x1 = table`,
+    /// `x2 = { p[4], -p^-1 }`. Operands are in table order,
+    /// `x_i0 x_i1 y_i0 y_i1` per product.
+    pub fn sosd6_frame(operands: [[u64; 4]; 12], p: [u64; 4], p_inv: u64) -> Self {
+        let mut frame = Self::base(p, p_inv);
+        frame.pointer(Reg::X1, TABLE_ADDR);
+        frame.pointer(Reg::X2, CONSTS_ADDR);
+        for (index, operand) in operands.into_iter().enumerate() {
+            let address = table_operand(index);
+            frame.operand(address, operand);
+            frame.mem.insert(TABLE_ADDR + 8 * index as u64, address);
+        }
+        frame
+    }
+
     /// Set up an AAPCS64 call frame for the dual-lane sosd2 kernel:
     /// `x0 = z` (8 limbs, lane0 then lane1), `x1 = x0`, `x2 = x1`, `x3 = y0`,
     /// `x4 = y1`, `x5 = { p[4], -p^-1 }`.
@@ -103,19 +139,12 @@ impl InterpA64 {
         p_inv: u64,
     ) -> Self {
         let mut frame = Self::call_frame(x0, y0, p, p_inv);
-        for (reg, value) in [
-            (Reg::X2, X1_ADDR),
-            (Reg::X3, Y_ADDR),
-            (Reg::X4, Y1_ADDR),
-            (Reg::X5, CONSTS_ADDR),
-        ] {
-            frame.regs[reg.index()] = value;
-            frame.defined[reg.index()] = true;
-        }
-        for limb in 0..4 {
-            frame.mem.insert(X1_ADDR + 8 * limb as u64, x1[limb]);
-            frame.mem.insert(Y1_ADDR + 8 * limb as u64, y1[limb]);
-        }
+        frame.pointer(Reg::X2, X1_ADDR);
+        frame.pointer(Reg::X3, Y_ADDR);
+        frame.pointer(Reg::X4, Y1_ADDR);
+        frame.pointer(Reg::X5, CONSTS_ADDR);
+        frame.operand(X1_ADDR, x1);
+        frame.operand(Y1_ADDR, y1);
         frame
     }
 

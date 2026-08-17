@@ -5,11 +5,12 @@
 use super::emit::EmitterA64;
 use super::machine::Reg;
 use super::schedule::{MONT4_REGISTER_MAP, mont4};
-use super::sos::{SOSD2_REGISTER_MAP, sosd2};
+use super::sos::{SOSD2_REGISTER_MAP, SOSD6_REGISTER_MAP, sosd2, sosd6};
 
 /// Apple Mach-O adds the underscore. Rust names the symbol `narsil_mont4`.
 pub const MONT4_SYMBOL: &str = "_narsil_mont4";
 pub const SOSD2_SYMBOL: &str = "_narsil_sosd2";
+pub const SOSD6_SYMBOL: &str = "_narsil_sosd6";
 
 /// One emitted symbol: its schedule, its register roles, and the argument
 /// list the wrapper in `src/fp/aarch64.rs` must match.
@@ -41,6 +42,17 @@ pub const A64_KERNELS: &[Kernel] = &[
             "Arguments: (z: *mut u64x8, x0: *const u64x4, x1: *const u64x4,",
             "            y0: *const u64x4, y1: *const u64x4,",
             "            consts: *const { p: [u64; 4], neg_p_inv: u64 })",
+        ],
+    },
+    Kernel {
+        symbol: SOSD6_SYMBOL,
+        schedule_name: "bn254-sosd6-dual-lane-cios",
+        schedule: sosd6::<EmitterA64>,
+        register_map: SOSD6_REGISTER_MAP,
+        signature: &[
+            "Arguments: (z: *mut u64x8, table: *const [*const u64x4; 12],",
+            "            consts: *const { p: [u64; 4], neg_p_inv: u64 })",
+            "Table order: x00 x01 y00 y01 x10 x11 y10 y11 x20 x21 y20 y21",
         ],
     },
 ];
