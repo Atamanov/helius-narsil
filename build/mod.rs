@@ -89,6 +89,19 @@ pub fn interpret_sosd2_a64(
     machine.output_lanes()
 }
 
+/// Execute the dual-lane AArch64 sosd4 schedule in the interpreter: both Fp
+/// halves of a sum of two Fp2 products, operands in table order
+/// `x_i0 x_i1 y_i0 y_i1` per product and each at most p.
+pub fn interpret_sosd4_a64(
+    operands: [[u64; 4]; 8],
+    p: [u64; 4],
+    p_inv: u64,
+) -> ([u64; 4], [u64; 4]) {
+    let mut machine = a64::interp::InterpA64::table_frame(&operands, p, p_inv);
+    a64::sos::sosd4(&mut machine);
+    machine.output_lanes()
+}
+
 /// Execute the dual-lane AArch64 sosd6 schedule in the interpreter: both Fp
 /// halves of a sum of three Fp2 products, operands in table order
 /// `x_i0 x_i1 y_i0 y_i1` per product and each at most p.
@@ -97,7 +110,7 @@ pub fn interpret_sosd6_a64(
     p: [u64; 4],
     p_inv: u64,
 ) -> ([u64; 4], [u64; 4]) {
-    let mut machine = a64::interp::InterpA64::sosd6_frame(operands, p, p_inv);
+    let mut machine = a64::interp::InterpA64::table_frame(&operands, p, p_inv);
     a64::sos::sosd6(&mut machine);
     machine.output_lanes()
 }

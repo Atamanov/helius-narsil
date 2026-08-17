@@ -111,15 +111,15 @@ impl InterpA64 {
         frame
     }
 
-    /// Set up an AAPCS64 call frame for the twelve-pointer table ABI:
+    /// Set up an AAPCS64 call frame for the pointer-table ABI:
     /// `x0 = z` (8 limbs, lane0 then lane1), `x1 = table`,
     /// `x2 = { p[4], -p^-1 }`. Operands are in table order,
     /// `x_i0 x_i1 y_i0 y_i1` per product.
-    pub fn sosd6_frame(operands: [[u64; 4]; 12], p: [u64; 4], p_inv: u64) -> Self {
+    pub fn table_frame(operands: &[[u64; 4]], p: [u64; 4], p_inv: u64) -> Self {
         let mut frame = Self::base(p, p_inv);
         frame.pointer(Reg::X1, TABLE_ADDR);
         frame.pointer(Reg::X2, CONSTS_ADDR);
-        for (index, operand) in operands.into_iter().enumerate() {
+        for (index, operand) in operands.iter().copied().enumerate() {
             let address = table_operand(index);
             frame.operand(address, operand);
             frame.mem.insert(TABLE_ADDR + 8 * index as u64, address);
