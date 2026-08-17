@@ -44,6 +44,11 @@ pub enum Reg {
     X21,
     X22,
     X23,
+    X24,
+    X25,
+    X26,
+    X27,
+    X28,
     Sp,
     Xzr,
 }
@@ -74,6 +79,11 @@ impl Reg {
             Reg::X21 => "x21",
             Reg::X22 => "x22",
             Reg::X23 => "x23",
+            Reg::X24 => "x24",
+            Reg::X25 => "x25",
+            Reg::X26 => "x26",
+            Reg::X27 => "x27",
+            Reg::X28 => "x28",
             Reg::Sp => "sp",
             Reg::Xzr => "xzr",
         }
@@ -112,13 +122,30 @@ impl Reg {
             Reg::X21 => 21,
             Reg::X22 => 22,
             Reg::X23 => 23,
-            Reg::Sp => 24,
-            Reg::Xzr => 25,
+            Reg::X24 => 24,
+            Reg::X25 => 25,
+            Reg::X26 => 26,
+            Reg::X27 => 27,
+            Reg::X28 => 28,
+            Reg::Sp => 29,
+            Reg::Xzr => 30,
         }
     }
 
     pub const fn is_callee_saved(self) -> bool {
-        matches!(self, Reg::X19 | Reg::X20 | Reg::X21 | Reg::X22 | Reg::X23)
+        matches!(
+            self,
+            Reg::X19
+                | Reg::X20
+                | Reg::X21
+                | Reg::X22
+                | Reg::X23
+                | Reg::X24
+                | Reg::X25
+                | Reg::X26
+                | Reg::X27
+                | Reg::X28
+        )
     }
 }
 
@@ -133,6 +160,11 @@ impl fmt::Display for Reg {
 pub trait MachineA64 {
     /// Free-standing comment line in the emitted kernel.
     fn comment(&mut self, text: &str);
+
+    /// A range fact the schedule rests on: `r` holds zero at this point.
+    /// Emits no instruction. The interpreter asserts it, so the bound is
+    /// checked on every corpus input instead of trusted.
+    fn claim_zero(&mut self, r: Reg, why: &str);
 
     /// `stp r1, r2, [sp, #imm]!` (pre-index spill. `imm` negative).
     fn stp_pre(&mut self, r1: Reg, r2: Reg, imm: i32);

@@ -16,20 +16,36 @@ pub const OUT_ADDR: u64 = 0x1_0000;
 pub const X_ADDR: u64 = 0x2_0000;
 pub const Y_ADDR: u64 = 0x3_0000;
 pub const CONSTS_ADDR: u64 = 0x4_0000;
+pub const X1_ADDR: u64 = 0x5_0000;
+pub const Y1_ADDR: u64 = 0x6_0000;
 const STACK_TOP: u64 = 0x8_0000;
 /// Recognizable poison for registers the ABI leaves undefined.
 const POISON: u64 = 0xdead_0000_dead_0000;
 
-const CALLEE_SAVED: [Reg; 5] = [Reg::X19, Reg::X20, Reg::X21, Reg::X22, Reg::X23];
+const CALLEE_SAVED: [Reg; 10] = [
+    Reg::X19,
+    Reg::X20,
+    Reg::X21,
+    Reg::X22,
+    Reg::X23,
+    Reg::X24,
+    Reg::X25,
+    Reg::X26,
+    Reg::X27,
+    Reg::X28,
+];
+
+/// One slot per [`Reg`] variant.
+const REGS: usize = 31;
 
 pub struct InterpA64 {
-    regs: [u64; 26],
+    regs: [u64; REGS],
     /// Registers holding a schedule-defined value. Callee-saved registers
     /// start undefined: spills may copy them, arithmetic may not read them.
-    defined: [bool; 26],
+    defined: [bool; REGS],
     carry: bool,
     mem: BTreeMap<u64, u64>,
-    entry_callee_saved: [(Reg, u64); 5],
+    entry_callee_saved: [(Reg, u64); CALLEE_SAVED.len()],
     returned: bool,
 }
 
@@ -37,8 +53,8 @@ impl InterpA64 {
     /// Set up an AAPCS64 call frame:
     /// `x0 = out`, `x1 = x`, `x2 = y`, `x3 = { p[4], -p^-1 }`.
     pub fn call_frame(x: [u64; 4], y: [u64; 4], p: [u64; 4], p_inv: u64) -> Self {
-        let mut regs = [0u64; 26];
-        let mut defined = [false; 26];
+        let mut regs = [0u64; REGS];
+        let mut defined = [false; REGS];
         for (index, value) in regs.iter_mut().enumerate() {
             *value = POISON | (index as u64) << 16;
         }
@@ -75,9 +91,46 @@ impl InterpA64 {
         }
     }
 
+    /// Set up an AAPCS64 call frame for the dual-lane sosd2 kernel:
+    /// `x0 = z` (8 limbs, lane0 then lane1), `x1 = x0`, `x2 = x1`, `x3 = y0`,
+    /// `x4 = y1`, `x5 = { p[4], -p^-1 }`.
+    pub fn sosd2_frame(
+        x0: [u64; 4],
+        x1: [u64; 4],
+        y0: [u64; 4],
+        y1: [u64; 4],
+        p: [u64; 4],
+        p_inv: u64,
+    ) -> Self {
+        let mut frame = Self::call_frame(x0, y0, p, p_inv);
+        for (reg, value) in [
+            (Reg::X2, X1_ADDR),
+            (Reg::X3, Y_ADDR),
+            (Reg::X4, Y1_ADDR),
+            (Reg::X5, CONSTS_ADDR),
+        ] {
+            frame.regs[reg.index()] = value;
+            frame.defined[reg.index()] = true;
+        }
+        for limb in 0..4 {
+            frame.mem.insert(X1_ADDR + 8 * limb as u64, x1[limb]);
+            frame.mem.insert(Y1_ADDR + 8 * limb as u64, y1[limb]);
+        }
+        frame
+    }
+
     pub fn output(&self) -> [u64; 4] {
         assert!(self.returned, "kernel did not return");
         core::array::from_fn(|limb| self.read_mem(OUT_ADDR + 8 * limb as u64))
+    }
+
+    /// Both output lanes of the sosd2 kernel: `z[0..4]` and `z[4..8]`.
+    pub fn output_lanes(&self) -> ([u64; 4], [u64; 4]) {
+        assert!(self.returned, "kernel did not return");
+        (
+            core::array::from_fn(|limb| self.read_mem(OUT_ADDR + 8 * limb as u64)),
+            core::array::from_fn(|limb| self.read_mem(OUT_ADDR + 32 + 8 * limb as u64)),
+        )
     }
 
     fn read_reg(&self, r: Reg) -> u64 {
@@ -127,8 +180,13 @@ impl InterpA64 {
 impl MachineA64 for InterpA64 {
     fn comment(&mut self, _text: &str) {}
 
+    fn claim_zero(&mut self, r: Reg, why: &str) {
+        assert_eq!(self.read_reg(r), 0, "claim broken, {r} is not zero: {why}");
+    }
+
     fn stp_pre(&mut self, r1: Reg, r2: Reg, imm: i32) {
-        assert!(imm < 0 && imm % 8 == 0, "pre-index spill only");
+        // AAPCS64 keeps sp 16-byte aligned at every instruction boundary.
+        assert!(imm < 0 && imm % 16 == 0, "pre-index spill only");
         // Reads the raw registers: spilling caller-owned callee-saved values
         // is exactly what the prologue does before they are "defined".
         let sp = self.regs[Reg::Sp.index()].wrapping_add(imm as u64);

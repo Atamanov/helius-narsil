@@ -62,6 +62,10 @@ impl MachineA64 for EmitterA64 {
         }
     }
 
+    fn claim_zero(&mut self, r: Reg, why: &str) {
+        self.lines.push(format!("    /* {r} == 0: {why} */"));
+    }
+
     fn stp_pre(&mut self, r1: Reg, r2: Reg, imm: i32) {
         self.instr(format!("stp {r1}, {r2}, [sp, #{imm}]!"), "");
     }
