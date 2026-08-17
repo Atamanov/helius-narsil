@@ -234,3 +234,95 @@ mod tests {
         }
     }
 }
+
+/// Paired A/B of the A64 leaf against the portable route. Both run in one
+/// process, alternating inside each sample, so they see the same core, the
+/// same clock and the same background load. The ratio survives noise that
+/// would swamp two separate absolute measurements. Run with
+/// `cargo test --release --features std --lib ab_sosd2 -- --ignored --nocapture`.
+#[cfg(all(test, narsil_a64_sosd2))]
+mod ab {
+    use super::sosd2;
+    use crate::fp::sos::sosd2_portable;
+    use core::hint::black_box;
+    use std::time::Instant;
+
+    fn residues(seed: u64, n: usize) -> Vec<[u64; 4]> {
+        let mut s = seed;
+        (0..n)
+            .map(|_| {
+                let mut r = [0u64; 4];
+                for w in &mut r {
+                    s ^= s << 13;
+                    s ^= s >> 7;
+                    s ^= s << 17;
+                    *w = s;
+                }
+                r[3] &= 0x0fff_ffff_ffff_ffff;
+                r
+            })
+            .collect()
+    }
+
+    #[test]
+    #[ignore]
+    fn ab_sosd2() {
+        let xs = residues(1, 256);
+        let ys = residues(2, 256);
+        let iters = 20_000usize;
+        let samples = 41usize;
+        let mut leaf = Vec::with_capacity(samples);
+        let mut port = Vec::with_capacity(samples);
+        // Warm both.
+        for i in 0..4096 {
+            let k = i & 255;
+            black_box(sosd2(&xs[k], &xs[k ^ 1], &ys[k], &ys[k ^ 1]));
+            black_box(sosd2_portable(&xs[k], &xs[k ^ 1], &ys[k], &ys[k ^ 1]));
+        }
+        for s in 0..samples {
+            // Alternate which goes first so drift cancels.
+            let order = if s % 2 == 0 { [0, 1] } else { [1, 0] };
+            for which in order {
+                let t = Instant::now();
+                if which == 0 {
+                    for i in 0..iters {
+                        let k = i & 255;
+                        black_box(sosd2(
+                            black_box(&xs[k]),
+                            black_box(&xs[k ^ 1]),
+                            black_box(&ys[k]),
+                            black_box(&ys[k ^ 1]),
+                        ));
+                    }
+                } else {
+                    for i in 0..iters {
+                        let k = i & 255;
+                        black_box(sosd2_portable(
+                            black_box(&xs[k]),
+                            black_box(&xs[k ^ 1]),
+                            black_box(&ys[k]),
+                            black_box(&ys[k ^ 1]),
+                        ));
+                    }
+                }
+                let ns = t.elapsed().as_nanos() as f64 / iters as f64;
+                if which == 0 {
+                    leaf.push(ns)
+                } else {
+                    port.push(ns)
+                }
+            }
+        }
+        leaf.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        port.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        let med = |v: &Vec<f64>| v[v.len() / 2];
+        let (l, p) = (med(&leaf), med(&port));
+        eprintln!("sosd2 leaf     median {:.2} ns  min {:.2}", l, leaf[0]);
+        eprintln!("sosd2 portable median {:.2} ns  min {:.2}", p, port[0]);
+        eprintln!(
+            "ratio leaf/portable  {:.3}   ({:+.1}%)",
+            l / p,
+            (l / p - 1.0) * 100.0
+        );
+    }
+}
