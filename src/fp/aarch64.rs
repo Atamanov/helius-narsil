@@ -238,7 +238,7 @@ pub(crate) fn cyclotomic_square(f: &[[u64; 4]; 12]) -> [[u64; 4]; 12] {
     unsafe {
         // SAFETY: `f` is twelve live four-limb residues and `staged` is a
         // local 48-limb block. The three calls write disjoint 16-limb
-        // quarters of it, so all 48 limbs are initialized before the fold
+        // thirds of it, so all 48 limbs are initialized before the fold
         // reads them, and the fold's output is a distinct local. No pointer
         // outlives its call.
         for (index, (a, b)) in [(0usize, 4usize), (3, 2), (1, 5)].into_iter().enumerate() {

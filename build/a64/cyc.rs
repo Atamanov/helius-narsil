@@ -33,7 +33,7 @@ use super::sos::{Banks, restore_callee_saved, spill_callee_saved};
 
 /// Register roles for `narsil_cyc_fp4`.
 pub const CYC_FP4_REGISTER_MAP: &[(Reg, &str)] = &[
-    (X0, "z: four result limbs sets, t_a lane0 first"),
+    (X0, "z: four result limb sets, t_a lane0 first"),
     (X1, "r0 pointer (two Fp halves)"),
     (X2, "r1 pointer"),
     (X3, "consts pointer, reread once per round for p"),
@@ -196,8 +196,8 @@ pub fn cyc_fp4<M: MachineA64>(m: &mut M) {
     prep(m);
     m.comment("");
     m.ldr(PINV, CONSTS, 32, "-p^-1 mod 2^64");
-    block_a(m);
-    block_b(m);
+    block(m, &BANKS_A, &ROWS_A, "t_a", 2, 0);
+    block(m, &BANKS_B, &ROWS_B, "t_b", 1, 64);
     m.comment("");
     restore_callee_saved(m, FP4_FRAME, SAVED_PAIRS);
 }
@@ -242,139 +242,186 @@ fn prep<M: MachineA64>(m: &mut M) {
     store4(m, PU, S_NINE1);
 }
 
-/// `t_a = r0^2 + xi*r1^2`, three rows per lane.
+/// One CIOS row: which lane it accumulates into, the register that carries
+/// its limb this round and its Montgomery factor next, the staged limb
+/// source, and where the four-limb multiplicand sits.
+struct Row {
+    lane: [Reg; 5],
+    scratch: Reg,
+    source: i32,
+    base: Reg,
+    offset: i32,
+    /// The two operand names, for the emitted column comments.
+    what: (&'static str, &'static str),
+}
+
+impl Row {
+    /// The first row of a lane writes the accumulator instead of adding to
+    /// it, so no lane pays a zeroing pass. `source_held` and `row_held` skip
+    /// a reload of a word an earlier row of the same round already placed.
+    fn emit<M: MachineA64>(
+        &self,
+        m: &mut M,
+        banks: &Banks,
+        limb: i32,
+        open: bool,
+        source_held: bool,
+        row_held: bool,
+    ) {
+        if !source_held {
+            m.ldr(self.scratch, Sp, slot(self.source) + limb, "source limb");
+        }
+        if !row_held {
+            banks.load_row(m, self.base, self.offset, "multiplicand limbs 0, 1");
+        }
+        let (multiplicand, source) = self.what;
+        if open {
+            banks.open(m, &self.lane, self.scratch, multiplicand, source);
+        } else {
+            banks.product(m, &self.lane, self.scratch, multiplicand, source, false);
+        }
+    }
+}
+
+/// `t_a = r0^2 + xi*r1^2`.
 ///
 /// Lane0 is `(p0+p1)(p0-p1) + 9(q0-q1)(q0+q1) + (2q0)(p-q1)`, which is
 /// `p0^2 - p1^2 + 9c - d` for `c = q0^2 - q1^2` and `d = 2*q0*q1`. Lane1 is
 /// `(2p0)p1 + (q0+q1)(q0-q1) + (9q1)(2q0)`, which is `2*p0*p1 + c + 9d`.
-fn block_a<M: MachineA64>(m: &mut M) {
-    for round in 0..4i32 {
-        let limb = 8 * round;
-        m.comment("");
-        m.comment(&format!("t_a round {round}"));
-        row(
-            m,
-            &BANKS_A,
-            LANE0,
-            VA,
-            S_SUM0,
-            limb,
-            Sp,
-            slot(M_DIF0),
-            round == 0,
-        );
-        row(m, &BANKS_A, LANE1, VB, S_DBL0, limb, R0P, 32, round == 0);
-        row(
-            m,
-            &BANKS_A,
-            LANE0,
-            VA,
-            S_NINE0,
-            limb,
-            Sp,
-            slot(M_SUM1),
-            false,
-        );
-        row(
-            m,
-            &BANKS_A,
-            LANE1,
-            VB,
-            S_SUM1,
-            limb,
-            Sp,
-            slot(M_DIF1),
-            false,
-        );
-        row(
-            m,
-            &BANKS_A,
-            LANE0,
-            VA,
-            S_DBLQ,
-            limb,
-            Sp,
-            slot(M_NEGQ),
-            false,
-        );
-        row(
-            m,
-            &BANKS_A,
-            LANE1,
-            VB,
-            S_NINE1,
-            limb,
-            Sp,
-            slot(M_DBLQ),
-            false,
-        );
-        m.comment("");
-        BANKS_A.load_row(m, CONSTS, 0, "p0, p1");
-        BANKS_A.reduce(m, &LANE0, VA, round == 3);
-        BANKS_A.reduce(m, &LANE1, VB, round == 3);
-    }
-    m.comment("");
-    m.comment("the row multiplicand still holds p, so the two conditional");
-    m.comment("subtractions need no reload");
-    BANKS_A.canonicalize(m, &LANE0, 2);
-    BANKS_A.store_lane(m, &LANE0, Z, 0);
-    BANKS_A.canonicalize(m, &LANE1, 2);
-    BANKS_A.store_lane(m, &LANE1, Z, 32);
-}
+const ROWS_A: [Row; 6] = [
+    Row {
+        lane: LANE0,
+        scratch: VA,
+        source: S_SUM0,
+        base: Sp,
+        offset: slot(M_DIF0),
+        what: ("dif0_", "sum0j"),
+    },
+    Row {
+        lane: LANE1,
+        scratch: VB,
+        source: S_DBL0,
+        base: R0P,
+        offset: 32,
+        what: ("p1_", "dbl0j"),
+    },
+    Row {
+        lane: LANE0,
+        scratch: VA,
+        source: S_NINE0,
+        base: Sp,
+        offset: slot(M_SUM1),
+        what: ("sum1_", "nine0j"),
+    },
+    Row {
+        lane: LANE1,
+        scratch: VB,
+        source: S_SUM1,
+        base: Sp,
+        offset: slot(M_DIF1),
+        what: ("dif1_", "sum1j"),
+    },
+    Row {
+        lane: LANE0,
+        scratch: VA,
+        source: S_DBLQ,
+        base: Sp,
+        offset: slot(M_NEGQ),
+        what: ("negq_", "dblqj"),
+    },
+    Row {
+        lane: LANE1,
+        scratch: VB,
+        source: S_NINE1,
+        base: Sp,
+        offset: slot(M_DBLQ),
+        what: ("dblq_", "nine1j"),
+    },
+];
 
-/// `t_b = 2*r0*r1`, the dual-lane Fp2 product with both sources doubled.
-fn block_b<M: MachineA64>(m: &mut M) {
-    for round in 0..4i32 {
-        let limb = 8 * round;
-        m.comment("");
-        m.comment(&format!("t_b round {round}"));
-        m.ldr(VA, Sp, slot(S_DBL0) + limb, "2*p0 limb");
-        m.ldr(VB, Sp, slot(S_DBL1) + limb, "2*p1 limb");
-        BANKS_B.load_row(m, R1P, 0, "q0 limbs 0, 1");
-        if round == 0 {
-            BANKS_B.open(m, &LANE0, VA, "q0_", "2p0j");
-            BANKS_B.open(m, &LANE1, VB, "q0_", "2p1j");
-        } else {
-            BANKS_B.product(m, &LANE0, VA, "q0_", "2p0j", false);
-            BANKS_B.product(m, &LANE1, VB, "q0_", "2p1j", false);
-        }
-        BANKS_B.load_row(m, Sp, slot(M_NEGQ), "p - q1, limbs 0, 1");
-        BANKS_B.product(m, &LANE0, VB, "nq1_", "2p1j", false);
-        BANKS_B.load_row(m, R1P, 32, "q1 limbs 0, 1");
-        BANKS_B.product(m, &LANE1, VA, "q1_", "2p0j", false);
-        m.comment("");
-        BANKS_B.load_row(m, CONSTS, 0, "p0, p1");
-        BANKS_B.reduce(m, &LANE0, VA, round == 3);
-        BANKS_B.reduce(m, &LANE1, VB, round == 3);
-    }
-    m.comment("");
-    BANKS_B.canonicalize(m, &LANE0, 1);
-    BANKS_B.store_lane(m, &LANE0, Z, 64);
-    BANKS_B.canonicalize(m, &LANE1, 1);
-    BANKS_B.store_lane(m, &LANE1, Z, 96);
-}
+/// `t_b = 2*r0*r1`: the dual-lane Fp2 product with both sources doubled.
+/// `p - q1` carries the subtracted lane0 term as a positive one.
+const ROWS_B: [Row; 4] = [
+    Row {
+        lane: LANE0,
+        scratch: VA,
+        source: S_DBL0,
+        base: R1P,
+        offset: 0,
+        what: ("q0_", "dbl0j"),
+    },
+    Row {
+        lane: LANE1,
+        scratch: VB,
+        source: S_DBL1,
+        base: R1P,
+        offset: 0,
+        what: ("q0_", "dbl1j"),
+    },
+    Row {
+        lane: LANE0,
+        scratch: VB,
+        source: S_DBL1,
+        base: Sp,
+        offset: slot(M_NEGQ),
+        what: ("negq_", "dbl1j"),
+    },
+    Row {
+        lane: LANE1,
+        scratch: VA,
+        source: S_DBL0,
+        base: R1P,
+        offset: 32,
+        what: ("q1_", "dbl0j"),
+    },
+];
 
-/// One CIOS row: load this round's limb of the source, load the four-limb
-/// multiplicand, then open or accumulate the lane.
-#[allow(clippy::too_many_arguments)]
-fn row<M: MachineA64>(
+/// Four dual-lane CIOS rounds over one row plan, then the canonical store.
+/// The two lanes alternate row by row, so both carry recurrences stay in
+/// flight through the whole block.
+fn block<M: MachineA64>(
     m: &mut M,
     banks: &Banks,
-    acc: [Reg; 5],
-    v: Reg,
-    source: i32,
-    limb: i32,
-    base: Reg,
-    offset: i32,
-    open: bool,
+    rows: &[Row],
+    name: &str,
+    subtractions: usize,
+    output: i32,
 ) {
-    m.ldr(v, Sp, slot(source) + limb, "source limb");
-    banks.load_row(m, base, offset, "multiplicand limbs 0, 1");
-    if open {
-        banks.open(m, &acc, v, "w", "src");
-    } else {
-        banks.product(m, &acc, v, "w", "src", false);
+    for round in 0..4i32 {
+        m.comment("");
+        m.comment(&format!("{name} round {round}"));
+        for (index, row) in rows.iter().enumerate() {
+            // Each row writes only its own scratch, so the previous row on
+            // the same scratch decides whether the source word is still live.
+            let source_held = rows[..index]
+                .iter()
+                .rev()
+                .find(|earlier| earlier.scratch == row.scratch)
+                .is_some_and(|earlier| earlier.source == row.source);
+            let row_held = index > 0
+                && rows[index - 1].base == row.base
+                && rows[index - 1].offset == row.offset;
+            row.emit(
+                m,
+                banks,
+                8 * round,
+                round < 1 && index < 2,
+                source_held,
+                row_held,
+            );
+        }
+        m.comment("");
+        banks.load_row(m, CONSTS, 0, "p0, p1");
+        banks.reduce(m, &LANE0, VA, round == 3);
+        banks.reduce(m, &LANE1, VB, round == 3);
     }
+    m.comment("");
+    m.comment("the row multiplicand still holds p, so the conditional");
+    m.comment("subtractions need no reload");
+    banks.canonicalize(m, &LANE0, subtractions);
+    banks.store_lane(m, &LANE0, Z, output);
+    banks.canonicalize(m, &LANE1, subtractions);
+    banks.store_lane(m, &LANE1, Z, output + 32);
 }
 
 // ---------------------------------------------------------------- fold leaf
