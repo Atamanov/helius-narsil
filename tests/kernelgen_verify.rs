@@ -2233,7 +2233,19 @@ fn rendered_files_are_deterministic_and_sized() {
     // The frame carries the spilled callee-saved pairs (one STP and one LDP
     // each) and one `p - y` image per product (2 STP each, reread once per
     // round). A spilled accumulator word would show up here as a larger count.
+    // The two fused cyclotomic leaves. cyc_fp4 issues 4 rounds x (6 product
+    // rows + 2 reduction rows) x 4 limbs x two multiply forms, plus the eight
+    // Montgomery factors. Its frame contract is the five spilled pairs, the
+    // twelve staged operands (two STP each), and per round six source words
+    // and five staged multiplicands for t_a and two source words and one
+    // staged multiplicand for t_b. cyc_fold stages only xi*t5.
     for (symbol, products, stack) in [
+        (
+            kernelgen::a64::render::CYC_FP4_SYMBOL,
+            464,
+            10 + 24 + 4 * 16 + 4 * 4,
+        ),
+        (kernelgen::a64::render::CYC_FOLD_SYMBOL, 0, 10 + 4 + 4),
         (kernelgen::a64::render::SOSD2_SYMBOL, 200, 10 + 2 + 4 * 2),
         (
             kernelgen::a64::render::SOSD4_SYMBOL,

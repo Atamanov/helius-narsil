@@ -310,6 +310,17 @@ impl Fp12 {
 
     /// SoS Fp4 square. For `(r0 + r1*y)^2` with `y^2 = xi`,
     /// `t0 = r0^2 + xir1^2 = r0*r0 + (xir1)*r1`, `t1 = 2r0r1 = (2r0)*r1`.
+    #[cfg(any(
+        test,
+        not(any(
+            all(
+                narsil_mont4_x86_64_adx,
+                narsil_cyc_sqr_asm,
+                not(feature = "force-portable")
+            ),
+            narsil_a64_cyc
+        ))
+    ))]
     #[inline(always)]
     fn fp4_square_sos(r0: Fp2, r1: Fp2) -> (Fp2, Fp2) {
         // Whole-op leaf (NARSIL_FP4_SQR_ASM=1): same math as the composed
@@ -369,6 +380,7 @@ impl Fp12 {
     /// of two products and one dual-lane product, so both output chains are
     /// in flight together instead of four single-lane chains in sequence.
     #[cfg(not(target_arch = "x86_64"))]
+    #[cfg(any(test, not(narsil_a64_cyc)))]
     pub(crate) fn fp4_square_sos_composed(r0: Fp2, r1: Fp2) -> (Fp2, Fp2) {
         use crate::fp::sos::{sosd2, sosd4};
         let x = r1.mul_by_nonresidue();
@@ -401,10 +413,25 @@ impl Fp12 {
             crate::fp::x86_64::cyc_sqr_assign(&mut out);
             out
         }
-        #[cfg(not(all(
-            narsil_mont4_x86_64_adx,
-            narsil_cyc_sqr_asm,
-            not(feature = "force-portable")
+        // Fused A64 leaves (NARSIL_A64_CYC=1): three Fp4 squares with lazy
+        // in-leaf prep, then one combine leaf. Same value as the composed
+        // path below, which stays the reference.
+        #[cfg(narsil_a64_cyc)]
+        {
+            let out = crate::fp::aarch64::cyclotomic_square(crate::abi::fp12_components(&self));
+            let half = |index: usize| Fp2::new(Fp(out[2 * index]), Fp(out[2 * index + 1]));
+            Self {
+                c0: Fp6::new(half(0), half(1), half(2)),
+                c1: Fp6::new(half(3), half(4), half(5)),
+            }
+        }
+        #[cfg(not(any(
+            all(
+                narsil_mont4_x86_64_adx,
+                narsil_cyc_sqr_asm,
+                not(feature = "force-portable")
+            ),
+            narsil_a64_cyc
         )))]
         {
             self.cyclotomic_square_composed()
@@ -417,10 +444,13 @@ impl Fp12 {
     /// products + 12 reductions.
     #[cfg(any(
         test,
-        not(all(
-            narsil_mont4_x86_64_adx,
-            narsil_cyc_sqr_asm,
-            not(feature = "force-portable")
+        not(any(
+            all(
+                narsil_mont4_x86_64_adx,
+                narsil_cyc_sqr_asm,
+                not(feature = "force-portable")
+            ),
+            narsil_a64_cyc
         ))
     ))]
     #[inline(always)]

@@ -150,6 +150,7 @@ fn main() {
     println!("cargo::rustc-check-cfg=cfg(narsil_a64_sosd4)");
     println!("cargo::rustc-check-cfg=cfg(narsil_a64_sosd6)");
     println!("cargo::rustc-check-cfg=cfg(narsil_a64_addsub)");
+    println!("cargo::rustc-check-cfg=cfg(narsil_a64_cyc)");
     println!("cargo::rustc-check-cfg=cfg(narsil_x86_intel)");
     println!("cargo::rustc-check-cfg=cfg(narsil_avx512_ifma)");
     println!("cargo::rustc-check-cfg=cfg(narsil_x86_runtime_ifma)");
@@ -174,6 +175,7 @@ fn main() {
     println!("cargo:rerun-if-env-changed=NARSIL_A64_SOSD4");
     println!("cargo:rerun-if-env-changed=NARSIL_A64_SOSD6");
     println!("cargo:rerun-if-env-changed=NARSIL_A64_ADDSUB");
+    println!("cargo:rerun-if-env-changed=NARSIL_A64_CYC");
     println!("cargo:rerun-if-env-changed=NARSIL_AVX512_IFMA");
     println!("cargo:rerun-if-env-changed=NARSIL_SOSD2_ASM");
     println!("cargo:rerun-if-env-changed=NARSIL_SOSD2_SMALL");
@@ -362,6 +364,9 @@ fn main() {
         }
         if a64_leaf_enabled("NARSIL_A64_SOSD6") {
             println!("cargo:rustc-cfg=narsil_a64_sosd6");
+        }
+        if a64_leaf_enabled("NARSIL_A64_CYC") {
+            println!("cargo:rustc-cfg=narsil_a64_cyc");
         }
         // The folds sit on a dependent chain between multiplies, so they are
         // rendered inline: through a call boundary the operands would round

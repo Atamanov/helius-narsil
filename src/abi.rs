@@ -1,5 +1,7 @@
 //! Private views used by assembly and FFI adapters.
 
+#[cfg(narsil_a64_cyc)]
+use crate::Fp12;
 #[cfg(narsil_mont4_x86_64_adx)]
 use crate::{Fp2, Fp6, Fp12};
 
@@ -11,9 +13,9 @@ const _: () = assert!(core::mem::align_of::<Fp2>() == core::mem::align_of::<[[u6
 const _: () = assert!(core::mem::size_of::<Fp6>() == core::mem::size_of::<[[u64; 4]; 6]>());
 #[cfg(narsil_mont4_x86_64_adx)]
 const _: () = assert!(core::mem::align_of::<Fp6>() == core::mem::align_of::<[[u64; 4]; 6]>());
-#[cfg(narsil_mont4_x86_64_adx)]
+#[cfg(any(narsil_mont4_x86_64_adx, narsil_a64_cyc))]
 const _: () = assert!(core::mem::size_of::<Fp12>() == core::mem::size_of::<[[u64; 4]; 12]>());
-#[cfg(narsil_mont4_x86_64_adx)]
+#[cfg(any(narsil_mont4_x86_64_adx, narsil_a64_cyc))]
 const _: () = assert!(core::mem::align_of::<Fp12>() == core::mem::align_of::<[[u64; 4]; 12]>());
 #[cfg(narsil_mont4_x86_64_adx)]
 const _: () = assert!(core::mem::size_of::<[Fp2; 3]>() == core::mem::size_of::<[[u64; 4]; 6]>());
@@ -32,7 +34,7 @@ pub(crate) fn fp6_components(value: &Fp6) -> &[[u64; 4]; 6] {
     unsafe { &*(core::ptr::from_ref(value).cast()) }
 }
 
-#[cfg(narsil_mont4_x86_64_adx)]
+#[cfg(any(narsil_mont4_x86_64_adx, narsil_a64_cyc))]
 #[inline]
 pub(crate) fn fp12_components(value: &Fp12) -> &[[u64; 4]; 12] {
     // SAFETY: the repr(C) tower has the asserted contiguous size and alignment.
@@ -83,6 +85,22 @@ unsafe extern "C" {
     pub(crate) fn narsil_sosd6(
         z: *mut u64,
         table: *const *const u64,
+        constants: *const crate::fp::aarch64::Mont4Constants,
+    );
+
+    #[cfg(narsil_a64_cyc)]
+    pub(crate) fn narsil_cyc_fp4(
+        z: *mut u64,
+        r0: *const u64,
+        r1: *const u64,
+        constants: *const crate::fp::aarch64::Mont4Constants,
+    );
+
+    #[cfg(narsil_a64_cyc)]
+    pub(crate) fn narsil_cyc_fold(
+        z: *mut u64,
+        t: *const u64,
+        f: *const u64,
         constants: *const crate::fp::aarch64::Mont4Constants,
     );
 

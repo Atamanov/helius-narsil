@@ -9,6 +9,8 @@ use crate::abi::narsil_sosd4;
 use crate::abi::narsil_sosd6;
 #[cfg(all(test, narsil_a64_addsub))]
 use crate::abi::{narsil_add_mod, narsil_sub_mod};
+#[cfg(narsil_a64_cyc)]
+use crate::abi::{narsil_cyc_fold, narsil_cyc_fp4};
 use crate::fp::Fp;
 #[cfg(any(narsil_a64_sosd4, narsil_a64_sosd6))]
 use crate::fp::sos::Fp2Product;
@@ -211,6 +213,52 @@ pub(crate) fn sosd6(products: [Fp2Product<'_>; 3]) -> ([u64; 4], [u64; 4]) {
     }
 }
 
+/// The Granger-Scott cyclotomic square of a repr(C) Fp12, through the two
+/// fused leaves: three Fp4 squares, then the six combines.
+///
+/// Kernel contract: `f` is a readable, 8-byte-aligned block of twelve Fp
+/// values, each a residue below the BN254 base modulus (both leaves stage
+/// `p - y` images, which needs `y <= p`, and the row bounds rest on the
+/// multiplicands being at most p). The wrapper supplies distinct, live and
+/// aligned output and intermediate blocks and an immutable constant table.
+/// Each leaf initializes every output limb it names, returns fully reduced
+/// residues, saves every callee-saved register it uses, keeps the 16-byte
+/// stack alignment, and neither calls Rust nor unwinds. The Fp4 pairs are
+/// `(r0, r1)`, `(r2, r3)`, `(r4, r5)`, which sit at repr(C) Fp2 indices
+/// `(0, 4)`, `(3, 2)` and `(1, 5)`.
+#[cfg(narsil_a64_cyc)]
+#[inline(never)]
+pub(crate) fn cyclotomic_square(f: &[[u64; 4]; 12]) -> [[u64; 4]; 12] {
+    for value in f {
+        debug_assert!(!crate::limb::gte(value, &crate::consts::P));
+    }
+    let mut t = core::mem::MaybeUninit::<[u64; 48]>::uninit();
+    let mut z = core::mem::MaybeUninit::<[[u64; 4]; 12]>::uninit();
+    let staged = t.as_mut_ptr().cast::<u64>();
+    unsafe {
+        // SAFETY: `f` is twelve live four-limb residues and `staged` is a
+        // local 48-limb block. The three calls write disjoint 16-limb
+        // quarters of it, so all 48 limbs are initialized before the fold
+        // reads them, and the fold's output is a distinct local. No pointer
+        // outlives its call.
+        for (index, (a, b)) in [(0usize, 4usize), (3, 2), (1, 5)].into_iter().enumerate() {
+            narsil_cyc_fp4(
+                staged.add(16 * index),
+                f[2 * a].as_ptr(),
+                f[2 * b].as_ptr(),
+                &MONT4_CONSTANTS,
+            );
+        }
+        narsil_cyc_fold(
+            z.as_mut_ptr().cast::<u64>(),
+            staged,
+            f.as_ptr().cast::<u64>(),
+            &MONT4_CONSTANTS,
+        );
+        z.assume_init()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use alloc::vec;
@@ -278,6 +326,54 @@ mod tests {
                     "multiply case {index}/{other_index}",
                 );
             }
+        }
+    }
+
+    /// Both fused cyclotomic leaves on silicon, against the composed route.
+    /// The interpreter proves the schedules' algebra; this proves the
+    /// assembler, the ABI and the callee-saved contract. Granger-Scott needs
+    /// a cyclotomic-subgroup input for the result to be `f^2`, but both
+    /// routes evaluate the same formula on any canonical Fp12, so the corpus
+    /// stays unrestricted.
+    #[cfg(narsil_a64_cyc)]
+    #[test]
+    fn cyclotomic_square_leaves_match_the_composed_route() {
+        use crate::fp2::Fp2;
+        use crate::fp6::Fp6;
+        use crate::fp12::Fp12;
+
+        let fp12_of = |limbs: &[[u64; 4]; 12]| {
+            let half = |index: usize| Fp2::new(Fp(limbs[2 * index]), Fp(limbs[2 * index + 1]));
+            Fp12::new(
+                Fp6::new(half(0), half(1), half(2)),
+                Fp6::new(half(3), half(4), half(5)),
+            )
+        };
+        let cases = residue_corpus(0x6379_635f_7369_6c69, 16);
+        let p_minus_one = limb::sub_noborrow(&P, &[1, 0, 0, 0]);
+        for background in [p_minus_one, [0; 4]] {
+            for slot in 0..12 {
+                for (index, value) in cases.iter().enumerate() {
+                    let mut limbs = [background; 12];
+                    limbs[slot] = *value;
+                    let f = fp12_of(&limbs);
+                    assert_eq!(
+                        f.cyclotomic_square(),
+                        f.cyclotomic_square_composed(),
+                        "slot {slot}, case {index}",
+                    );
+                }
+            }
+        }
+        let mut state = 0x6379_635f_7261_6e64;
+        for case in 0..100_000 {
+            let limbs = core::array::from_fn(|_| next_residue(&mut state));
+            let f = fp12_of(&limbs);
+            assert_eq!(
+                f.cyclotomic_square(),
+                f.cyclotomic_square_composed(),
+                "case {case}",
+            );
         }
     }
 
@@ -590,7 +686,8 @@ mod tests {
         narsil_a64_sosd2,
         narsil_a64_sosd4,
         narsil_a64_sosd6,
-        narsil_a64_addsub
+        narsil_a64_addsub,
+        narsil_a64_cyc
     )
 ))]
 mod ab {
@@ -600,6 +697,8 @@ mod ab {
     use super::sosd4;
     #[cfg(narsil_a64_sosd6)]
     use super::sosd6;
+    #[cfg(narsil_a64_cyc)]
+    use crate::fp::Fp;
     #[cfg(any(narsil_a64_sosd4, narsil_a64_sosd6))]
     use crate::fp::sos::Fp2Product;
     #[cfg(narsil_a64_sosd2)]
@@ -745,6 +844,64 @@ mod ab {
             &mut leaf_free,
             &mut port_free,
         );
+    }
+
+    /// The fused leaves against the composed route, alternating so drift
+    /// cancels. Each sample squares a fresh element, so the loop measures the
+    /// call the final exponentiation waits on, not a cached one.
+    #[cfg(narsil_a64_cyc)]
+    #[test]
+    #[ignore]
+    fn ab_cyc_sqr() {
+        use crate::fp2::Fp2;
+        use crate::fp6::Fp6;
+        use crate::fp12::Fp12;
+
+        let pool = residues(0x6379_6362_656e_6368, 256 * 12);
+        let cases: Vec<Fp12> = (0..256)
+            .map(|k| {
+                let half = |index: usize| {
+                    Fp2::new(
+                        Fp(pool[12 * k + 2 * index]),
+                        Fp(pool[12 * k + 2 * index + 1]),
+                    )
+                };
+                Fp12::new(
+                    Fp6::new(half(0), half(1), half(2)),
+                    Fp6::new(half(3), half(4), half(5)),
+                )
+            })
+            .collect();
+        let iters = 10_000usize;
+        let samples = 41usize;
+        let mut leaf = Vec::with_capacity(samples);
+        let mut port = Vec::with_capacity(samples);
+        for i in 0..4096 {
+            black_box(cases[i & 255].cyclotomic_square());
+            black_box(cases[i & 255].cyclotomic_square_composed());
+        }
+        for s in 0..samples {
+            let order = if s % 2 == 0 { [0, 1] } else { [1, 0] };
+            for which in order {
+                let t = Instant::now();
+                if which == 0 {
+                    for i in 0..iters {
+                        black_box(black_box(cases[i & 255]).cyclotomic_square());
+                    }
+                } else {
+                    for i in 0..iters {
+                        black_box(black_box(cases[i & 255]).cyclotomic_square_composed());
+                    }
+                }
+                let ns = t.elapsed().as_nanos() as f64 / iters as f64;
+                if which == 0 {
+                    leaf.push(ns)
+                } else {
+                    port.push(ns)
+                }
+            }
+        }
+        report("cyc_sqr", &mut leaf, &mut port);
     }
 
     #[cfg(narsil_a64_sosd2)]
