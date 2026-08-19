@@ -166,6 +166,50 @@ impl InterpA64 {
         frame
     }
 
+    /// Set up an AAPCS64 call frame for the fused Fp4 square:
+    /// `x0 = z` (four limb sets), `x1 = r0`, `x2 = r1`,
+    /// `x3 = { p[4], -p^-1 }`. Both operands are two canonical Fp halves.
+    pub fn fp4_frame(r0: &[[u64; 4]; 2], r1: &[[u64; 4]; 2], p: [u64; 4], p_inv: u64) -> Self {
+        let mut frame = Self::base(p, p_inv);
+        frame.pointer(Reg::X1, X_ADDR);
+        frame.pointer(Reg::X2, Y_ADDR);
+        frame.pointer(Reg::X3, CONSTS_ADDR);
+        for (half, value) in r0.iter().enumerate() {
+            frame.operand(X_ADDR + 32 * half as u64, *value);
+        }
+        for (half, value) in r1.iter().enumerate() {
+            frame.operand(Y_ADDR + 32 * half as u64, *value);
+        }
+        frame
+    }
+
+    /// Set up an AAPCS64 call frame for the Granger-Scott combines:
+    /// `x0 = z` (twelve limb sets), `x1 = t`, `x2 = f`,
+    /// `x3 = { p[4], -p^-1 }`.
+    pub fn fold_frame(t: &[[u64; 4]; 12], f: &[[u64; 4]; 12], p: [u64; 4], p_inv: u64) -> Self {
+        let mut frame = Self::base(p, p_inv);
+        frame.pointer(Reg::X1, X_ADDR);
+        frame.pointer(Reg::X2, Y_ADDR);
+        frame.pointer(Reg::X3, CONSTS_ADDR);
+        for (index, value) in t.iter().enumerate() {
+            frame.operand(X_ADDR + 32 * index as u64, *value);
+        }
+        for (index, value) in f.iter().enumerate() {
+            frame.operand(Y_ADDR + 32 * index as u64, *value);
+        }
+        frame
+    }
+
+    /// `count` consecutive four-limb results at the output pointer.
+    pub fn output_values<const N: usize>(&self) -> [[u64; 4]; N] {
+        assert!(self.returned, "kernel did not return");
+        core::array::from_fn(|index| {
+            core::array::from_fn(|limb| {
+                self.read_mem(OUT_ADDR + 32 * index as u64 + 8 * limb as u64)
+            })
+        })
+    }
+
     pub fn output(&self) -> [u64; 4] {
         assert!(self.returned, "kernel did not return");
         core::array::from_fn(|limb| self.read_mem(OUT_ADDR + 8 * limb as u64))

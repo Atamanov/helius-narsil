@@ -153,28 +153,38 @@ pub const SOSD6_REGISTER_MAP: &[(Reg, &str)] = &[
 
 /// The banks every dual-lane row works through, plus the reduction constant.
 /// Both kernels drive the same row primitives through this one description.
-struct Banks {
+pub(super) struct Banks {
     /// Column words of the current row.
-    s: [Reg; 5],
+    pub(super) s: [Reg; 5],
     /// The four limbs of the current row multiplicand.
-    w: [Reg; 4],
+    pub(super) w: [Reg; 4],
     /// `-p^-1 mod 2^64`, on the critical path from word 0 to the factor.
-    pinv: Reg,
+    pub(super) pinv: Reg,
     /// Products T summed into one lane. Every accumulator bound the rows
     /// claim is a multiple of `(T+1)p`.
-    terms: u32,
+    pub(super) terms: u32,
+    /// The bound the lane reaches after the last round, which decides how
+    /// many conditional subtractions [`Banks::canonicalize`] must run.
+    pub(super) result: &'static str,
 }
 
 impl Banks {
     /// Load the four limbs of the next row multiplicand.
-    fn load_row<M: MachineA64>(&self, m: &mut M, base: Reg, offset: i32, what: &str) {
+    pub(super) fn load_row<M: MachineA64>(&self, m: &mut M, base: Reg, offset: i32, what: &str) {
         m.ldp(self.w[0], self.w[1], base, offset, what);
         m.ldp(self.w[2], self.w[3], base, offset + 16, "");
     }
 
     /// `acc = v * W`: the first row of a lane writes the accumulator instead
     /// of adding to it, so no lane pays a zeroing pass or an accumulate chain.
-    fn open<M: MachineA64>(&self, m: &mut M, acc: &[Reg], v: Reg, limb: &str, factor: &str) {
+    pub(super) fn open<M: MachineA64>(
+        &self,
+        m: &mut M,
+        acc: &[Reg],
+        v: Reg,
+        limb: &str,
+        factor: &str,
+    ) {
         let columns = [acc[0], acc[1], acc[2], acc[3], acc[4]];
         column_products(m, columns, v, self.w, limb, factor);
     }
@@ -183,7 +193,7 @@ impl Banks {
     /// opens the top word from the chain carry: only the row that can push
     /// the accumulator past 2^320 pays for it, and the ADC on every other row
     /// is what the interpreter checks that claim against.
-    fn product<M: MachineA64>(
+    pub(super) fn product<M: MachineA64>(
         &self,
         m: &mut M,
         acc: &[Reg],
@@ -207,7 +217,7 @@ impl Banks {
 
     /// `acc = (acc + m*p) / 2^64` with `m = acc0 * -p^-1`. W holds p. `last`
     /// drops the carry word the next round would have consumed.
-    fn reduce<M: MachineA64>(&self, m: &mut M, acc: &[Reg], factor: Reg, last: bool) {
+    pub(super) fn reduce<M: MachineA64>(&self, m: &mut M, acc: &[Reg], factor: Reg, last: bool) {
         m.mul(
             factor,
             self.pinv,
@@ -229,12 +239,7 @@ impl Banks {
         m.adcs(acc[1], acc[2], self.s[2], "");
         m.adcs(acc[2], acc[3], self.s[3], "");
         match (acc.get(5), last) {
-            (None, true) => m.adc(
-                acc[3],
-                acc[4],
-                self.s[4],
-                "after four rounds u < 2p < 2^256",
-            ),
+            (None, true) => m.adc(acc[3], acc[4], self.s[4], self.result),
             (None, false) => {
                 m.adcs(acc[3], acc[4], self.s[4], "");
                 m.cset_hs(acc[4], "");
@@ -257,7 +262,7 @@ impl Banks {
 
     /// Branch-free conditional subtractions. W holds p. One reaches [0, p)
     /// from below 2p, two from below 3p.
-    fn canonicalize<M: MachineA64>(&self, m: &mut M, acc: &[Reg], subtractions: usize) {
+    pub(super) fn canonicalize<M: MachineA64>(&self, m: &mut M, acc: &[Reg], subtractions: usize) {
         for _ in 0..subtractions {
             m.subs(self.s[0], acc[0], self.w[0], "word 0 of u - p");
             m.sbcs(self.s[1], acc[1], self.w[1], "");
@@ -271,7 +276,7 @@ impl Banks {
     }
 
     /// The four canonical limbs of one lane.
-    fn store_lane<M: MachineA64>(&self, m: &mut M, acc: &[Reg], z: Reg, offset: i32) {
+    pub(super) fn store_lane<M: MachineA64>(&self, m: &mut M, acc: &[Reg], z: Reg, offset: i32) {
         m.stp(acc[0], acc[1], z, offset, "");
         m.stp(acc[2], acc[3], z, offset + 16, "");
     }
@@ -279,16 +284,17 @@ impl Banks {
 
 /// The callee-saved registers, paired for `stp`. A kernel spills the first
 /// `pairs` of them and allocates out of exactly that prefix.
-const SAVED: [(Reg, Reg); 5] = [(X19, X20), (X21, X22), (X23, X24), (X25, X26), (X27, X28)];
+pub(super) const SAVED: [(Reg, Reg); 5] =
+    [(X19, X20), (X21, X22), (X23, X24), (X25, X26), (X27, X28)];
 
-fn spill_callee_saved<M: MachineA64>(m: &mut M, frame: i32, pairs: usize) {
+pub(super) fn spill_callee_saved<M: MachineA64>(m: &mut M, frame: i32, pairs: usize) {
     m.stp_pre(SAVED[0].0, SAVED[0].1, -frame);
     for (index, (low, high)) in SAVED[1..pairs].iter().enumerate() {
         m.stp(*low, *high, Sp, 16 * (index as i32 + 1), "");
     }
 }
 
-fn restore_callee_saved<M: MachineA64>(m: &mut M, frame: i32, pairs: usize) {
+pub(super) fn restore_callee_saved<M: MachineA64>(m: &mut M, frame: i32, pairs: usize) {
     for (index, (low, high)) in SAVED[1..pairs].iter().enumerate() {
         m.ldp(*low, *high, Sp, 16 * (index as i32 + 1), "");
     }
@@ -305,6 +311,7 @@ const BANKS2: Banks = Banks {
     w: [X24, X25, X26, X27],
     pinv: X6,
     terms: 2,
+    result: "after four rounds u < 1.38p < 2^256",
 };
 const Z2: Reg = X0;
 const X0P: Reg = X1;
@@ -492,6 +499,7 @@ const SOSD4: TableKernel = TableKernel {
         w: [X23, X24, X25, X26],
         pinv: X3,
         terms: 4,
+        result: "after four rounds u < 1.76p < 2^256",
     },
     t: &T4,
     u: &U4,
@@ -507,6 +515,7 @@ const SOSD6: TableKernel = TableKernel {
         w: [X25, X26, X27, X28],
         pinv: X3,
         terms: 6,
+        result: "unused: the six-word lane takes the top-word path",
     },
     t: &T6,
     u: &U6,
@@ -527,7 +536,7 @@ pub fn sosd6<M: MachineA64>(m: &mut M) {
 }
 
 /// `W = p - S`, stored to the frame. W holds p and S holds the subtrahend.
-fn negp_image<M: MachineA64>(m: &mut M, banks: &Banks, offset: i32, what: &str) {
+pub(super) fn negp_image<M: MachineA64>(m: &mut M, banks: &Banks, offset: i32, what: &str) {
     m.subs(
         banks.w[0],
         banks.w[0],

@@ -7,10 +7,11 @@ mod kernelgen;
 
 use kernelgen::{
     BN254_MU, BN254_P, BN254_P_INV, interpret_add_mod_a64, interpret_add_mod_inline_a64,
-    interpret_f2mul, interpret_f2sqr, interpret_g2_ysqr, interpret_mont4_a64, interpret_mont4_mul,
-    interpret_mont4_mulpre, interpret_mont4_redc, interpret_mont4_sqr, interpret_sos,
-    interpret_sosd2_a64, interpret_sosd2_small, interpret_sosd4_a64, interpret_sosd6_a64,
-    interpret_sub_mod_a64, interpret_sub_mod_inline_a64,
+    interpret_cyc_fold_a64, interpret_cyc_fp4_a64, interpret_f2mul, interpret_f2sqr,
+    interpret_g2_ysqr, interpret_mont4_a64, interpret_mont4_mul, interpret_mont4_mulpre,
+    interpret_mont4_redc, interpret_mont4_sqr, interpret_sos, interpret_sosd2_a64,
+    interpret_sosd2_small, interpret_sosd4_a64, interpret_sosd6_a64, interpret_sub_mod_a64,
+    interpret_sub_mod_inline_a64,
 };
 
 /// Independent CIOS Montgomery multiplication oracle (word-by-word, u128).
@@ -2310,4 +2311,159 @@ fn runtime_ifma_follows_the_base_target_and_the_override() {
     assert_eq!(runtime_ifma_enabled(Some("1"), false), Some(true));
     assert_eq!(runtime_ifma_enabled(Some("0"), true), Some(false));
     assert_eq!(runtime_ifma_enabled(Some("yes"), true), None);
+}
+
+/// The two Fp halves at index `i` of a limb block, as a tower element.
+fn fp2_at(block: &[[u64; 4]], index: usize) -> helius_narsil::Fp2 {
+    use helius_narsil::{Fp, Fp2};
+    Fp2 {
+        c0: Fp::from_raw_unchecked(block[2 * index]),
+        c1: Fp::from_raw_unchecked(block[2 * index + 1]),
+    }
+}
+
+fn fp2_limbs<const N: usize>(values: [helius_narsil::Fp2; N]) -> Vec<[u64; 4]> {
+    values
+        .iter()
+        .flat_map(|value| [value.c0.mont_limbs(), value.c1.mont_limbs()])
+        .collect()
+}
+
+/// `(r0 + r1*y)^2` over `Fp4 = Fp2[y]/(y^2 - (9+u))` from the tower algebra,
+/// drawn with multiplies rather than squares so it shares no identity with
+/// the leaf's complex-method rows.
+fn reference_cyc_fp4(r0: &[[u64; 4]; 2], r1: &[[u64; 4]; 2]) -> [[u64; 4]; 4] {
+    let a = fp2_at(r0, 0);
+    let b = fp2_at(r1, 0);
+    let t_a = a * a + (b * b).mul_by_nonresidue();
+    let t_b = a * b + a * b;
+    [
+        t_a.c0.mont_limbs(),
+        t_a.c1.mont_limbs(),
+        t_b.c0.mont_limbs(),
+        t_b.c1.mont_limbs(),
+    ]
+}
+
+/// The six Granger-Scott combines from the tower algebra. `t` is t0..t5 in
+/// Fp4-pair order, `f` and the result are repr(C) Fp12.
+fn reference_cyc_fold(t: &[[u64; 4]; 12], f: &[[u64; 4]; 12]) -> Vec<[u64; 4]> {
+    use helius_narsil::Fp2;
+    let tv: [Fp2; 6] = core::array::from_fn(|i| fp2_at(t, i));
+    let [r0, r4, r3, r2, r1, r5]: [Fp2; 6] = core::array::from_fn(|i| fp2_at(f, i));
+    let three = |x: Fp2| x + x + x;
+    let two = |x: Fp2| x + x;
+    fp2_limbs([
+        three(tv[0]) - two(r0),
+        three(tv[2]) - two(r4),
+        three(tv[4]) - two(r3),
+        three(tv[5].mul_by_nonresidue()) + two(r2),
+        three(tv[1]) + two(r1),
+        three(tv[3]) + two(r5),
+    ])
+}
+
+/// The whole Granger-Scott square, straight from the tower: three Fp4
+/// squares over the (r0, r1), (r2, r3), (r4, r5) pairs, then the combines.
+fn reference_cyclotomic(f: &[[u64; 4]; 12]) -> Vec<[u64; 4]> {
+    let pairs = [(0, 4), (3, 2), (1, 5)];
+    let mut t = [[0u64; 4]; 12];
+    for (index, (a, b)) in pairs.into_iter().enumerate() {
+        let r0 = [f[2 * a], f[2 * a + 1]];
+        let r1 = [f[2 * b], f[2 * b + 1]];
+        t[4 * index..4 * index + 4].copy_from_slice(&reference_cyc_fp4(&r0, &r1));
+    }
+    reference_cyc_fold(&t, f)
+}
+
+/// A canonical Fp12 drawn from the edge corpus or at random.
+fn cyc_case(state: &mut u64, corpus: &[[u64; 4]], edges: bool) -> [[u64; 4]; 12] {
+    core::array::from_fn(|_| {
+        if edges {
+            *state = state
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            corpus[(*state >> 33) as usize % corpus.len()]
+        } else {
+            next_residue(state)
+        }
+    })
+}
+
+/// Every Fp4 operand slot swept over the edge corpus against three saturated
+/// backgrounds. The interpreter checks the leaf's own bound claims (no
+/// accumulate carry-out of word 4, no fifth word between rounds, no carry out
+/// of any lazy prep chain) on each of these inputs.
+#[test]
+fn a64_cyc_fp4_matches_the_tower_on_edge_corpus() {
+    let mut corpus = edge_corpus();
+    corpus.push(BN254_P);
+    let p_minus_one = {
+        let mut value = BN254_P;
+        value[0] -= 1;
+        value
+    };
+    for background in [p_minus_one, [0; 4]] {
+        for slot in 0..4 {
+            for (index, value) in corpus.iter().enumerate() {
+                let mut operands = [background; 4];
+                operands[slot] = *value;
+                if operands.iter().any(|limbs| gte(limbs, &BN254_P)) {
+                    continue;
+                }
+                let r0 = [operands[0], operands[1]];
+                let r1 = [operands[2], operands[3]];
+                assert_eq!(
+                    interpret_cyc_fp4_a64(&r0, &r1, BN254_P, BN254_P_INV),
+                    reference_cyc_fp4(&r0, &r1),
+                    "slot {slot}, corpus {index}",
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn a64_cyc_fp4_matches_the_tower_on_random_residues() {
+    let mut state = 0x6379_6366_7034_5f61u64;
+    for case in 0..100_000 {
+        let operands: [[u64; 4]; 4] = core::array::from_fn(|_| next_residue(&mut state));
+        let r0 = [operands[0], operands[1]];
+        let r1 = [operands[2], operands[3]];
+        let got = interpret_cyc_fp4_a64(&r0, &r1, BN254_P, BN254_P_INV);
+        assert_eq!(got, reference_cyc_fp4(&r0, &r1), "case {case}");
+        for (half, value) in got.iter().enumerate() {
+            assert!(!gte(value, &BN254_P), "unreduced half {half}, case {case}");
+        }
+    }
+}
+
+/// Both leaves in series against the tower, on inputs drawn from the edge
+/// corpus and at random. Production only feeds cyclotomic-subgroup elements,
+/// but the composed route computes the same formula on any canonical Fp12,
+/// so the leaves must too.
+#[test]
+fn a64_cyc_leaves_match_the_granger_scott_square() {
+    let mut corpus = edge_corpus();
+    corpus.retain(|limbs| !gte(limbs, &BN254_P));
+    let mut state = 0x6379_635f_6c65_6166u64;
+    for case in 0..102_000 {
+        let f = cyc_case(&mut state, &corpus, case < 2_000);
+        let mut t = [[0u64; 4]; 12];
+        for (index, (a, b)) in [(0, 4), (3, 2), (1, 5)].into_iter().enumerate() {
+            let r0 = [f[2 * a], f[2 * a + 1]];
+            let r1 = [f[2 * b], f[2 * b + 1]];
+            t[4 * index..4 * index + 4].copy_from_slice(&interpret_cyc_fp4_a64(
+                &r0,
+                &r1,
+                BN254_P,
+                BN254_P_INV,
+            ));
+        }
+        let got = interpret_cyc_fold_a64(&t, &f, BN254_P, BN254_P_INV);
+        assert_eq!(got.to_vec(), reference_cyclotomic(&f), "case {case}");
+        for (half, value) in got.iter().enumerate() {
+            assert!(!gte(value, &BN254_P), "unreduced half {half}, case {case}");
+        }
+    }
 }

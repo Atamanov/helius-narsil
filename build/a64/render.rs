@@ -6,6 +6,7 @@ use super::addsub::{
     ADD_MOD_INLINE_OPERANDS, ADD_MOD_REGISTER_MAP, MemoryShape, SUB_MOD_INLINE_OPERANDS,
     SUB_MOD_REGISTER_MAP, add_mod, sub_mod,
 };
+use super::cyc::{CYC_FOLD_REGISTER_MAP, CYC_FP4_REGISTER_MAP, cyc_fold, cyc_fp4};
 use super::emit::EmitterA64;
 use super::inline::{EmitterInlineA64, InlineOperand};
 use super::machine::Reg;
@@ -19,6 +20,8 @@ pub const SOSD4_SYMBOL: &str = "_narsil_sosd4";
 pub const SOSD6_SYMBOL: &str = "_narsil_sosd6";
 pub const ADD_MOD_SYMBOL: &str = "_narsil_add_mod";
 pub const SUB_MOD_SYMBOL: &str = "_narsil_sub_mod";
+pub const CYC_FP4_SYMBOL: &str = "_narsil_cyc_fp4";
+pub const CYC_FOLD_SYMBOL: &str = "_narsil_cyc_fold";
 
 /// One emitted symbol: its schedule, its register roles, and the argument
 /// list the wrapper in `src/fp/aarch64.rs` must match.
@@ -72,6 +75,28 @@ pub const A64_KERNELS: &[Kernel] = &[
             "Arguments: (z: *mut u64x8, table: *const [*const u64x4; 12],",
             "            consts: *const { p: [u64; 4], neg_p_inv: u64 })",
             "Table order: x00 x01 y00 y01 x10 x11 y10 y11 x20 x21 y20 y21",
+        ],
+    },
+    Kernel {
+        symbol: CYC_FP4_SYMBOL,
+        schedule_name: "bn254-cyc-fp4-square-fused",
+        schedule: cyc_fp4::<EmitterA64>,
+        register_map: CYC_FP4_REGISTER_MAP,
+        signature: &[
+            "Arguments: (z: *mut u64x16, r0: *const u64x8, r1: *const u64x8,",
+            "            consts: *const { p: [u64; 4], neg_p_inv: u64 })",
+            "z holds t_a then t_b, each two canonical Fp halves.",
+        ],
+    },
+    Kernel {
+        symbol: CYC_FOLD_SYMBOL,
+        schedule_name: "bn254-cyc-granger-scott-combines",
+        schedule: cyc_fold::<EmitterA64>,
+        register_map: CYC_FOLD_REGISTER_MAP,
+        signature: &[
+            "Arguments: (z: *mut u64x48, t: *const u64x48, f: *const u64x48,",
+            "            consts: *const { p: [u64; 4], neg_p_inv: u64 })",
+            "t holds t0..t5 in Fp4-pair order, z and f are repr(C) Fp12.",
         ],
     },
     Kernel {

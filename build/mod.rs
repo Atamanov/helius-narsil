@@ -184,6 +184,34 @@ pub fn interpret_sosd6_a64(
     machine.output_lanes()
 }
 
+/// Execute the fused AArch64 Fp4 square in the interpreter: `(r0 + r1*y)^2`
+/// over `Fp4 = Fp2[y]/(y^2 - (9+u))`, returning the four canonical Fp values
+/// t_a.re, t_a.im, t_b.re, t_b.im for canonical `(re, im)` inputs.
+pub fn interpret_cyc_fp4_a64(
+    r0: &[[u64; 4]; 2],
+    r1: &[[u64; 4]; 2],
+    p: [u64; 4],
+    p_inv: u64,
+) -> [[u64; 4]; 4] {
+    let mut machine = a64::interp::InterpA64::fp4_frame(r0, r1, p, p_inv);
+    a64::cyc::cyc_fp4(&mut machine);
+    machine.output_values()
+}
+
+/// Execute the AArch64 Granger-Scott combines in the interpreter: `t` holds
+/// t0..t5 in Fp4-pair order and `f` is the repr(C) Fp12 input, both as
+/// canonical Fp values. The result is the repr(C) Fp12 output.
+pub fn interpret_cyc_fold_a64(
+    t: &[[u64; 4]; 12],
+    f: &[[u64; 4]; 12],
+    p: [u64; 4],
+    p_inv: u64,
+) -> [[u64; 4]; 12] {
+    let mut machine = a64::interp::InterpA64::fold_frame(t, f, p, p_inv);
+    a64::cyc::cyc_fold(&mut machine);
+    machine.output_values()
+}
+
 /// Execute the rolled x86-64 SoS schedule in the interpreter for one
 /// `(a_i, b_i)` pair list (`1..=10` pairs, operands at most p).
 pub fn interpret_sos(pairs: &[([u64; 4], [u64; 4])], p: [u64; 4], p_inv: u64) -> [u64; 4] {
