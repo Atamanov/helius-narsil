@@ -227,7 +227,7 @@ pub(crate) fn sosd6(products: [Fp2Product<'_>; 3]) -> ([u64; 4], [u64; 4]) {
 /// `(r0, r1)`, `(r2, r3)`, `(r4, r5)`, which sit at repr(C) Fp2 indices
 /// `(0, 4)`, `(3, 2)` and `(1, 5)`.
 #[cfg(narsil_a64_cyc)]
-#[inline(never)]
+#[inline(always)]
 pub(crate) fn cyclotomic_square(f: &[[u64; 4]; 12]) -> [[u64; 4]; 12] {
     for value in f {
         debug_assert!(!crate::limb::gte(value, &crate::consts::P));

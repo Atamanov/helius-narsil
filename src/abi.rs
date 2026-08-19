@@ -41,6 +41,15 @@ pub(crate) fn fp12_components(value: &Fp12) -> &[[u64; 4]; 12] {
     unsafe { &*(core::ptr::from_ref(value).cast()) }
 }
 
+/// The repr(C) inverse of [`fp12_components`], for a kernel result that is
+/// already twelve canonical Fp values in Fp12 order.
+#[cfg(narsil_a64_cyc)]
+#[inline(always)]
+pub(crate) fn fp12_from_components(value: [[u64; 4]; 12]) -> Fp12 {
+    // SAFETY: the repr(C) tower has the asserted contiguous size and alignment.
+    unsafe { core::mem::transmute(value) }
+}
+
 #[cfg(narsil_mont4_x86_64_adx)]
 #[inline]
 pub(crate) fn fp2_triplet_components(value: &[Fp2; 3]) -> &[[u64; 4]; 6] {

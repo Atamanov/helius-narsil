@@ -418,12 +418,9 @@ impl Fp12 {
         // path below, which stays the reference.
         #[cfg(narsil_a64_cyc)]
         {
-            let out = crate::fp::aarch64::cyclotomic_square(crate::abi::fp12_components(&self));
-            let half = |index: usize| Fp2::new(Fp(out[2 * index]), Fp(out[2 * index + 1]));
-            Self {
-                c0: Fp6::new(half(0), half(1), half(2)),
-                c1: Fp6::new(half(3), half(4), half(5)),
-            }
+            crate::abi::fp12_from_components(crate::fp::aarch64::cyclotomic_square(
+                crate::abi::fp12_components(&self),
+            ))
         }
         #[cfg(not(any(
             all(

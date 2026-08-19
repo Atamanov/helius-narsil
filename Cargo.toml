@@ -79,6 +79,10 @@ name = "a64_rows"
 harness = false
 
 [[bench]]
+name = "a64_cyc"
+harness = false
+
+[[bench]]
 name = "groth16_batch"
 harness = false
 required-features = ["std"]
